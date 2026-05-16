@@ -1,0 +1,90 @@
+# theCollider v1.4.1 -- example config.yml
+#
+# Copy this file to ./config.yml (or ~/.collider/config.yml) and edit
+# in place. Anything unset falls back to the built-in default. CLI
+# flags ALWAYS win over config.yml values when both are supplied.
+#
+# Schema reference: src/core/yaml_config.hpp::AppConfig.
+
+# ---------------------------------------------------------------------------
+# Pool mode (distributed solving via the JLP protocol).
+# ---------------------------------------------------------------------------
+# Most users only need `worker` (Bitcoin address) and `url`. password +
+# api_key are present for compatibility with non-default pools that
+# require them; Collision Protocol's public pool does not.
+pool:
+  worker: "1YourBitcoinAddressForRewards"
+  url: "jlps://collisionprotocol.com:17403" # jlps:// = TLS (recommended)
+  # password: "..."
+  # api_key: "..."
+
+# ---------------------------------------------------------------------------
+# Standalone puzzle mode (no pool, this machine solves directly).
+# ---------------------------------------------------------------------------
+puzzle:
+  # number: 71            # Specific puzzle by number (otherwise smart-select)
+  # smart_select: true    # ROI-rank when picking among unsolved puzzles
+  # min_bits: 71          # Lower bound for --all-unsolved iteration
+  # max_bits: 160         # Upper bound for --all-unsolved iteration
+  # kangaroo: true        # Force kangaroo (only works on revealed-pubkey puzzles)
+  # dp_bits: 25           # Distinguished-point bits, 16-28 (default: auto)
+  # random_search: true   # Random walk within range (default true)
+  # auto_next: false      # Advance to next puzzle after solving
+  # checkpoint: "./puzzle.ckpt"
+
+  # ------------------------------------------------------------
+  # v1.4.1: per-run target / range / pubkey override.
+  #
+  # Use these to scan a custom address + range without modifying the
+  # bundled puzzle data. Most users won't need them; they're for
+  # research targets, newly-revealed pubkeys, or testing.
+  #
+  # Kangaroo requires the public key. The bundled puzzle_history.json
+  # already has every revealed pubkey for the canonical Bitcoin Puzzle
+  # Challenge (multiples of 5 in 71-160 plus all solved puzzles below
+  # 71). For a target outside that set, supply `pubkey:` here too.
+  # ------------------------------------------------------------
+  # target:  "13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so"  # Bitcoin address
+  # start:   "0x40000000000000000"                  # Range start (hex)
+  # end:     "0x7ffffffffffffffff"                  # Range end (hex)
+  # pubkey:  "02..."                                # 33-byte compressed pubkey
+
+# ---------------------------------------------------------------------------
+# Brain wallet mode (Pro feature). FREE builds silently ignore this section.
+# ---------------------------------------------------------------------------
+# brainwallet:
+#   enabled: false
+#   wordlist: "./wordlists/rockyou.txt"
+#   save_interval: 1000000
+#   resume: false
+
+# ---------------------------------------------------------------------------
+# Bloom filter (Pro feature; .blf file with funded addresses).
+# ---------------------------------------------------------------------------
+# bloom:
+#   file: "./funded_addresses.blf"
+
+# ---------------------------------------------------------------------------
+# GPU configuration.
+# ---------------------------------------------------------------------------
+gpu:
+  # devices: [0, 1]      # Specific GPU IDs (default: auto-detect all)
+  # batch_size: 4000000  # Keys per batch
+  # force_calibrate: false
+
+# ---------------------------------------------------------------------------
+# General settings.
+# ---------------------------------------------------------------------------
+settings:
+  # verbose: false
+  # debug: false
+  # benchmark_seconds: 30
+
+# ---------------------------------------------------------------------------
+# Working directories. (Currently parsed but not yet consumed by every
+# subsystem; see track-e finding 7 in the codebase.)
+# ---------------------------------------------------------------------------
+# paths:
+#   data_dir: "./processed"
+#   checkpoint_dir: "./checkpoints"
+#   log_dir: "./logs"

@@ -1,0 +1,258 @@
+name: Build and Release (Free)
+
+# Builds the FREE distribution of theCollider for Linux, Windows, and macOS,
+# and attaches the artifacts to a GitHub Release. Pro binaries (full brain
+# wallet pipeline) are built privately and shipped to paying customers; this
+# workflow intentionally pins -DCOLLIDER_PRO=OFF so a public clone cannot
+# accidentally publish Pro code from public infrastructure.
+
+on:
+  push:
+    tags:
+      # Free release tags: v1.3.0-free, v1.4.0-free, etc.
+      # The plain `v*` glob also matches Pro tags (`v1.3.0-pro`); to keep Pro
+      # tags from triggering this public workflow, the Pro repo (private)
+      # owns its own release pipeline and Pro tags are pushed there only.
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.3.0-free) -- only used for manual runs"
+        required: true
+        type: string
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Linux x64 + CUDA
+  # ---------------------------------------------------------------------------
+  linux-cuda:
+    name: Linux x64 (CUDA)
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout (no submodules -- Pro lives in a private repo)
+        uses: actions/checkout@v4
+
+      - name: Install build tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build
+
+      - name: Install CUDA Toolkit 12.6
+        uses: Jimver/cuda-toolkit@v0.2.19
+        with:
+          cuda: "12.6.0"
+          method: "network"
+          sub-packages: '["nvcc", "cudart"]'
+
+      - name: Configure (FREE build, COLLIDER_PRO=OFF)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCOLLIDER_PRO=OFF \
+            -DCOLLIDER_USE_CUDA=ON \
+            -DCOLLIDER_BUILD_TESTS=OFF \
+            -DCOLLIDER_BUILD_BENCHMARKS=OFF \
+            -DCMAKE_CUDA_ARCHITECTURES="75;80;86;89"
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} -j4
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp build/collider release/
+          if [ -f build/build_bloom ]; then cp build/build_bloom release/; fi
+          cp README.md release/
+          cp -r docs release/
+          if [ -d rules ]; then cp -r rules release/; fi
+          tar -czvf collider-linux-x64.tar.gz -C release .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: collider-linux-x64
+          path: collider-linux-x64.tar.gz
+
+  # ---------------------------------------------------------------------------
+  # Windows x64 + CUDA
+  # ---------------------------------------------------------------------------
+  windows-cuda:
+    name: Windows x64 (CUDA)
+    runs-on: windows-2022
+    steps:
+      - name: Checkout (no submodules -- Pro lives in a private repo)
+        uses: actions/checkout@v4
+
+      - name: Install CUDA Toolkit 12.6
+        uses: Jimver/cuda-toolkit@v0.2.19
+        with:
+          cuda: "12.6.0"
+          method: "network"
+          sub-packages: '["nvcc", "cudart", "visual_studio_integration"]'
+
+      - name: Setup MSVC x64 environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Configure (FREE build, COLLIDER_PRO=OFF)
+        # vcpkg is needed for OpenSSL; the in-tree CMakeLists has the
+        # auto-bootstrap which uses VCPKG_ROOT or downloads vcpkg on demand.
+        # On windows-2022 the BuildTools image already ships vcpkg.
+        env:
+          VCPKG_ROOT: 'C:\vcpkg'
+        run: |
+          cmake -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DCOLLIDER_PRO=OFF `
+            -DCOLLIDER_USE_CUDA=ON `
+            -DCOLLIDER_BUILD_TESTS=OFF `
+            -DCOLLIDER_BUILD_BENCHMARKS=OFF `
+            -DCMAKE_CUDA_ARCHITECTURES="75;80;86;89"
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} -j4
+
+      - name: Package
+        run: |
+          mkdir release
+          copy build\collider.exe release\
+          if (Test-Path build\build_bloom.exe) { copy build\build_bloom.exe release\ }
+          copy README.md release\
+          xcopy docs release\docs\ /E /I /Y
+          if (Test-Path rules) { xcopy rules release\rules\ /E /I /Y }
+          # OpenSSL DLLs travel with the binary on Windows.
+          Get-ChildItem build -Filter "libssl-*.dll" -ErrorAction SilentlyContinue |
+              ForEach-Object { Copy-Item $_.FullName release\ }
+          Get-ChildItem build -Filter "libcrypto-*.dll" -ErrorAction SilentlyContinue |
+              ForEach-Object { Copy-Item $_.FullName release\ }
+          Compress-Archive -Path release\* -DestinationPath collider-windows-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: collider-windows-x64
+          path: collider-windows-x64.zip
+
+  # ---------------------------------------------------------------------------
+  # macOS arm64 + Metal (no CUDA on Apple)
+  # ---------------------------------------------------------------------------
+  macos-metal:
+    name: macOS arm64 (Metal)
+    runs-on: macos-14
+    steps:
+      - name: Checkout (no submodules -- Pro lives in a private repo)
+        uses: actions/checkout@v4
+
+      - name: Install build tooling
+        run: brew install cmake ninja
+
+      - name: Configure (FREE build, COLLIDER_PRO=OFF, Metal backend)
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCOLLIDER_PRO=OFF \
+            -DCOLLIDER_USE_CUDA=OFF \
+            -DCOLLIDER_USE_METAL=ON \
+            -DCOLLIDER_BUILD_TESTS=OFF \
+            -DCOLLIDER_BUILD_BENCHMARKS=OFF
+
+      - name: Build
+        run: cmake --build build --config ${{ env.BUILD_TYPE }} -j4
+
+      - name: Package
+        run: |
+          mkdir -p release
+          cp build/collider release/
+          if [ -f build/build_bloom ]; then cp build/build_bloom release/; fi
+          cp README.md release/
+          cp -r docs release/
+          if [ -d rules ]; then cp -r rules release/; fi
+          tar -czvf collider-macos-arm64.tar.gz -C release .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: collider-macos-arm64
+          path: collider-macos-arm64.tar.gz
+
+  # ---------------------------------------------------------------------------
+  # Publish a GitHub Release with all three artifacts
+  # ---------------------------------------------------------------------------
+  create-release:
+    name: Publish GitHub Release
+    needs: [linux-cuda, windows-cuda, macos-metal]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: theCollider ${{ steps.tag.outputs.tag }} (Free)
+          # generate_release_notes pulls the annotated tag message + the
+          # commit log since the previous tag, so users see real changelog
+          # content without the workflow needing to maintain a release-notes
+          # file.
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/collider-linux-x64/collider-linux-x64.tar.gz
+            artifacts/collider-windows-x64/collider-windows-x64.zip
+            artifacts/collider-macos-arm64/collider-macos-arm64.tar.gz
+          body: |
+            ## theCollider ${{ steps.tag.outputs.tag }} (Free Edition)
+
+            GPU-accelerated Bitcoin puzzle solver. The free build supports the
+            Pollard's Kangaroo / brute-force puzzle solver and the JLP pool
+            client (TLS, hostname-verified). The brain-wallet pipeline is a
+            Pro feature and is not included in this download.
+
+            ### Downloads
+
+            | Platform | Architecture | Backend | File |
+            |----------|--------------|---------|------|
+            | Linux    | x64          | CUDA    | `collider-linux-x64.tar.gz`   |
+            | Windows  | x64          | CUDA    | `collider-windows-x64.zip`    |
+            | macOS    | arm64 (M1/M2/M3) | Metal | `collider-macos-arm64.tar.gz` |
+
+            ### Requirements
+
+            - **Linux / Windows**: NVIDIA GPU, Compute Capability 7.5 or newer
+              (driver supporting CUDA 12.x).
+            - **macOS**: Apple Silicon with Metal support.
+
+            ### Quick start
+
+            ```
+            ./collider --puzzle 71
+            ./collider --pool jlps://collisionprotocol.com:17403 --worker <btc-address>
+            ```
+
+            ### Pro upgrade
+
+            Brain-wallet scanning, the GPU rule engine, and the mega-fused
+            kernel ship in theCollider Pro. See
+            [collisionprotocol.com/pro](https://collisionprotocol.com/pro).

@@ -1,0 +1,123 @@
+# Build directories
+build/
+build-*/
+build_*/
+cmake-build-*/
+out/
+
+# Local build helper output and ad-hoc batch files
+build_*_out.txt
+do_build_*.bat
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Compiled objects
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+
+# Executables
+*.exe
+superflayer
+collider
+thepuzzler
+thecollider
+
+# CUDA compiled
+*.cubin
+*.fatbin
+*.ptx
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+venv/
+.env
+
+# Data files (too large for git)
+data/passwords/rockyou.txt
+data/passwords/darkc0de.txt
+data/wordlists/frequency_words.txt
+data/wordlists/wikipedia_frequency.txt
+data/wordlists/german.txt
+data/names/xato_usernames.txt
+processed/*.txt
+
+# Keep structure but ignore large processed files
+!processed/rules/
+!processed/stats.json
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Test outputs
+test_results/
+benchmark_results/
+
+# Generated output files (puzzle solutions, findings)
+puzzle_found.txt
+puzzle_solved.txt
+*_found.txt
+*_solved.txt
+findings/
+solutions/
+
+# Bloom filter files
+*.blf
+*.bloom
+
+# State/checkpoint files
+*.state
+*.checkpoint
+checkpoints/
+
+# Claude Code / AI assistant files
+.claude/
+
+# vcpkg (auto-downloaded during build)
+vcpkg/
+
+# User config (contains personal pool URLs, wallet addresses, local paths)
+config.yml
+config.yaml
+
+# Temporary build/test scripts and outputs from dev sessions
+_tmp_*.bat
+_build_*_out*.txt
+bash_test.txt
+build_out.txt
+do_build.bat
+run_build.bat
+run_build.ps1
+ksp_direct.txt
+run_ksp_direct.bat
+brainwallet.pot
+brainwallet_hits.txt
+utxodump.csv
