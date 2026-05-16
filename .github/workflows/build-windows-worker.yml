@@ -1,0 +1,31 @@
+name: Build Windows Worker (.exe)
+
+on:
+  push:
+    paths:
+      - 'worker/**'
+  workflow_dispatch:
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build .exe with PyInstaller
+        run: |
+          pyinstaller --onefile --name starminer-worker --icon=NONE worker/starminer-worker.py
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: starminer-worker-windows
+          path: dist/starminer-worker.exe
