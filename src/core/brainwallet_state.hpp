@@ -2,7 +2,7 @@
  * Brainwallet Search State Persistence
  *
  * Saves and restores brain wallet search progress to allow resuming after interruption.
- * State files are stored in ~/.collider/state/
+ * State files are stored in ~/.starminer/state/
  *
  * SAFETY FEATURES:
  * - Atomic saves: Write to temp file, then rename (survives Ctrl+C)
@@ -104,7 +104,7 @@ public:
         const char* home_env = std::getenv("HOME");
         home = home_env ? home_env : ".";
 #endif
-        return home + "/.collider/state";
+        return home + "/.starminer/state";
     }
 
     /**

@@ -85,7 +85,7 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
         args.pool_url = pool_url;
         args.pool_worker = worker;
 
-        // v1.4.1: persist the BTC payout address to ~/.collider/config.yml
+        // v1.4.1: persist the BTC payout address to ~/.starminer/config.yml
         // so the next launch defaults to it (user can still override at the
         // prompt). Only writes when the file doesn't already exist; never
         // overwrites an existing operator-managed config.

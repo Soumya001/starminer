@@ -113,8 +113,8 @@ struct AppConfig {
         home = home_env ? home_env : "";
 #endif
         if (!home.empty()) {
-            paths.push_back(home + "/.collider/config.yml");
-            paths.push_back(home + "/.collider/config.yaml");
+            paths.push_back(home + "/.starminer/config.yml");
+            paths.push_back(home + "/.starminer/config.yaml");
         }
 
         return paths;
@@ -313,7 +313,7 @@ public:
     //
     // Guided mode in interactive_ui calls save_pool_worker() after the user
     // enters their BTC address so the next launch defaults to it. We touch
-    // ONLY ~/.collider/config.yml (or %USERPROFILE%/.collider/config.yml on
+    // ONLY ~/.starminer/config.yml (or %USERPROFILE%/.starminer/config.yml on
     // Windows) -- never the user's working-directory ./config.yml, which is
     // the operator-managed file. A power user with their own config remains
     // in control; the home-directory file is purely the "remember my BTC
@@ -336,7 +336,7 @@ public:
 #endif
         if (home.empty()) return {};
 
-        std::filesystem::path dir = std::filesystem::path(home) / ".collider";
+        std::filesystem::path dir = std::filesystem::path(home) / ".starminer";
         std::error_code ec;
         std::filesystem::create_directories(dir, ec);
         // Even if create_directories fails (e.g. read-only home), keep

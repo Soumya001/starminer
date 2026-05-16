@@ -2,7 +2,7 @@
  * Collider Logger
  *
  * File-based logging for crash diagnosis and overnight run monitoring.
- * Logs to ~/.collider/collider.log with timestamps and rotation.
+ * Logs to ~/.starminer/starminer.log with timestamps and rotation.
  */
 
 #pragma once
@@ -49,7 +49,7 @@ public:
             home = std::getenv("HOME");
 #endif
             if (home) {
-                dir = std::string(home) + "/.collider";
+                dir = std::string(home) + "/.starminer";
             } else {
                 dir = ".";
             }

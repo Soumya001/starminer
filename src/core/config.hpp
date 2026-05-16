@@ -2,7 +2,7 @@
  * Collider Configuration
  *
  * Handles persistent configuration for puzzle solving.
- * Config file: ~/.collider/config
+ * Config file: ~/.starminer/config
  */
 
 #pragma once
@@ -53,7 +53,7 @@ struct UserConfig {
         const char* home_env = std::getenv("HOME");
         home = home_env ? home_env : ".";
 #endif
-        return home + "/.collider/config";
+        return home + "/.starminer/config";
     }
 
     /**

@@ -1,5 +1,5 @@
 /**
- * cli_parser.cpp - Implementation of theCollider's CLI argument parser.
+ * cli_parser.cpp - StarMiner CLI argument parser.
  *
  * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor; no
  * behavior changes. Pro-only flags stay gated by COLLIDER_PRO so the free
@@ -135,7 +135,7 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             std::string ignored = argv[++i];
             std::cerr << "[Pro] --bloom '" << ignored
                       << "' ignored -- opportunistic address scanning is a "
-                         "Pro feature. https://collisionprotocol.com/pro"
+                         "Pro feature. Contact pool operator for access."
                       << std::endl;
 #endif
         } else if (arg == "--brainwallet") {
@@ -214,7 +214,7 @@ Arguments parse_args(int argc, char* argv[], collider::CLIFlags* cli_out) {
     std::string err;
     if (parse_args_core(argc, argv, args, cli, err) != 0) {
         std::cerr << err;
-        std::cerr << "    Run `collider --help` for usage details.\n";
+        std::cerr << "    Run `starminer --help` for usage details.\n";
         std::exit(1);
     }
     if (cli_out) *cli_out = cli;
@@ -231,14 +231,14 @@ int parse_args_for_test(int argc, char* argv[], Arguments& args,
 
 void print_usage() {
     std::cout << R"(
-theCollider - Bitcoin Puzzle Solver
+StarMiner - Bitcoin Puzzle Pool Solver
 ===================================
 
 GPU-accelerated solver for the Bitcoin Puzzle Challenge.
 
 Usage:
-  collider [options]
-  collider --puzzle <number>
+  starminer [options]
+  starminer --puzzle <number>
 
 Puzzle Options:
   --puzzle, -P [N]            Target puzzle number N (default: auto-select easiest
@@ -294,8 +294,7 @@ Smart Selection:
 #ifdef COLLIDER_PRO
     std::cout << R"(License:
   --activate <KEY>        Activate your Pro license key (run once after purchase)
-                          Example: ./collider --activate CLLDR-A1B2-C3D4-E5F6-G7H8
-                          Purchase at: https://collisionprotocol.com/pro
+                          Example: ./starminer --activate YOUR-LICENSE-KEY
 
 Brainwallet Mode (PRO):
   --brainwallet           Brainwallet-only mode (requires --bloom)
@@ -313,7 +312,7 @@ Brainwallet Mode (PRO):
   Brain wallet scanning is a Pro feature. This is the FREE build.
   Pro adds: --brainwallet, --brainwallet-setup, --bloom, --resume,
             --save-interval, --cpu-rules.
-  Purchase at: https://collisionprotocol.com/pro
+  Contact pool operator for Pro access.
 
 )";
 #endif
@@ -322,7 +321,7 @@ Brainwallet Mode (PRO):
                           URL format: jlps://host:port (TLS, recommended)
                                       jlp://host:port (plaintext)
                                       http://host:port
-                          Example: jlps://collisionprotocol.com:17403
+                          Example: https://starnetlive.space
   --worker, -w <address>  Worker name (your Bitcoin address for rewards)
   --pool-password <pass>  Pool password (if required)
   --pool-api-key <key>    API key for HTTP pools (if required)
@@ -333,7 +332,7 @@ Other:
   --config, -c <file>     Use custom config file (default: ./config.yml)
 
 Configuration:
-  Settings can be stored in config.yml (current directory or ~/.collider/)
+  Settings can be stored in config.yml (current directory or ~/.starminer/)
   Command-line arguments override config file settings.
 
 Examples:

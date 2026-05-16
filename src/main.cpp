@@ -1,10 +1,10 @@
 /**
- * theCollider - Bitcoin Puzzle Solver
+ * StarMiner - Bitcoin Puzzle Pool Solver
  *
  * GPU-accelerated solver for the Bitcoin Puzzle Challenge.
  *
  * Usage:
- *   collider --puzzle <number>
+ *   starminer --puzzle <number>
  *
  * Options:
  *   --puzzle, -P     Puzzle number to solve (66-160)
@@ -16,8 +16,8 @@
  *   --help, -h       Show this help message
  *
  * Example:
- *   collider --puzzle 71
- *   collider --all-unsolved --gpus 0,1
+ *   starminer --puzzle 71
+ *   starminer --all-unsolved --gpus 0,1
  */
 
 // Prevent Windows min/max macros from breaking std::min/std::max
@@ -63,7 +63,7 @@
 // ============================================================================
 // v1.4.1 A.3 refactor (commits 1/6 - 6/6) summary
 // ============================================================================
-// theCollider's mode runners and helpers all live in dedicated runtime
+// StarMiner's mode runners and helpers all live in dedicated runtime
 // modules. main.cpp is the thin dispatcher: parse args -> license gate
 // (Pro) -> signal handler / logger init -> GPU detect -> mode dispatch.
 //
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     collider::CLIFlags cli_flags;
     Arguments args = parse_args(argc, argv, &cli_flags);
 
-    // Load config file (config.yml in cwd or ~/.collider/config.yml).
+    // Load config file (config.yml in cwd or ~/.starminer/config.yml).
     // Command-line arguments take precedence over config file.
     collider::AppConfig app_config;
     if (app_config.load(args.config_file)) {
@@ -191,7 +191,7 @@ int main(int argc, char* argv[]) {
     // with a pointer to the Pro upgrade. Both --brainwallet (CLI) and
     // brainwallet_enabled (config.yml) end up setting brainwallet_mode.
     if (args.brainwallet_mode) {
-        std::cerr << "[PRO] Brain wallet scanning requires theCollider Pro.\n"
+        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n"
                   << "      Purchase at: https://collisionprotocol.com/pro\n";
         return 1;
     }
@@ -223,7 +223,7 @@ int main(int argc, char* argv[]) {
         ui::BrainwalletSetup::run_wizard();
         return 0;
 #else
-        std::cerr << "[PRO] Brain wallet scanning requires theCollider Pro.\n"
+        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n"
                   << "      Purchase at: https://collisionprotocol.com/pro\n";
         return 1;
 #endif
@@ -241,7 +241,7 @@ int main(int argc, char* argv[]) {
     auto& logger = Logger::instance();
     try {
         if (logger.init()) {
-            LOG_INFO("Starting theCollider v1.4.0");
+            LOG_INFO("Starting StarMiner v1.0.0");
         }
     } catch (const std::exception& e) {
         if (args.debug) std::cerr << "[DEBUG] Logger exception: " << e.what() << "\n" << std::flush;

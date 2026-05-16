@@ -33,7 +33,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         namespace boxui = ::collider::ui::box;
         std::cout << "\n";
         boxui::top(std::cout);
-        boxui::centered(std::cout, "POOL MODE - Distributed Kangaroo Solving");
+        boxui::centered(std::cout, "STAR POOL MODE - Distributed Kangaroo Solving");
         boxui::bottom(std::cout);
         std::cout << "\n";
     }

@@ -842,9 +842,9 @@ endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/main.cpp")
     # For CUDA backend, include stub to enable device linking
     if(COLLIDER_BACKEND STREQUAL "CUDA")
-        add_executable(collider src/main.cpp src/cuda_stub.cu)
+        add_executable(starminer src/main.cpp src/cuda_stub.cu)
     else()
-        add_executable(collider src/main.cpp)
+        add_executable(starminer src/main.cpp)
     endif()
 
     # collider_core PUBLIC-links collider_platform (and the INTERFACE
@@ -882,11 +882,11 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/main.cpp")
         list(APPEND MAIN_LIBS ${METAL_LIBRARY} ${FOUNDATION_LIBRARY})
     endif()
 
-    target_link_libraries(collider ${MAIN_LIBS})
+    target_link_libraries(starminer ${MAIN_LIBS})
 
     # For CUDA separable compilation, the final executable must resolve device symbols
     if(COLLIDER_BACKEND STREQUAL "CUDA")
-        set_target_properties(collider PROPERTIES
+        set_target_properties(starminer PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
             CUDA_RESOLVE_DEVICE_SYMBOLS ON
             CUDA_RUNTIME_LIBRARY Shared
