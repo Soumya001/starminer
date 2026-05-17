@@ -198,18 +198,14 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-          merge-multiple: true
 
       - name: Rename to final filenames
         run: |
-          mv artifacts/starminer starminer-linux-x64-cuda   2>/dev/null || true
-          mv artifacts/starminer starminer-linux-x64-cpu    2>/dev/null || true
-          # Each artifact is in its own dir; handle that
-          cp artifacts/starminer-linux-x64-cuda/starminer   starminer-linux-x64-cuda  2>/dev/null || true
-          cp artifacts/starminer-linux-x64-cpu/starminer    starminer-linux-x64-cpu   2>/dev/null || true
-          cp artifacts/starminer-windows-x64-cuda/starminer.exe starminer-windows-x64-cuda.exe 2>/dev/null || true
-          cp artifacts/starminer-windows-x64-cpu/starminer.exe  starminer-windows-x64-cpu.exe  2>/dev/null || true
-          cp artifacts/starminer-macos-arm64/starminer      starminer-macos-arm64      2>/dev/null || true
+          cp artifacts/starminer-linux-x64-cuda/starminer   starminer-linux-x64-cuda
+          cp artifacts/starminer-linux-x64-cpu/starminer    starminer-linux-x64-cpu
+          cp artifacts/starminer-windows-x64-cuda/starminer.exe starminer-windows-x64-cuda.exe
+          cp artifacts/starminer-windows-x64-cpu/starminer.exe  starminer-windows-x64-cpu.exe
+          cp artifacts/starminer-macos-arm64/starminer      starminer-macos-arm64
           chmod +x starminer-linux-x64-cuda starminer-linux-x64-cpu starminer-macos-arm64
           ls -lh starminer-*
 
