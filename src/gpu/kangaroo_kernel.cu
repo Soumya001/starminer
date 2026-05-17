@@ -115,6 +115,9 @@ __device__ __forceinline__ uint64_t add256_carry(uint64_t* r, const uint64_t* a,
           "l"(b[0]), "l"(b[1]), "l"(b[2]), "l"(b[3])
     );
     return carry;
+#elif defined(_MSC_VER)
+    for (int i = 0; i < 4; i++) r[i] = 0;
+    return 0;
 #else
     typedef unsigned __int128 u128;
     u128 s = (u128)a[0] + b[0];
@@ -146,6 +149,9 @@ __device__ __forceinline__ uint64_t sub256_borrow(uint64_t* r, const uint64_t* a
           "l"(b[0]), "l"(b[1]), "l"(b[2]), "l"(b[3])
     );
     return borrow;  // subc of (0-0-borrow): 0 if no borrow, ~0ULL if borrow
+#elif defined(_MSC_VER)
+    for (int i = 0; i < 4; i++) r[i] = 0;
+    return 0;
 #else
     // a - b via two's-complement: a + ~b + 1. carry-out 1 = no borrow.
     typedef unsigned __int128 u128;

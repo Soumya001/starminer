@@ -460,6 +460,8 @@ __device__ __forceinline__ uint64_t add_cc(uint64_t a, uint64_t b, uint64_t& car
     asm volatile("add.cc.u64 %0, %2, %3;\n\t addc.u64 %1, 0, 0;"
                  : "=l"(result), "=l"(carry) : "l"(a), "l"(b));
     return result;
+#elif defined(_MSC_VER)
+    carry = 0; return 0;
 #else
     typedef unsigned __int128 u128;
     u128 s = (u128)a + b;
@@ -475,6 +477,8 @@ __device__ __forceinline__ uint64_t addc_cc(uint64_t a, uint64_t b, uint64_t car
                  : "=l"(result), "=l"(carry_out) : "l"(a), "l"(b));
     if (carry_in) { if (result == UINT64_MAX) carry_out = 1; result++; }
     return result;
+#elif defined(_MSC_VER)
+    carry_out = 0; return 0;
 #else
     typedef unsigned __int128 u128;
     u128 s = (u128)a + b + (carry_in & 1u);
@@ -503,6 +507,8 @@ __device__ __forceinline__ uint64_t subc_cc(uint64_t a, uint64_t b, uint64_t bor
                  : "=l"(result), "=l"(borrow_out) : "l"(a), "l"(b));
     if (b1) { if (result == 0) borrow_out = UINT64_MAX; result--; }
     return result;
+#elif defined(_MSC_VER)
+    borrow_out = 0; return 0;
 #else
     uint64_t b1 = (borrow_in >> 63) & 1u;
     typedef unsigned __int128 u128;
