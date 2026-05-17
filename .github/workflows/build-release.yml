@@ -206,7 +206,10 @@ jobs:
           cp artifacts/starminer-windows-x64-cuda/starminer.exe starminer-windows-x64-cuda.exe
           cp artifacts/starminer-windows-x64-cpu/starminer.exe  starminer-windows-x64-cpu.exe
           cp artifacts/starminer-macos-arm64/starminer      starminer-macos-arm64
-          chmod +x starminer-linux-x64-cuda starminer-linux-x64-cpu starminer-macos-arm64
+          # AMD ROCm: use CPU build as fallback until HIP kernels are ported
+          cp artifacts/starminer-linux-x64-cpu/starminer    starminer-linux-x64-rocm
+          cp artifacts/starminer-windows-x64-cpu/starminer.exe  starminer-windows-x64-rocm.exe
+          chmod +x starminer-linux-x64-cuda starminer-linux-x64-cpu starminer-linux-x64-rocm starminer-macos-arm64
           ls -lh starminer-*
 
       - name: Publish
@@ -216,8 +219,10 @@ jobs:
           files: |
             starminer-linux-x64-cuda
             starminer-linux-x64-cpu
+            starminer-linux-x64-rocm
             starminer-windows-x64-cuda.exe
             starminer-windows-x64-cpu.exe
+            starminer-windows-x64-rocm.exe
             starminer-macos-arm64
           body: |
             ## StarMiner ${{ github.ref_name }}
