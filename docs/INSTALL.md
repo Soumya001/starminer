@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide covers building theCollider from source on Linux, Windows, and macOS. For prebuilt binaries see the [GitHub Releases page](https://github.com/hevnsnt/collider/releases).
+This guide covers building StarMiner from source on Linux, Windows, and macOS. For prebuilt binaries see the [GitHub Releases page](https://github.com/Soumya001/starminer/releases).
 
 This document covers the **free** edition. **(PRO VERSION ONLY)** builds are issued per-license to paying customers; see [collisionprotocol.com/pro](https://collisionprotocol.com/pro).
 
@@ -31,7 +31,7 @@ This document covers the **free** edition. **(PRO VERSION ONLY)** builds are iss
 
 ### GPU backends
 
-theCollider auto-detects one of three backends. Auto-detection runs in this order:
+StarMiner auto-detects one of three backends. Auto-detection runs in this order:
 
 1. **Metal** on Apple Silicon (macOS arm64).
 2. **CUDA** on Linux or Windows when the CUDA Toolkit is found.
@@ -99,7 +99,7 @@ nvidia-smi
 ### Step 3: clone and build
 
 ```bash
-git clone https://github.com/hevnsnt/collider.git
+git clone https://github.com/Soumya001/starminer.git
 cd collider
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -159,7 +159,7 @@ winget install Ninja-build.Ninja
 From "x64 Native Tools Command Prompt for VS 2022":
 
 ```cmd
-git clone https://github.com/hevnsnt/collider.git
+git clone https://github.com/Soumya001/starminer.git
 cd collider
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -181,7 +181,7 @@ ctest --output-on-failure
 
 ## macOS
 
-theCollider on macOS uses **Apple Metal**. Apple Silicon (M1, M2, M3, M4) is required.
+StarMiner on macOS uses **Apple Metal**. Apple Silicon (M1, M2, M3, M4) is required.
 
 ### Step 1: install Xcode Command Line Tools
 
@@ -201,7 +201,7 @@ brew install cmake ninja openssl@3
 The canonical entry point on macOS is `./build_macos.sh`, which sets `OPENSSL_ROOT_DIR` from Homebrew, configures Metal, and runs Ninja with all CPU cores.
 
 ```bash
-git clone https://github.com/hevnsnt/collider.git
+git clone https://github.com/Soumya001/starminer.git
 cd collider
 ./build_macos.sh free
 ```
@@ -361,7 +361,7 @@ Log out and back in.
 
 ## Getting Help
 
-If a build issue is not covered here, open an issue at <https://github.com/hevnsnt/collider/issues> with:
+If a build issue is not covered here, open an issue at <https://github.com/Soumya001/starminer/issues> with:
 
 - Operating system and version.
 - GPU model plus driver version.

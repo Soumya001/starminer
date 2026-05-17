@@ -1,6 +1,6 @@
 // test_jlp_pool_manager.cpp
 //
-// Pure-logic tests for D:\theCollider\src\pool\pool_manager.cpp and the
+// Pure-logic tests for D:\StarMiner\src\pool\pool_manager.cpp and the
 // DistinguishedPoint serializer in src/pool/jlp_pool_client.cpp. No sockets,
 // no threads -- everything in this file runs in main().
 //

@@ -1,5 +1,5 @@
 /**
- * puzzle_solver.cpp - Implementation of theCollider's puzzle-mode and
+ * puzzle_solver.cpp - Implementation of StarMiner's puzzle-mode and
  * benchmark runtime drivers.
  *
  * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor
@@ -963,7 +963,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
         std::cout << "\nFor sustained-rate Kangaroo throughput on this hardware,\n";
         std::cout << "connect to the live pool:\n";
         std::cout << "  ./collider --pool jlps://collisionprotocol.com:17403 --worker bc1q...\n";
-        std::cout << "\nFor the full brain-wallet pipeline benchmark, theCollider Pro\n";
+        std::cout << "\nFor the full brain-wallet pipeline benchmark, StarMiner Pro\n";
         std::cout << "exercises SHA256 -> EC -> hash160 -> bloom across all GPUs.\n";
         std::cout << "https://collisionprotocol.com/pro\n";
         return 0;

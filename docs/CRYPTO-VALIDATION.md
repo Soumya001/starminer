@@ -1,10 +1,10 @@
 # Crypto Validation
 
-How theCollider verifies that its on-GPU cryptography matches the canonical Bitcoin convention. Read this when adding a new GPU kernel that touches SHA256, RIPEMD160, secp256k1, or the brain-wallet pipeline **(PRO VERSION ONLY)**.
+How StarMiner verifies that its on-GPU cryptography matches the canonical Bitcoin convention. Read this when adding a new GPU kernel that touches SHA256, RIPEMD160, secp256k1, or the brain-wallet pipeline **(PRO VERSION ONLY)**.
 
 ## Why this exists
 
-The most expensive failure mode for a Bitcoin solver is **silent wrong hash**: if the GPU computes the wrong hash160 for a given private key, the bloom filter (or the puzzle target hash) never matches, and the scanner runs at full speed forever finding nothing. theCollider has caught at least three independent versions of this bug class in its history. Every one of them lived undetected for weeks because no test compared GPU output to a CPU reference.
+The most expensive failure mode for a Bitcoin solver is **silent wrong hash**: if the GPU computes the wrong hash160 for a given private key, the bloom filter (or the puzzle target hash) never matches, and the scanner runs at full speed forever finding nothing. StarMiner has caught at least three independent versions of this bug class in its history. Every one of them lived undetected for weeks because no test compared GPU output to a CPU reference.
 
 The validation suite below is the standing defense.
 

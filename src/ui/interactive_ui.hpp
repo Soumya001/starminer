@@ -1,6 +1,6 @@
 /**
  * interactive_ui.hpp - Interactive top-level menu / setup wizard glue
- * for theCollider.
+ * for StarMiner.
  *
  * Extracted out of src/main.cpp during the v1.4.1 A.3 refactor. Hosts the
  * argv-less startup flow (banner + main menu + per-mode submenus) and the

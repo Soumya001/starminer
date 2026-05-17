@@ -1,6 +1,6 @@
 @echo off
 REM ============================================================
-REM theCollider Windows Build Script
+REM StarMiner Windows Build Script
 REM Run from: x64 Native Tools Command Prompt for VS 2022
 REM ============================================================
 
@@ -13,7 +13,7 @@ if not defined VT (
 )
 
 REM Configuration
-set PROJECT_DIR=D:\theCollider
+set PROJECT_DIR=D:\StarMiner
 set BUILD_TYPE=Release
 
 REM Colors - using escape character
@@ -25,7 +25,7 @@ set "CYAN=%ESC%[96m"
 set "RESET=%ESC%[0m"
 
 echo %CYAN%============================================================%RESET%
-echo %CYAN%  theCollider Build Script%RESET%
+echo %CYAN%  StarMiner Build Script%RESET%
 echo %CYAN%============================================================%RESET%
 echo.
 

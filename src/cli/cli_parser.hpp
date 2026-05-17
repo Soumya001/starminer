@@ -1,5 +1,5 @@
 /**
- * cli_parser.hpp - Command-line argument parsing for theCollider.
+ * cli_parser.hpp - Command-line argument parsing for StarMiner.
  *
  * Extracted from src/main.cpp during the v1.4.1 A.3 refactor. The struct
  * `Arguments`, the parser entry points (`parse_args`, `parse_args_for_test`),

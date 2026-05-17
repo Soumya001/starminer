@@ -10,7 +10,7 @@ REM Expected: 16 tests pass. test_gpu_hash160 is included because it links
 REM against the brain-wallet pipeline that is enabled by COLLIDER_PRO=ON.
 REM
 REM Requires the Pro source files in-tree (current full-opto layout) or, in
-REM the future, the hevnsnt/collider-pro submodule checked out at pro/.
+REM the future, the Soumya001/starminer submodule checked out at pro/.
 REM
 REM Usage:
 REM   .\test-pro-build.bat            REM incremental build
@@ -25,7 +25,7 @@ set REPO_ROOT=%~dp0
 if "%REPO_ROOT:~-1%"=="\" set REPO_ROOT=%REPO_ROOT:~0,-1%
 
 echo =====================================================
-echo theCollider PRO Build (COLLIDER_PRO=ON)
+echo StarMiner PRO Build (COLLIDER_PRO=ON)
 echo Build dir: %REPO_ROOT%\%BUILD_DIR%
 echo =====================================================
 echo.

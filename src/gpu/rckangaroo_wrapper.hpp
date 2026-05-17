@@ -1,5 +1,5 @@
 /**
- * RCKangaroo Wrapper for theCollider
+ * RCKangaroo Wrapper for StarMiner
  *
  * Integrates RetiredCoder's RCKangaroo (GPLv3) as the Kangaroo solver backend.
  * RCKangaroo achieves ~8 GKeys/s on RTX 4090, ~4 GKeys/s on RTX 3090.

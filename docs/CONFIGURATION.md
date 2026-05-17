@@ -1,6 +1,6 @@
 # Configuration Guide
 
-Complete reference for theCollider's `config.yml` and the precedence rules between CLI flags, config-file values, and built-in defaults.
+Complete reference for StarMiner's `config.yml` and the precedence rules between CLI flags, config-file values, and built-in defaults.
 
 The schema source of truth is [`src/core/yaml_config.hpp`](../src/core/yaml_config.hpp) (the `AppConfig` struct). A documented example with every section is at [`example-config.yml`](../example-config.yml) at the repo root.
 
@@ -24,7 +24,7 @@ This eliminates the "value silently overridden" bug class where CLI values that 
 
 ## File location
 
-theCollider searches for `config.yml` in this order:
+StarMiner searches for `config.yml` in this order:
 
 1. `./config.yml`
 2. `./config.yaml`
@@ -193,7 +193,7 @@ These flags imply `--brainwallet` (they go through the brain-wallet pipeline). F
 
 ## Validation
 
-theCollider validates configuration on startup. Common errors:
+StarMiner validates configuration on startup. Common errors:
 
 | Error                                 | Cause                             | Fix                                                                                   |
 | ------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------- |

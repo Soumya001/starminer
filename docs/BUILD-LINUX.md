@@ -1,4 +1,4 @@
-# Building theCollider on Linux
+# Building StarMiner on Linux
 
 Platform-specific build reference for Linux x64 with the CUDA backend. For a step-by-step first-time install (distro packages, CUDA Toolkit install, environment setup), see [INSTALL.md](INSTALL.md). This document is the reference for CMake options, build flags, multi-GPU layouts, and Linux-specific troubleshooting.
 
@@ -23,7 +23,7 @@ This document covers both the Free and **(PRO VERSION ONLY)** editions. The same
 ## Quick build
 
 ```bash
-git clone https://github.com/hevnsnt/collider.git
+git clone https://github.com/Soumya001/starminer.git
 cd collider
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -35,7 +35,7 @@ Output: `build/collider`.
 For the **(PRO VERSION ONLY)** edition (private repo, license required):
 
 ```bash
-git clone git@github.com:hevnsnt/collider-pro.git
+git clone git@github.com:Soumya001/starminer.git
 cd collider-pro
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCOLLIDER_PRO=ON
@@ -160,7 +160,7 @@ For details on the GPU correctness test strategy, see [CRYPTO-VALIDATION.md](CRY
 
 CUDA enumerates devices via `cudaGetDeviceCount`; the order matches `nvidia-smi -L` unless `CUDA_VISIBLE_DEVICES` is set.
 
-By default, theCollider uses every visible GPU. To restrict:
+By default, StarMiner uses every visible GPU. To restrict:
 
 ```bash
 ./collider --gpus 0,2          # CLI: skip GPU 1

@@ -1,4 +1,4 @@
-# theCollider Architecture
+# StarMiner Architecture
 
 A high-level map of the codebase: layered view, CMake targets, source tree, backend selection, free/Pro split, pool-client lifecycle, testing layout, and dependencies. Intended for new contributors and third-party readers who want the lay of the land without grepping the tree.
 

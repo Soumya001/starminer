@@ -1,4 +1,4 @@
-# Building theCollider on Windows
+# Building StarMiner on Windows
 
 Platform-specific build reference for Windows x64 with the CUDA backend. For a step-by-step first-time install (Visual Studio, CUDA Toolkit, dependency setup), see [INSTALL.md](INSTALL.md). This document is the reference for CMake options, build flags, vcpkg bootstrap, and Windows-specific troubleshooting.
 
@@ -27,7 +27,7 @@ This document covers both the Free and **(PRO VERSION ONLY)** editions. The same
 From "x64 Native Tools Command Prompt for VS 2022":
 
 ```cmd
-git clone https://github.com/hevnsnt/collider.git
+git clone https://github.com/Soumya001/starminer.git
 cd collider
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -39,7 +39,7 @@ Output: `build\collider.exe`.
 For the **(PRO VERSION ONLY)** edition (private repo, license required):
 
 ```cmd
-git clone git@github.com:hevnsnt/collider-pro.git
+git clone git@github.com:Soumya001/starminer.git
 cd collider-pro
 build_pro.bat
 ```
@@ -135,7 +135,7 @@ Minimum supported compute capability is **7.5** (Turing).
 
 ## vcpkg and OpenSSL
 
-theCollider on Windows uses [vcpkg](https://github.com/microsoft/vcpkg) to provide OpenSSL (for `jlps://` TLS pool connections). The repo includes a `vcpkg.json` manifest that lists `openssl` as a dependency.
+StarMiner on Windows uses [vcpkg](https://github.com/microsoft/vcpkg) to provide OpenSSL (for `jlps://` TLS pool connections). The repo includes a `vcpkg.json` manifest that lists `openssl` as a dependency.
 
 The CMake configure step auto-bootstraps vcpkg in `.\vcpkg\` if `VCPKG_ROOT` is not already set. This downloads, builds, and caches OpenSSL on the first run; subsequent configures reuse the cache.
 
@@ -223,7 +223,7 @@ For details on the GPU correctness test strategy, see [CRYPTO-VALIDATION.md](CRY
 
 CUDA on Windows enumerates devices via `cudaGetDeviceCount`; the order matches `nvidia-smi -L`. Both consumer GeForce drivers and the data-center (`Tesla`) driver branch are supported.
 
-By default, theCollider uses every visible GPU. To restrict:
+By default, StarMiner uses every visible GPU. To restrict:
 
 ```cmd
 .\collider --gpus 0,2
@@ -247,7 +247,7 @@ Each GPU runs an independent kangaroo walk with its own DP queue. Cross-GPU work
 
 ### WDDM vs TCC driver mode
 
-Consumer GeForce cards run in WDDM (Windows Display Driver Model). Data-center cards (Tesla, A100, H100) can be switched to TCC for lower-latency CUDA. theCollider works in either mode; TCC typically gives a modest throughput uplift on data-center cards due to the absent display compositor, though the magnitude is workload-dependent. Measure with `--benchmark` on your own hardware before relying on a specific number.
+Consumer GeForce cards run in WDDM (Windows Display Driver Model). Data-center cards (Tesla, A100, H100) can be switched to TCC for lower-latency CUDA. StarMiner works in either mode; TCC typically gives a modest throughput uplift on data-center cards due to the absent display compositor, though the magnitude is workload-dependent. Measure with `--benchmark` on your own hardware before relying on a specific number.
 
 ```cmd
 nvidia-smi -i 0 -dm 1                  # WDDM = 0, TCC = 1
@@ -303,7 +303,7 @@ If absent, reinstall the CUDA Toolkit or copy `cudart64_12.dll` next to `collide
 
 ### `MSVC error C2039: 'ERROR': is not a member of 'X'`
 
-This usually indicates a third-party header has `#define ERROR ...` that conflicts with a project symbol. theCollider uses `MSG_ERROR` (not `ERROR`) for its JLP message-type constant for exactly this reason; if you see the error, suspect a recently added header. The Windows `<winerror.h>` macro is the most common culprit.
+This usually indicates a third-party header has `#define ERROR ...` that conflicts with a project symbol. StarMiner uses `MSG_ERROR` (not `ERROR`) for its JLP message-type constant for exactly this reason; if you see the error, suspect a recently added header. The Windows `<winerror.h>` macro is the most common culprit.
 
 ### TLS handshake failure on `jlps://` URLs at runtime
 

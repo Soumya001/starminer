@@ -1,7 +1,7 @@
 /**
  * Interactive Mode - User-Friendly Menu System
  *
- * Provides interactive prompts and menus for theCollider when launched
+ * Provides interactive prompts and menus for StarMiner when launched
  * without command-line arguments.
  */
 
@@ -259,7 +259,7 @@ public:
      * options are renumbered so the menu stays compact.
      */
     static MainMenuChoice display_main_menu(const std::string& version) {
-        display_header("theCollider", version);
+        display_header("StarMiner", version);
 
         std::cout << "\n";
         std::cout << colors::BRIGHT_WHITE << "What would you like to do?" << colors::RESET << "\n\n";

@@ -1,5 +1,5 @@
 /**
- * TheCollider - Clean ANSI Banner with Shine Wipe Effect
+ * starminer - Clean ANSI Banner with Shine Wipe Effect
  *
  * Simple, context-aware display with animated shine.
  */

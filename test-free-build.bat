@@ -24,7 +24,7 @@ set REPO_ROOT=%~dp0
 if "%REPO_ROOT:~-1%"=="\" set REPO_ROOT=%REPO_ROOT:~0,-1%
 
 echo =====================================================
-echo theCollider FREE Build (COLLIDER_PRO=OFF)
+echo StarMiner FREE Build (COLLIDER_PRO=OFF)
 echo Build dir: %REPO_ROOT%\%BUILD_DIR%
 echo =====================================================
 echo.

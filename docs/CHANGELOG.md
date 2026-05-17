@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to theCollider are documented in this file.
+All notable changes to StarMiner are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -91,7 +91,7 @@ Major release driven by a multi-track adversarial review on the v1.3.0-dev branc
 
 ## [1.3.x] and earlier
 
-Pre-public history. The v1.3.x line was the last private-only series; v1.4.0 is the first release with a synchronized public Free edition at <https://github.com/hevnsnt/collider>.
+Pre-public history. The v1.3.x line was the last private-only series; v1.4.0 is the first release with a synchronized public Free edition at <https://github.com/Soumya001/starminer>.
 
 ---
 

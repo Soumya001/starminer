@@ -1,8 +1,8 @@
-# theColliderPro
+# StarMinerPro
 
 > Every key your GPU computes is a lottery ticket. Pro just gives you more lotteries to win.
 
-theCollider Free is one of the most complete open-source Bitcoin Puzzle Challenge solvers in the world. **theColliderPro turns the same binary into a treasure hunter.**
+StarMiner Free is one of the most complete open-source Bitcoin Puzzle Challenge solvers in the world. **StarMinerPro turns the same binary into a treasure hunter.**
 
 You are running a GPU. It is grinding millions, billions, eventually trillions of private keys. In Free, every one of those keys is checked against exactly one target: the puzzle you are solving. In Pro, **every single key is also checked against 100 million funded Bitcoin addresses, automatically, in the same GPU kernel pass, at zero marginal cost.**
 
@@ -217,7 +217,7 @@ A: Two reasons. First, the 100M+ funded-address bloom is built from datasets tha
 
 **Q: What if a bug in Pro burns through my electricity for nothing?**
 
-A: Pro ships the same telemetry as Free (DP rate, accepted-by-pool counter, bloom hits if any). If your DP rate drops or your accrual on the pool stalls, you will see it in the same place you see it in Free. Open an issue on the [private Pro tracker](https://github.com/hevnsnt/collider-pro) (access included with your license) and we will triage. The free build's CI runs the same kernels; we have not shipped a Pro build that produces correct opportunistic scans but incorrect kangaroo DPs, and the design makes that hard to do accidentally.
+A: Pro ships the same telemetry as Free (DP rate, accepted-by-pool counter, bloom hits if any). If your DP rate drops or your accrual on the pool stalls, you will see it in the same place you see it in Free. Open an issue on the [private Pro tracker](https://github.com/Soumya001/starminer-pro) (access included with your license) and we will triage. The free build's CI runs the same kernels; we have not shipped a Pro build that produces correct opportunistic scans but incorrect kangaroo DPs, and the design makes that hard to do accidentally.
 
 ---
 

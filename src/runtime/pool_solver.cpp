@@ -1,5 +1,5 @@
 /**
- * pool_solver.cpp - Implementation of theCollider's pool-mode runtime
+ * pool_solver.cpp - Implementation of StarMiner's pool-mode runtime
  * driver.
  *
  * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor;

@@ -1,6 +1,6 @@
-# Building theCollider on macOS
+# Building StarMiner on macOS
 
-theCollider on macOS uses **Apple Metal** for GPU compute. CUDA is unavailable on Mac. Apple Silicon (M1, M2, M3, M4) is required. Intel Macs are not supported.
+StarMiner on macOS uses **Apple Metal** for GPU compute. CUDA is unavailable on Mac. Apple Silicon (M1, M2, M3, M4) is required. Intel Macs are not supported.
 
 This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `-DCOLLIDER_PRO=ON|OFF` flag selects which.
 
@@ -31,7 +31,7 @@ brew --prefix openssl@3   # should print a path
 For the Free edition (public repo):
 
 ```bash
-git clone https://github.com/hevnsnt/collider.git
+git clone https://github.com/Soumya001/starminer.git
 cd collider
 ./build_macos.sh free
 ```
@@ -39,7 +39,7 @@ cd collider
 For the **(PRO VERSION ONLY)** edition (private repo, license required):
 
 ```bash
-git clone git@github.com:hevnsnt/collider-pro.git
+git clone git@github.com:Soumya001/starminer.git
 cd collider-pro
 ./build_macos.sh pro
 ```
@@ -195,7 +195,7 @@ Pro releases on Mac follow the same flow as Windows and Linux:
 1. Tag `v1.4.1-pro` on `collider-pro/main` after merging.
 2. CI builds the artifact for distribution.
 3. Free release follows via `scripts/sync-to-free.sh v1.4.1-free`.
-4. Website auto-pulls from `github.com/hevnsnt/collider/releases/latest`.
+4. Website auto-pulls from `github.com/Soumya001/starminer/releases/latest`.
 
 ---
 

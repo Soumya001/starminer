@@ -1,5 +1,5 @@
 /**
- * yaml_config.hpp - Simple YAML configuration loader for theCollider
+ * yaml_config.hpp - Simple YAML configuration loader for StarMiner
  *
  * Parses a subset of YAML (key: value pairs with sections) without external dependencies.
  * Command-line arguments override config file settings.
@@ -373,7 +373,7 @@ public:
         // File does not exist -- write a minimal new one.
         std::ofstream out(file_path);
         if (!out) return {};
-        out << "# theCollider config (auto-created from guided mode).\n";
+        out << "# StarMiner config (auto-created from guided mode).\n";
         out << "# Edit freely -- the format is documented in example-config.yml.\n";
         out << "\n";
         out << "pool:\n";

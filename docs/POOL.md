@@ -1,6 +1,6 @@
 # Pool Mode Operator Guide
 
-How to join the Collision Protocol pool, what your worker does on the wire, how share-of-pool credit accrues, and what counts as good worker etiquette. This document is for operators running theCollider in pool mode and want more than the README's quick-start gives.
+How to join the Collision Protocol pool, what your worker does on the wire, how share-of-pool credit accrues, and what counts as good worker etiquette. This document is for operators running StarMiner in pool mode and want more than the README's quick-start gives.
 
 For the wire format itself (frame layouts, byte offsets, struct sizes), see [JLP-PROTOCOL.md](JLP-PROTOCOL.md). This document is the operator-facing companion.
 
@@ -68,7 +68,7 @@ Once connected, the client runs the following loop. The full state machine is do
 8. Eventually: server pushes SOLUTION when any worker's tame collides with any wild.
 ```
 
-The connection is long-lived. theCollider holds one socket for the full session and multiplexes the read and write loops behind a TLS-safe mutex. Reconnects are jittered and bounded (3 attempts on `AUTH_FAIL`, exponential backoff with a unified cap).
+The connection is long-lived. StarMiner holds one socket for the full session and multiplexes the read and write loops behind a TLS-safe mutex. Reconnects are jittered and bounded (3 attempts on `AUTH_FAIL`, exponential backoff with a unified cap).
 
 Two anti-cheat properties of the wire are worth understanding as an operator:
 
@@ -159,7 +159,7 @@ Practical follow-ups:
 
 ## Telemetry and monitoring your worker
 
-theCollider prints rolling telemetry to the terminal: GPU step rate, DPs submitted, DPs acknowledged, current chunk, and the last `STATS_RSP` snapshot.
+StarMiner prints rolling telemetry to the terminal: GPU step rate, DPs submitted, DPs acknowledged, current chunk, and the last `STATS_RSP` snapshot.
 
 For headless operation:
 
@@ -224,7 +224,7 @@ If your worker is banned in error (genuine client bug, fixed and updated), conta
 
 ## Running a non-default pool
 
-theCollider's pool client is server-agnostic. Any server that speaks the JLP wire protocol works.
+StarMiner's pool client is server-agnostic. Any server that speaks the JLP wire protocol works.
 
 ```bash
 ./collider --pool jlps://your-pool.example.com:17403 --worker bc1qYourAddr
@@ -238,7 +238,7 @@ Schemes:
 - `jlp://` (plaintext TCP). Acceptable on a LAN or in a test environment. Do not use over the public internet; AUTH frames travel in cleartext.
 - `http://` (HTTP variant). The client speaks a non-JLP REST variant; some legacy private pools use this. Wire-level features (batch sequencing, work_id attestation) are degraded.
 
-For running your own server: the reference implementation is [github.com/hevnsnt/collision-protocol](https://github.com/hevnsnt/collision-protocol), a Python pool server. The wire IDL at `protocol/jlp.yaml` plus the generated bindings (C++ `jlp_wire_generated.hpp`, Python `jlp_protocol_generated.py`) is the single source of truth; any conformant server reading the IDL can drive any conformant client.
+For running your own server: the reference implementation is [github.com/Soumya001/starminer](https://github.com/Soumya001/starminer), a Python pool server. The wire IDL at `protocol/jlp.yaml` plus the generated bindings (C++ `jlp_wire_generated.hpp`, Python `jlp_protocol_generated.py`) is the single source of truth; any conformant server reading the IDL can drive any conformant client.
 
 ---
 
@@ -304,4 +304,4 @@ Your local stats line is computed from `DP_ACK` round trips. High RTT to the poo
 - [CONFIGURATION.md](CONFIGURATION.md) - the `pool` section of `config.yml`, plus precedence between CLI and config.
 - [ARCHITECTURE.md](ARCHITECTURE.md) - where the pool client lives in the source tree (`src/pool/`).
 - [collisionprotocol.com](https://collisionprotocol.com) - public-pool dashboard, payout policy, status page.
-- [github.com/hevnsnt/collision-protocol](https://github.com/hevnsnt/collision-protocol) - reference Python server.
+- [github.com/Soumya001/starminer](https://github.com/Soumya001/starminer) - reference Python server.

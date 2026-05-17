@@ -31,7 +31,7 @@ do_build_*.bat
 superflayer
 collider
 thepuzzler
-thecollider
+starminer
 
 # CUDA compiled
 *.cubin

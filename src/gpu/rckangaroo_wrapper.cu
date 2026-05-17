@@ -1,5 +1,5 @@
 /**
- * RCKangaroo Wrapper Implementation for theCollider
+ * RCKangaroo Wrapper Implementation for StarMiner
  *
  * Integrates RetiredCoder's RCKangaroo (GPLv3) as the Kangaroo solver backend.
  *
@@ -421,7 +421,7 @@ void AddPointsToList(u32* data, int pnt_cnt, u64 ops_cnt) {
 }
 
 // ============================================================================
-// Namespace for theCollider integration
+// Namespace for StarMiner integration
 // ============================================================================
 
 namespace collider {

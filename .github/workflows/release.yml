@@ -1,6 +1,6 @@
 name: Build and Release (Free)
 
-# Builds the FREE distribution of theCollider for Linux, Windows, and macOS,
+# Builds the FREE distribution of StarMiner for Linux, Windows, and macOS,
 # and attaches the artifacts to a GitHub Release. Pro binaries (full brain
 # wallet pipeline) are built privately and shipped to paying customers; this
 # workflow intentionally pins -DCOLLIDER_PRO=OFF so a public clone cannot
@@ -210,7 +210,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
-          name: theCollider ${{ steps.tag.outputs.tag }} (Free)
+          name: StarMiner ${{ steps.tag.outputs.tag }} (Free)
           # generate_release_notes pulls the annotated tag message + the
           # commit log since the previous tag, so users see real changelog
           # content without the workflow needing to maintain a release-notes
@@ -223,7 +223,7 @@ jobs:
             artifacts/collider-windows-x64/collider-windows-x64.zip
             artifacts/collider-macos-arm64/collider-macos-arm64.tar.gz
           body: |
-            ## theCollider ${{ steps.tag.outputs.tag }} (Free Edition)
+            ## StarMiner ${{ steps.tag.outputs.tag }} (Free Edition)
 
             GPU-accelerated Bitcoin puzzle solver. The free build supports the
             Pollard's Kangaroo / brute-force puzzle solver and the JLP pool
@@ -254,5 +254,5 @@ jobs:
             ### Pro upgrade
 
             Brain-wallet scanning, the GPU rule engine, and the mega-fused
-            kernel ship in theCollider Pro. See
+            kernel ship in StarMiner Pro. See
             [collisionprotocol.com/pro](https://collisionprotocol.com/pro).

@@ -1,6 +1,6 @@
 # StarMiner
 
-**StarMiner** is a GPU-accelerated Bitcoin puzzle solver with native HTTP/JSON pool support. Forked and heavily improved from theCollider — no JLP binary protocol required.
+**StarMiner** is a GPU-accelerated Bitcoin puzzle solver with native HTTP/JSON pool support. Forked and heavily improved from StarMiner — no JLP binary protocol required.
 
 ## Quick Start
 

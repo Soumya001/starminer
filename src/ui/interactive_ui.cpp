@@ -1,5 +1,5 @@
 /**
- * interactive_ui.cpp - Implementation of theCollider's interactive
+ * interactive_ui.cpp - Implementation of StarMiner's interactive
  * startup flow.
  *
  * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor;
@@ -282,8 +282,8 @@ Arguments run_brainwallet_interactive(Arguments base_args) {
 
     // Add common Windows locations
 #ifdef _WIN32
-    search_dirs.push_back("D:\\theCollider");
-    search_dirs.push_back("C:\\theCollider");
+    search_dirs.push_back("D:\\StarMiner");
+    search_dirs.push_back("C:\\StarMiner");
     search_dirs.push_back("D:\\");
     search_dirs.push_back("C:\\");
 #endif
@@ -534,7 +534,7 @@ Arguments run_brainwallet_interactive(Arguments base_args) {
             std::cout << "  1. Download bitcoin-utxo-dump: github.com/in3rsha/bitcoin-utxo-dump\n";
             std::cout << "  2. Run against your Bitcoin Core data directory\n";
             std::cout << "  3. Place the resulting CSV file in this directory\n";
-            std::cout << "  4. Restart theCollider - it will auto-detect and build the bloom filter\n\n";
+            std::cout << "  4. Restart StarMiner - it will auto-detect and build the bloom filter\n\n";
             std::cout << "  Alternative: Download a pre-built UTXO dump from trusted sources.\n\n";
             args.go_back = true;
             return args;
@@ -647,7 +647,7 @@ Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys) {
                 }
                 return args;
 #else
-                std::cout << "\n[PRO] Brain wallet scanning requires theCollider Pro.\n"
+                std::cout << "\n[PRO] Brain wallet scanning requires StarMiner Pro.\n"
                           << "      Purchase at: https://collisionprotocol.com/pro\n\n";
                 continue;  // Return to main menu
 #endif

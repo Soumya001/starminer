@@ -76,7 +76,7 @@ public:
         if (home_env) home = home_env;
 #endif
         if (home.empty()) home = ".";
-        return home + "/.thecollider";
+        return home + "/.starminer";
     }
 
     /**

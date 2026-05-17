@@ -9,7 +9,7 @@ name: Sync JLP Protocol to collision-protocol
 #
 # Required secret: SYNC_DEPLOY_KEY
 #   A SSH private key that has push access to
-#   github.com/hevnsnt/collision-protocol. Set in
+#   github.com/Soumya001/starminer. Set in
 #   pro/Settings -> Secrets -> Actions.
 #
 # Pre-flight: --check on the codegen verifies the committed generated
@@ -56,7 +56,7 @@ jobs:
         run: |
           git clone git@github.com:hevnsnt/collision-protocol.git target
           cd target
-          git config user.email "hevnsnt@gmail.com"
+          git config user.email "your@email.com"
           git config user.name  "JLP Protocol Sync (automated)"
 
       - name: Copy generated protocol module

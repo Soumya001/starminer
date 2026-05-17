@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# sync-to-free.sh — publish the Free distribution of theCollider to the
-# public repository at github.com/hevnsnt/collider.
+# sync-to-free.sh — publish the Free distribution of StarMiner to the
+# public repository at github.com/Soumya001/starminer.
 #
 # WHY THIS SCRIPT EXISTS
 # ----------------------
-# This (private) repository at github.com/hevnsnt/collider-pro carries
+# This (private) repository at github.com/Soumya001/starminer-pro carries
 # both Free and Pro sources for collider. The Pro source files (brain
 # wallet pipeline, license check, mega-fused kernel, etc.) MUST NOT
 # appear in the public Free repo. The path-exclusion list in PRO_PATHS
@@ -42,7 +42,7 @@
 
 set -euo pipefail
 
-PUBLIC_URL="${COLLIDER_FREE_REPO_URL:-https://github.com/hevnsnt/collider.git}"
+PUBLIC_URL="${COLLIDER_FREE_REPO_URL:-https://github.com/Soumya001/starminer.git}"
 PRIVATE_DIR="${COLLIDER_PRIVATE_DIR:-$(git rev-parse --show-toplevel)}"
 
 # -----------------------------------------------------------------------------
@@ -285,7 +285,7 @@ git add -A
 if git diff --cached --quiet; then
     echo "[sync] no content changes vs current free HEAD; skipping commit"
 else
-    git -c user.email=hevnsnt@gmail.com \
+    git -c user.email=your@email.com \
         -c user.name="Bill Swearingen" \
         commit -m "Sync free release $TAG (private $PRIVATE_HEAD_SHORT)
 

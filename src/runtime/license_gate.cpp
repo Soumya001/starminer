@@ -45,7 +45,7 @@ bool process_activate_flag(int argc, char* argv[], int& out_exit_code) {
     try { fs::create_directories(fs::path(kfile).parent_path()); } catch (...) {}
     std::ofstream kf(kfile, std::ios::trunc);
     if (kf) kf << key << "\n";
-    std::cout << "[LICENSE] Activated for " << result.email << ". Enjoy theCollider Pro!\n";
+    std::cout << "[LICENSE] Activated for " << result.email << ". Enjoy StarMiner Pro!\n";
     out_exit_code = 0;
     return true;
 }

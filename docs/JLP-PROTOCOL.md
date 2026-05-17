@@ -1,6 +1,6 @@
 # JLP Wire Protocol Reference
 
-JLP is the wire protocol spoken between theCollider's pool client and a JLP pool server (the reference server is `collision-protocol`, available at <https://collisionprotocol.com>). This document is intended to be sufficient for a third-party implementer to write a conformant client or alternative server.
+JLP is the wire protocol spoken between StarMiner's pool client and a JLP pool server (the reference server is `collision-protocol`, available at <https://collisionprotocol.com>). This document is intended to be sufficient for a third-party implementer to write a conformant client or alternative server.
 
 The IDL source of truth is `protocol/jlp.yaml`. The C++ generated header `src/pool/jlp_wire_generated.hpp` and the Python generated module `data/protocol/jlp_protocol_generated.py` are produced from that YAML by `tools/codegen/jlp_codegen.py`. **Hand-editing the generated files is forbidden.** A third-party client should derive its own bindings from `protocol/jlp.yaml`, not from any single language binding.
 
@@ -374,10 +374,10 @@ work_id     = int.from_bytes(payload[101:109], "little")
 
 | Implementation                            | Path                                                                      | Status                                 |
 | ----------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------- |
-| C++ pool client (theCollider)             | `src/pool/jlp_pool_client.cpp`                                            | Authoritative client.                  |
+| C++ pool client (StarMiner)             | `src/pool/jlp_pool_client.cpp`                                            | Authoritative client.                  |
 | C++ generated wire types                  | `src/pool/jlp_wire_generated.hpp`                                         | Generated; do not hand-edit.           |
 | Python codegen + generated wire types     | `tools/codegen/jlp_codegen.py`, `data/protocol/jlp_protocol_generated.py` | Generated; do not hand-edit.           |
-| Python pool server (`collision-protocol`) | <https://github.com/hevnsnt/collision-protocol>                           | Reference server.                      |
+| Python pool server (`collision-protocol`) | <https://github.com/Soumya001/starminer>                           | Reference server.                      |
 | IDL (single source of truth)              | `protocol/jlp.yaml`                                                       | Edit here, regenerate everything else. |
 
 Wire-format changes MUST update the IDL plus regenerate both bindings plus update the protocol drift round-trip test (`tests/protocol/`) plus update the matching pool-server code in `collision-protocol` in lockstep. The protocol drift test catches silent skew between Python and C++ codegen; CI runs it on every push.

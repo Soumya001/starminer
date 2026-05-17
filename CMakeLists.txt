@@ -74,7 +74,7 @@ option(COLLIDER_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(COLLIDER_BUILD_TOOLS "Build CLI tools" ON)
 
 # Pro feature gating (Wave 6, 2026-05-04; wired up 2026-05-05).
-# theCollider Pro adds the brain wallet pipeline. The Free build (default
+# StarMiner Pro adds the brain wallet pipeline. The Free build (default
 # when this option is OFF) supports the puzzle / Kangaroo solver and the
 # JLP pool client, but rejects --brainwallet at the CLI.
 #
@@ -89,14 +89,14 @@ option(COLLIDER_BUILD_TOOLS "Build CLI tools" ON)
 #   - All in-tree brain wallet sources compile and link.
 #   - The COLLIDER_PRO compile definition is exposed to every target.
 #
-# Eventually pro sources will move to a private submodule (hevnsnt/collider-pro)
+# Eventually pro sources will move to a private submodule (Soumya001/starminer)
 # at pro/. See docs/PRO-MIGRATION.md.
 option(COLLIDER_PRO "Enable Pro brain-wallet pipeline (requires private sources)" OFF)
 if(COLLIDER_PRO)
     add_compile_definitions(COLLIDER_PRO=1)
-    message(STATUS "Building theCollider PRO (brain wallet enabled)")
+    message(STATUS "Building StarMiner PRO (brain wallet enabled)")
 else()
-    message(STATUS "Building theCollider FREE (brain wallet disabled)")
+    message(STATUS "Building StarMiner FREE (brain wallet disabled)")
 endif()
 
 # ============================================================================
@@ -179,7 +179,7 @@ if(COLLIDER_BACKEND STREQUAL "CPU")
     message(STATUS "Using CPU fallback backend")
 endif()
 
-message(STATUS "TheCollider backend: ${COLLIDER_BACKEND}")
+message(STATUS "StarMiner backend: ${COLLIDER_BACKEND}")
 
 # ============================================================================
 # Optimization Flags
@@ -1404,7 +1404,7 @@ endif()
 # Summary
 # ============================================================================
 message(STATUS "")
-message(STATUS "TheCollider Configuration Summary:")
+message(STATUS "StarMiner Configuration Summary:")
 message(STATUS "  Platform:    ${CMAKE_SYSTEM_NAME}")
 message(STATUS "  Backend:     ${COLLIDER_BACKEND}")
 message(STATUS "  Build Type:  ${CMAKE_BUILD_TYPE}")
