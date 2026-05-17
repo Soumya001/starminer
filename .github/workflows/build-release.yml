@@ -53,7 +53,7 @@ jobs:
             -DCOLLIDER_PRO=OFF \
             -DCOLLIDER_BUILD_TESTS=OFF \
             -DCOLLIDER_BUILD_BENCHMARKS=OFF \
-            -DCMAKE_CUDA_ARCHITECTURES="75;80;86;89"
+            -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89"
           cmake --build build --target starminer -j4
           strip build/starminer
 
@@ -122,7 +122,7 @@ jobs:
             -DCOLLIDER_PRO=OFF `
             -DCOLLIDER_BUILD_TESTS=OFF `
             -DCOLLIDER_BUILD_BENCHMARKS=OFF `
-            -DCMAKE_CUDA_ARCHITECTURES="75;80;86;89"
+            -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89"
           cmake --build build --target starminer -j4
 
       - uses: actions/upload-artifact@v4
