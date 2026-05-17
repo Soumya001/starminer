@@ -19,7 +19,9 @@
 #include "ui/box_render.hpp"    // single-source-of-truth boxed UI
 #include "ui/pool_progress.hpp"
 
+#ifdef COLLIDER_USE_CUDA
 #include "platform/nvml_wrapper.hpp"
+#endif
 #include <chrono>
 #include <map>
 #include <fstream>
@@ -279,11 +281,15 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
     ::collider::kangaroo::BackendCallbacks cb;
 
     // v1.5: NVML thermal monitoring and telemetry
+#ifdef COLLIDER_USE_CUDA
     ::collider::platform::NvmlWrapper nvml;
     bool nvml_ok = nvml.init();
     if (nvml_ok) {
         std::cout << "[*] NVML initialized - GPU thermal monitoring active\n";
     }
+#else
+    bool nvml_ok = false;
+#endif
     auto last_telemetry_time = std::chrono::steady_clock::now();
     const auto telemetry_interval = std::chrono::seconds(5);
     auto last_checkpoint_time = std::chrono::steady_clock::now();
@@ -293,7 +299,11 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                                 uint8_t type, uint32_t dp_bits) {
         pool_manager.submit_dp(x_be, d_be, type, dp_bits);
     };
-    cb.on_progress = [&progress, &pool_manager, &nvml, nvml_ok, &last_telemetry_time,
+    cb.on_progress = [&progress, &pool_manager,
+#ifdef COLLIDER_USE_CUDA
+                      &nvml,
+#endif
+                      nvml_ok, &last_telemetry_time,
                       telemetry_interval, &last_checkpoint_time, checkpoint_interval,
                       &work, &args](double ops_per_sec,
                                     uint64_t local_dps) -> bool {
@@ -317,6 +327,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         }
 
         // v1.5: periodic telemetry upload
+#ifdef COLLIDER_USE_CUDA
         if (nvml_ok) {
             auto now = std::chrono::steady_clock::now();
             if (now - last_telemetry_time >= telemetry_interval) {
@@ -326,9 +337,6 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                 std::map<int, double> gpu_mhs;
                 for (const auto& gt : telemetry) {
                     gpu_names[gt.index] = gt.name;
-                    // Approximate MKeys/s from overall ops_per_sec divided by GPU count
-                    // or use per-GPU utilization as proxy. For now report aggregate
-                    // on GPU 0, 0 on others to avoid overcounting.
                     if (gt.index == args.gpu_ids.empty() ? 0 : args.gpu_ids[0]) {
                         gpu_mhs[gt.index] = ops_per_sec / 1e6;
                     } else {
@@ -338,6 +346,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                 pool_manager.set_gpu_telemetry(gpu_names, gpu_mhs);
             }
         }
+#endif
         return true;
     };
     cb.on_solution = [&pool_manager](const uint8_t key[32]) {
@@ -348,13 +357,18 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         std::cout << "\n";
         pool_manager.report_solution(key);
     };
-    cb.should_continue = [&pool_manager, &nvml, nvml_ok]() {
+    cb.should_continue = [&pool_manager
+#ifdef COLLIDER_USE_CUDA
+                          , &nvml
+#endif
+                          , nvml_ok]() {
         if (g_shutdown.load()) return false;
         if (pool_manager.solution_found()) {
             std::cout << "\n[*] Another worker found the solution. Stopping gracefully.\n";
             return false;
         }
         // v1.5: thermal protection
+#ifdef COLLIDER_USE_CUDA
         if (nvml_ok) {
             bool overheat = nvml.check_thermal_protection(
                 75,  // warn threshold
@@ -368,6 +382,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                 return false;
             }
         }
+#endif
         return true;
     };
 
