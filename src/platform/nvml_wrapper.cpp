@@ -1,10 +1,25 @@
 // nvml_wrapper.cpp - NVIDIA GPU temperature and telemetry monitoring
-// Dynamically loads libnvidia-ml.so.1 so StarMiner works on non-NVIDIA systems.
+// Dynamically loads libnvidia-ml so StarMiner works on non-NVIDIA systems.
 
 #include "nvml_wrapper.hpp"
 #include <iostream>
 #include <cstring>
-#include <dlfcn.h>
+
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  define NOMINMAX
+#  include <windows.h>
+   using DlHandle = HMODULE;
+   static DlHandle dl_open(const char* name)  { return LoadLibraryA(name); }
+   static void*    dl_sym(DlHandle h, const char* s) { return reinterpret_cast<void*>(GetProcAddress(h, s)); }
+   static void     dl_close(DlHandle h)        { FreeLibrary(h); }
+#else
+#  include <dlfcn.h>
+   using DlHandle = void*;
+   static DlHandle dl_open(const char* name)  { return dlopen(name, RTLD_LAZY); }
+   static void*    dl_sym(DlHandle h, const char* s) { return dlsym(h, s); }
+   static void     dl_close(DlHandle h)        { dlclose(h); }
+#endif
 
 namespace collider {
 namespace platform {
@@ -28,40 +43,45 @@ NvmlWrapper::~NvmlWrapper() {
         fn_shutdown_();
     }
     if (nvml_handle_) {
-        dlclose(nvml_handle_);
+        dl_close(static_cast<DlHandle>(nvml_handle_));
     }
 }
 
 bool NvmlWrapper::init() {
     if (initialized_) return true;
 
-    nvml_handle_ = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
-    if (!nvml_handle_) {
-        // NVML not available (no NVIDIA driver or non-NVIDIA system)
+#ifdef _WIN32
+    auto handle = dl_open("nvml.dll");
+    if (!handle) handle = dl_open("C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvml.dll");
+#else
+    auto handle = dl_open("libnvidia-ml.so.1");
+#endif
+    if (!handle) {
         return false;
     }
+    nvml_handle_ = static_cast<void*>(handle);
 
-    fn_init_ = reinterpret_cast<nvmlInit_t>(dlsym(nvml_handle_, "nvmlInit_v2"));
-    if (!fn_init_) fn_init_ = reinterpret_cast<nvmlInit_t>(dlsym(nvml_handle_, "nvmlInit"));
-    fn_shutdown_ = reinterpret_cast<nvmlShutdown_t>(dlsym(nvml_handle_, "nvmlShutdown"));
-    fn_get_count_ = reinterpret_cast<nvmlDeviceGetCount_t>(dlsym(nvml_handle_, "nvmlDeviceGetCount"));
-    fn_get_handle_ = reinterpret_cast<nvmlDeviceGetHandleByIndex_t>(dlsym(nvml_handle_, "nvmlDeviceGetHandleByIndex_v2"));
-    if (!fn_get_handle_) fn_get_handle_ = reinterpret_cast<nvmlDeviceGetHandleByIndex_t>(dlsym(nvml_handle_, "nvmlDeviceGetHandleByIndex"));
-    fn_get_name_ = reinterpret_cast<nvmlDeviceGetName_t>(dlsym(nvml_handle_, "nvmlDeviceGetName"));
-    fn_get_temp_ = reinterpret_cast<nvmlDeviceGetTemperature_t>(dlsym(nvml_handle_, "nvmlDeviceGetTemperature"));
-    fn_get_power_ = reinterpret_cast<nvmlDeviceGetPowerUsage_t>(dlsym(nvml_handle_, "nvmlDeviceGetPowerUsage"));
-    fn_get_util_ = reinterpret_cast<nvmlDeviceGetUtilizationRates_t>(dlsym(nvml_handle_, "nvmlDeviceGetUtilizationRates"));
-    fn_get_fan_ = reinterpret_cast<nvmlDeviceGetFanSpeed_t>(dlsym(nvml_handle_, "nvmlDeviceGetFanSpeed"));
+    fn_init_ = reinterpret_cast<nvmlInit_t>(dl_sym(handle, "nvmlInit_v2"));
+    if (!fn_init_) fn_init_ = reinterpret_cast<nvmlInit_t>(dl_sym(handle, "nvmlInit"));
+    fn_shutdown_ = reinterpret_cast<nvmlShutdown_t>(dl_sym(handle, "nvmlShutdown"));
+    fn_get_count_ = reinterpret_cast<nvmlDeviceGetCount_t>(dl_sym(handle, "nvmlDeviceGetCount"));
+    fn_get_handle_ = reinterpret_cast<nvmlDeviceGetHandleByIndex_t>(dl_sym(handle, "nvmlDeviceGetHandleByIndex_v2"));
+    if (!fn_get_handle_) fn_get_handle_ = reinterpret_cast<nvmlDeviceGetHandleByIndex_t>(dl_sym(handle, "nvmlDeviceGetHandleByIndex"));
+    fn_get_name_ = reinterpret_cast<nvmlDeviceGetName_t>(dl_sym(handle, "nvmlDeviceGetName"));
+    fn_get_temp_ = reinterpret_cast<nvmlDeviceGetTemperature_t>(dl_sym(handle, "nvmlDeviceGetTemperature"));
+    fn_get_power_ = reinterpret_cast<nvmlDeviceGetPowerUsage_t>(dl_sym(handle, "nvmlDeviceGetPowerUsage"));
+    fn_get_util_ = reinterpret_cast<nvmlDeviceGetUtilizationRates_t>(dl_sym(handle, "nvmlDeviceGetUtilizationRates"));
+    fn_get_fan_ = reinterpret_cast<nvmlDeviceGetFanSpeed_t>(dl_sym(handle, "nvmlDeviceGetFanSpeed"));
 
     if (!fn_init_ || !fn_shutdown_ || !fn_get_count_ || !fn_get_handle_ ||
         !fn_get_name_ || !fn_get_temp_) {
-        dlclose(nvml_handle_);
+        dl_close(handle);
         nvml_handle_ = nullptr;
         return false;
     }
 
     if (fn_init_() != NVML_SUCCESS) {
-        dlclose(nvml_handle_);
+        dl_close(handle);
         nvml_handle_ = nullptr;
         return false;
     }

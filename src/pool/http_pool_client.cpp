@@ -1,5 +1,8 @@
 // http_pool_client.cpp - HTTP/JSON pool client implementation for StarMiner
 
+#ifdef _WIN32
+#  define NOMINMAX
+#endif
 #include "http_pool_client.hpp"
 #include <iostream>
 #include <sstream>
