@@ -77,6 +77,11 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Static MSVC runtime on Windows so users don't need VC++ Redistributable
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 # ============================================================================
 # Options
 # ============================================================================
@@ -157,9 +162,12 @@ elseif(COLLIDER_USE_CUDA)
             message(STATUS "Compiling for CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
         endif()
 
-        # Force consistent CUDA runtime library (avoid mixing static/dynamic)
-        # Use Shared (cudart.lib) to avoid duplicate symbol errors on Windows
-        set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
+        # Static CUDA runtime so users don't need cudart64_12.dll installed
+        if(WIN32)
+            set(CMAKE_CUDA_RUNTIME_LIBRARY Static)
+        else()
+            set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
+        endif()
 
         # CUDA optimization flags - aggressive optimization for compute-bound kernels
         set(CMAKE_CUDA_FLAGS_RELEASE "-O3 --use_fast_math -DNDEBUG")
@@ -342,7 +350,7 @@ elseif(COLLIDER_BACKEND STREQUAL "CUDA")
     set_target_properties(collider_platform PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
         CUDA_RESOLVE_DEVICE_SYMBOLS ON
-        CUDA_RUNTIME_LIBRARY Shared
+        CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
         POSITION_INDEPENDENT_CODE ON
     )
 else()
@@ -785,7 +793,7 @@ if(COLLIDER_BACKEND STREQUAL "CUDA")
         endif()
         set_target_properties(collider_gpu PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
-            CUDA_RUNTIME_LIBRARY Shared
+            CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             POSITION_INDEPENDENT_CODE ON
         )
     endif()
@@ -905,7 +913,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/main.cpp")
         set_target_properties(starminer PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
             CUDA_RESOLVE_DEVICE_SYMBOLS ON
-            CUDA_RUNTIME_LIBRARY Shared
+            CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
         )
     endif()
 endif()
@@ -1270,7 +1278,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_secp256k1_inv tests/test_secp256k1_inv.cu)
             set_target_properties(test_secp256k1_inv PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_link_libraries(test_secp256k1_inv collider_gpu CUDA::cudart)
             add_test(NAME Secp256k1Inv COMMAND test_secp256k1_inv)
@@ -1285,7 +1293,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_device_hmac_sha512 tests/test_device_hmac_sha512.cu)
             set_target_properties(test_device_hmac_sha512 PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_include_directories(test_device_hmac_sha512
                 PRIVATE ${CMAKE_SOURCE_DIR}/src)
@@ -1298,7 +1306,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_ec_table_consistency tests/test_ec_table_consistency.cu)
             set_target_properties(test_ec_table_consistency PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_link_libraries(test_ec_table_consistency collider_gpu CUDA::cudart)
             add_test(NAME EcTableConsistency COMMAND test_ec_table_consistency)
@@ -1312,7 +1320,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_puzzle_optimized_inv tests/test_puzzle_optimized_inv.cu)
             set_target_properties(test_puzzle_optimized_inv PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_link_libraries(test_puzzle_optimized_inv collider_gpu CUDA::cudart)
             add_test(NAME PuzzleOptimizedInv COMMAND test_puzzle_optimized_inv)
@@ -1328,7 +1336,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_gpu_hash160 tests/test_gpu_hash160.cu)
             set_target_properties(test_gpu_hash160 PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_link_libraries(test_gpu_hash160 collider_gpu collider_core CUDA::cudart)
             add_test(NAME GpuHash160 COMMAND test_gpu_hash160)
@@ -1345,7 +1353,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_ec_mul_known_answers tests/test_ec_mul_known_answers.cu)
             set_target_properties(test_ec_mul_known_answers PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_link_libraries(test_ec_mul_known_answers collider_gpu CUDA::cudart)
             add_test(NAME EcMulKnownAnswers COMMAND test_ec_mul_known_answers)
@@ -1365,7 +1373,7 @@ if(COLLIDER_BUILD_TESTS)
             add_executable(test_kangaroo_small_puzzle tests/test_kangaroo_small_puzzle.cu)
             set_target_properties(test_kangaroo_small_puzzle PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
-                CUDA_RUNTIME_LIBRARY Shared
+                CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
             target_link_libraries(test_kangaroo_small_puzzle collider_gpu CUDA::cudart)
             add_test(NAME KangarooSmallPuzzle COMMAND test_kangaroo_small_puzzle)
