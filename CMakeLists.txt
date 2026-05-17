@@ -48,16 +48,30 @@ if(WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "")
 endif()
 
-# Detect platform before project declaration
+# Detect platform before project declaration.
+# COLLIDER_USE_CUDA can be forced OFF via -DCOLLIDER_USE_CUDA=OFF before
+# option() is parsed, so check it here to avoid nvcc detection on CPU builds.
+if(NOT DEFINED COLLIDER_USE_CUDA)
+    set(COLLIDER_USE_CUDA ON)
+endif()
+
 if(APPLE)
     set(COLLIDER_PLATFORM_MACOS TRUE)
     project(collider LANGUAGES CXX OBJCXX)
 elseif(WIN32)
     set(COLLIDER_PLATFORM_WINDOWS TRUE)
-    project(collider LANGUAGES CXX CUDA)
+    if(COLLIDER_USE_CUDA)
+        project(collider LANGUAGES CXX CUDA)
+    else()
+        project(collider LANGUAGES CXX)
+    endif()
 else()
     set(COLLIDER_PLATFORM_LINUX TRUE)
-    project(collider LANGUAGES CXX CUDA)
+    if(COLLIDER_USE_CUDA)
+        project(collider LANGUAGES CXX CUDA)
+    else()
+        project(collider LANGUAGES CXX)
+    endif()
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
