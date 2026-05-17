@@ -5,7 +5,7 @@
  * Processes batches of passphrases to generate private keys.
  */
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdint>
 
 #include "hash_rounds.cuh"

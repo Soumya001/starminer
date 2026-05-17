@@ -188,10 +188,42 @@ jobs:
           name: starminer-macos-arm64
           path: build/starminer
 
+  # ── Linux x64 — AMD ROCm/HIP ─────────────────────────────────────────
+  linux-rocm:
+    name: Linux x64 (ROCm/HIP)
+    runs-on: ubuntu-22.04
+    container:
+      image: rocm/dev-ubuntu-22.04:6.2-complete
+    steps:
+      - name: Install build tools
+        run: |
+          apt-get update -qq
+          apt-get install -y git cmake ninja-build libcurl4-openssl-dev
+
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCOLLIDER_USE_CUDA=OFF \
+            -DCOLLIDER_USE_ROCM=ON \
+            -DCOLLIDER_PRO=OFF \
+            -DCOLLIDER_BUILD_TESTS=OFF \
+            -DCOLLIDER_BUILD_BENCHMARKS=OFF \
+            -DCMAKE_HIP_ARCHITECTURES="gfx906;gfx908;gfx1030;gfx1100;gfx1101;gfx1102"
+          cmake --build build --target starminer -j4
+          strip build/starminer
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: starminer-linux-x64-rocm
+          path: build/starminer
+
   # ── GitHub Release ───────────────────────────────────────────────────
   release:
     name: Publish Release
-    needs: [linux-cuda, linux-cpu, windows-cuda, windows-cpu, macos-arm64]
+    needs: [linux-cuda, linux-cpu, linux-rocm, windows-cuda, windows-cpu, macos-arm64]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -201,14 +233,14 @@ jobs:
 
       - name: Rename to final filenames
         run: |
-          cp artifacts/starminer-linux-x64-cuda/starminer   starminer-linux-x64-cuda
-          cp artifacts/starminer-linux-x64-cpu/starminer    starminer-linux-x64-cpu
-          cp artifacts/starminer-windows-x64-cuda/starminer.exe starminer-windows-x64-cuda.exe
-          cp artifacts/starminer-windows-x64-cpu/starminer.exe  starminer-windows-x64-cpu.exe
-          cp artifacts/starminer-macos-arm64/starminer      starminer-macos-arm64
-          # AMD ROCm: use CPU build as fallback until HIP kernels are ported
-          cp artifacts/starminer-linux-x64-cpu/starminer    starminer-linux-x64-rocm
-          cp artifacts/starminer-windows-x64-cpu/starminer.exe  starminer-windows-x64-rocm.exe
+          cp artifacts/starminer-linux-x64-cuda/starminer        starminer-linux-x64-cuda
+          cp artifacts/starminer-linux-x64-cpu/starminer         starminer-linux-x64-cpu
+          cp artifacts/starminer-linux-x64-rocm/starminer        starminer-linux-x64-rocm
+          cp artifacts/starminer-windows-x64-cuda/starminer.exe  starminer-windows-x64-cuda.exe
+          cp artifacts/starminer-windows-x64-cpu/starminer.exe   starminer-windows-x64-cpu.exe
+          # Windows ROCm: CPU fallback until HIP is ported to Windows
+          cp artifacts/starminer-windows-x64-cpu/starminer.exe   starminer-windows-x64-rocm.exe
+          cp artifacts/starminer-macos-arm64/starminer            starminer-macos-arm64
           chmod +x starminer-linux-x64-cuda starminer-linux-x64-cpu starminer-linux-x64-rocm starminer-macos-arm64
           ls -lh starminer-*
 

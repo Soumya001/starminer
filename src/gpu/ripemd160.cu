@@ -4,7 +4,7 @@
  * Used for Bitcoin address generation: RIPEMD160(SHA256(pubkey))
  */
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdint>
 
 #include "ripemd160_device.cuh"

@@ -26,7 +26,7 @@
  * To check current value: the kernel prints "GPU_GRP_SIZE=N" at startup.
  */
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -95,52 +95,35 @@ __device__ const uint64_t SECP256K1_P[4] = {
 // Debug mode flag - passed as kernel parameter to avoid RDC symbol issues
 
 // ============================================================================
-// PTX Carry-Chain Arithmetic (from JLP Kangaroo / BitCrack)
-// ============================================================================
-// PTX inline assembly provides direct access to carry flags, enabling
-// efficient multi-word arithmetic without branch overhead.
-
-// 64-bit addition with carry out
-#define UADDO(r, a, b) asm volatile("add.cc.u64 %0, %1, %2;" : "=l"(r) : "l"(a), "l"(b))
-// 64-bit addition with carry in and carry out
-#define UADDC(r, a, b) asm volatile("addc.cc.u64 %0, %1, %2;" : "=l"(r) : "l"(a), "l"(b))
-// 64-bit addition with carry in, no carry out
-#define UADD(r, a, b) asm volatile("addc.u64 %0, %1, %2;" : "=l"(r) : "l"(a), "l"(b))
-
-// 64-bit subtraction with borrow out
-#define USUBO(r, a, b) asm volatile("sub.cc.u64 %0, %1, %2;" : "=l"(r) : "l"(a), "l"(b))
-// 64-bit subtraction with borrow in and borrow out
-#define USUBC(r, a, b) asm volatile("subc.cc.u64 %0, %1, %2;" : "=l"(r) : "l"(a), "l"(b))
-// 64-bit subtraction with borrow in, no borrow out
-#define USUB(r, a, b) asm volatile("subc.u64 %0, %1, %2;" : "=l"(r) : "l"(a), "l"(b))
-
-// Multiply-add: r = a * b + c (with carry chain)
-#define UMULLO(r, a, b) (r) = (a) * (b)
-#define UMULHI(r, a, b) (r) = __umul64hi(a, b)
-
-// Mad with carry: r = a * b + c, propagating carry
-#define MADDO(r, a, b, c) { \
-    uint64_t _lo = (a) * (b); \
-    asm volatile("add.cc.u64 %0, %1, %2;" : "=l"(r) : "l"(_lo), "l"(c)); \
-}
-#define MADDC(r, a, b, c) { \
-    uint64_t _lo = (a) * (b); \
-    asm volatile("addc.cc.u64 %0, %1, %2;" : "=l"(r) : "l"(_lo), "l"(c)); \
-}
-
-// ============================================================================
-// 256-bit Arithmetic (Device Functions) - PTX Optimized
+// 256-bit Carry-Chain Arithmetic
+// CUDA path: fused PTX inline assembly (add.cc / addc / sub.cc / subc).
+// HIP / host path: portable __uint128_t — same correctness, ~5% slower.
 // ============================================================================
 
-// Add two 256-bit numbers: r = a + b (mod 2^256), returns carry
+// Add two 256-bit numbers: r = a + b (mod 2^256), returns carry (0 or 1)
 __device__ __forceinline__ uint64_t add256_carry(uint64_t* r, const uint64_t* a, const uint64_t* b) {
+#if defined(__CUDA_ARCH__)
     uint64_t carry;
-    UADDO(r[0], a[0], b[0]);
-    UADDC(r[1], a[1], b[1]);
-    UADDC(r[2], a[2], b[2]);
-    UADDC(r[3], a[3], b[3]);
-    UADD(carry, 0ULL, 0ULL);  // Extract final carry
+    asm volatile(
+        "add.cc.u64  %0, %5, %9;\n\t"
+        "addc.cc.u64 %1, %6, %10;\n\t"
+        "addc.cc.u64 %2, %7, %11;\n\t"
+        "addc.cc.u64 %3, %8, %12;\n\t"
+        "addc.u64    %4, 0, 0;"
+        : "=l"(r[0]), "=l"(r[1]), "=l"(r[2]), "=l"(r[3]), "=l"(carry)
+        : "l"(a[0]), "l"(a[1]), "l"(a[2]), "l"(a[3]),
+          "l"(b[0]), "l"(b[1]), "l"(b[2]), "l"(b[3])
+    );
     return carry;
+#else
+    typedef unsigned __int128 u128;
+    u128 s = (u128)a[0] + b[0];
+    r[0] = (uint64_t)s; s >>= 64;
+    s += (u128)a[1] + b[1]; r[1] = (uint64_t)s; s >>= 64;
+    s += (u128)a[2] + b[2]; r[2] = (uint64_t)s; s >>= 64;
+    s += (u128)a[3] + b[3]; r[3] = (uint64_t)s;
+    return (uint64_t)(s >> 64);
+#endif
 }
 
 // Add two 256-bit numbers: r = a + b (mod 2^256)
@@ -148,15 +131,31 @@ __device__ __forceinline__ void add256(uint64_t* r, const uint64_t* a, const uin
     add256_carry(r, a, b);
 }
 
-// Subtract: r = a - b (mod 2^256), returns borrow
+// Subtract: r = a - b (mod 2^256), returns ~0ULL on borrow, 0 on no-borrow
 __device__ __forceinline__ uint64_t sub256_borrow(uint64_t* r, const uint64_t* a, const uint64_t* b) {
+#if defined(__CUDA_ARCH__)
     uint64_t borrow;
-    USUBO(r[0], a[0], b[0]);
-    USUBC(r[1], a[1], b[1]);
-    USUBC(r[2], a[2], b[2]);
-    USUBC(r[3], a[3], b[3]);
-    USUB(borrow, 0ULL, 0ULL);  // Extract final borrow (will be 0 or -1)
-    return borrow;
+    asm volatile(
+        "sub.cc.u64  %0, %5, %9;\n\t"
+        "subc.cc.u64 %1, %6, %10;\n\t"
+        "subc.cc.u64 %2, %7, %11;\n\t"
+        "subc.cc.u64 %3, %8, %12;\n\t"
+        "subc.u64    %4, 0, 0;"
+        : "=l"(r[0]), "=l"(r[1]), "=l"(r[2]), "=l"(r[3]), "=l"(borrow)
+        : "l"(a[0]), "l"(a[1]), "l"(a[2]), "l"(a[3]),
+          "l"(b[0]), "l"(b[1]), "l"(b[2]), "l"(b[3])
+    );
+    return borrow;  // subc of (0-0-borrow): 0 if no borrow, ~0ULL if borrow
+#else
+    // a - b via two's-complement: a + ~b + 1. carry-out 1 = no borrow.
+    typedef unsigned __int128 u128;
+    u128 s = (u128)a[0] + ~b[0] + 1u;
+    r[0] = (uint64_t)s; uint64_t c = (uint64_t)(s >> 64);
+    s = (u128)a[1] + ~b[1] + c; r[1] = (uint64_t)s; c = (uint64_t)(s >> 64);
+    s = (u128)a[2] + ~b[2] + c; r[2] = (uint64_t)s; c = (uint64_t)(s >> 64);
+    s = (u128)a[3] + ~b[3] + c; r[3] = (uint64_t)s; c = (uint64_t)(s >> 64);
+    return c ? 0ULL : ~0ULL;  // match PTX convention
+#endif
 }
 
 // Subtract: r = a - b (mod 2^256)

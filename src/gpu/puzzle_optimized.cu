@@ -13,7 +13,7 @@
  * Target: 400-800M keys/sec on RTX 3090 class hardware
  */
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdint>
 #include <cstdio>
 
@@ -452,50 +452,68 @@ __device__ PointA* d_PRECOMP_TABLE_LAMBDA = nullptr;
 // MODULAR ARITHMETIC (Optimized)
 // =============================================================================
 
-// Add with carry using PTX for maximum performance.
-// Both instructions are in one asm block so NVCC cannot insert other
-// instructions between them and break the CC register dependency.
+// Carry-chain helpers: CUDA path uses fused PTX; HIP/host path uses __uint128_t.
+
 __device__ __forceinline__ uint64_t add_cc(uint64_t a, uint64_t b, uint64_t& carry) {
+#if defined(__CUDA_ARCH__)
     uint64_t result;
-    asm volatile("add.cc.u64 %0, %2, %3;\n\t"
-                 "addc.u64 %1, 0, 0;"
+    asm volatile("add.cc.u64 %0, %2, %3;\n\t addc.u64 %1, 0, 0;"
                  : "=l"(result), "=l"(carry) : "l"(a), "l"(b));
     return result;
+#else
+    typedef unsigned __int128 u128;
+    u128 s = (u128)a + b;
+    carry = (uint64_t)(s >> 64);
+    return (uint64_t)s;
+#endif
 }
 
 __device__ __forceinline__ uint64_t addc_cc(uint64_t a, uint64_t b, uint64_t carry_in, uint64_t& carry_out) {
+#if defined(__CUDA_ARCH__)
     uint64_t result;
-    asm volatile("add.cc.u64 %0, %2, %3;\n\t"
-                 "addc.u64 %1, 0, 0;"
+    asm volatile("add.cc.u64 %0, %2, %3;\n\t addc.u64 %1, 0, 0;"
                  : "=l"(result), "=l"(carry_out) : "l"(a), "l"(b));
-    if (carry_in) {
-        if (result == UINT64_MAX) carry_out = 1;
-        result++;
-    }
+    if (carry_in) { if (result == UINT64_MAX) carry_out = 1; result++; }
     return result;
+#else
+    typedef unsigned __int128 u128;
+    u128 s = (u128)a + b + (carry_in & 1u);
+    carry_out = (uint64_t)(s >> 64);
+    return (uint64_t)s;
+#endif
 }
 
-// Subtraction with borrow output (first in chain)
 __device__ __forceinline__ uint64_t sub_cc(uint64_t a, uint64_t b, uint64_t& borrow) {
+#if defined(__CUDA_ARCH__)
     uint64_t result;
-    asm volatile("sub.cc.u64 %0, %2, %3;\n\t"
-                 "subc.u64 %1, 0, 0;"
+    asm volatile("sub.cc.u64 %0, %2, %3;\n\t subc.u64 %1, 0, 0;"
                  : "=l"(result), "=l"(borrow) : "l"(a), "l"(b));
     return result;
+#else
+    borrow = (a < b) ? UINT64_MAX : 0ULL;
+    return a - b;
+#endif
 }
 
-// Subtraction with borrow-in and borrow-out (for chaining)
 __device__ __forceinline__ uint64_t subc_cc(uint64_t a, uint64_t b, uint64_t borrow_in, uint64_t& borrow_out) {
-    uint64_t b1 = borrow_in >> 63;  // 0 or 1
+#if defined(__CUDA_ARCH__)
+    uint64_t b1 = borrow_in >> 63;
     uint64_t result;
-    asm volatile("sub.cc.u64 %0, %2, %3;\n\t"
-                 "subc.u64 %1, 0, 0;"
+    asm volatile("sub.cc.u64 %0, %2, %3;\n\t subc.u64 %1, 0, 0;"
                  : "=l"(result), "=l"(borrow_out) : "l"(a), "l"(b));
-    if (b1) {
-        if (result == 0) borrow_out = UINT64_MAX;
-        result--;  // uint64 wrap is intentional when result==0
-    }
+    if (b1) { if (result == 0) borrow_out = UINT64_MAX; result--; }
     return result;
+#else
+    uint64_t b1 = (borrow_in >> 63) & 1u;
+    typedef unsigned __int128 u128;
+    u128 s = (u128)a + ~b + 1u;  // a - b via two's complement
+    uint64_t r0 = (uint64_t)s;
+    uint64_t c0 = (uint64_t)(s >> 64);  // 1 if a >= b
+    uint64_t r1 = r0 - b1;
+    uint64_t c1 = (b1 && r0 == 0) ? 1u : 0u;
+    borrow_out = (c0 - c1) ? 0ULL : UINT64_MAX;
+    return r1;
+#endif
 }
 
 // Multiply-add: a*b + c + carry -> (hi, lo)

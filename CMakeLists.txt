@@ -86,6 +86,7 @@ endif()
 # Options
 # ============================================================================
 option(COLLIDER_USE_CUDA "Enable CUDA backend" ON)
+option(COLLIDER_USE_ROCM "Enable AMD ROCm/HIP backend" OFF)
 option(COLLIDER_USE_METAL "Enable Metal backend" ON)
 option(COLLIDER_USE_CPU "Enable CPU fallback backend" ON)
 option(COLLIDER_BUILD_TESTS "Build tests" ON)
@@ -190,9 +191,35 @@ elseif(COLLIDER_USE_CUDA)
             add_compile_definitions(COLLIDER_PLATFORM_WINDOWS=1)
             add_compile_definitions(NOMINMAX)           # Prevent Windows min/max macro conflicts
             add_compile_definitions(WIN32_LEAN_AND_MEAN) # Reduce Windows header bloat
+            # Use static cudart on Windows to avoid double-linking:
+            # CMAKE_CUDA_RUNTIME_LIBRARY=Static makes device objects use cudart_static.lib,
+            # so we must also link CUDA::cudart_static (not CUDA::cudart) at the target level.
+            set(CUDA_RT_TARGET CUDA::cudart_static)
         else()
             add_compile_definitions(COLLIDER_PLATFORM_LINUX=1)
+            set(CUDA_RT_TARGET CUDA::cudart)
         endif()
+    endif()
+elseif(COLLIDER_USE_ROCM)
+    # Linux: Try AMD ROCm / HIP
+    find_package(hip QUIET)
+    if(hip_FOUND)
+        set(COLLIDER_BACKEND "ROCM")
+        enable_language(HIP)
+        add_compile_definitions(COLLIDER_USE_ROCM=1)
+        add_compile_definitions(COLLIDER_PLATFORM_LINUX=1)
+
+        # RDNA2 (RX 6xxx) = gfx1030, RDNA3 (RX 7xxx) = gfx1100-1102
+        # Vega (RX 5xxx/Vega) = gfx906/gfx908
+        if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
+            set(CMAKE_HIP_ARCHITECTURES "gfx906;gfx908;gfx1030;gfx1100;gfx1101;gfx1102")
+            message(STATUS "Compiling for HIP architectures: ${CMAKE_HIP_ARCHITECTURES}")
+        endif()
+
+        set(CMAKE_HIP_FLAGS_RELEASE "-O3 -DNDEBUG")
+        message(STATUS "AMD ROCm/HIP backend enabled")
+    else()
+        message(WARNING "COLLIDER_USE_ROCM=ON but HIP not found — falling back to CPU")
     endif()
 endif()
 
@@ -324,6 +351,9 @@ set(PLATFORM_SOURCES
 if(COLLIDER_BACKEND STREQUAL "CUDA")
     list(APPEND PLATFORM_SOURCES src/platform/cuda_platform.cu)
     list(APPEND PLATFORM_SOURCES src/platform/nvml_wrapper.cpp)
+elseif(COLLIDER_BACKEND STREQUAL "ROCM")
+    list(APPEND PLATFORM_SOURCES src/platform/cuda_platform.cu)
+    set_source_files_properties(src/platform/cuda_platform.cu PROPERTIES LANGUAGE HIP)
 elseif(COLLIDER_BACKEND STREQUAL "METAL")
     list(APPEND PLATFORM_SOURCES src/platform/metal_platform.mm)
 else()
@@ -343,7 +373,7 @@ if(COLLIDER_BACKEND STREQUAL "METAL")
 elseif(COLLIDER_BACKEND STREQUAL "CUDA")
     add_library(collider_platform STATIC ${PLATFORM_SOURCES})
     target_link_libraries(collider_platform
-        CUDA::cudart
+        ${CUDA_RT_TARGET}
         Threads::Threads
         ${CMAKE_DL_LIBS}
     )
@@ -353,6 +383,10 @@ elseif(COLLIDER_BACKEND STREQUAL "CUDA")
         CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
         POSITION_INDEPENDENT_CODE ON
     )
+elseif(COLLIDER_BACKEND STREQUAL "ROCM")
+    add_library(collider_platform STATIC ${PLATFORM_SOURCES})
+    target_link_libraries(collider_platform hip::host Threads::Threads)
+    set_target_properties(collider_platform PROPERTIES POSITION_INDEPENDENT_CODE ON)
 else()
     add_library(collider_platform STATIC ${PLATFORM_SOURCES})
     target_link_libraries(collider_platform
@@ -782,7 +816,7 @@ if(COLLIDER_BACKEND STREQUAL "CUDA")
     if(EXISTING_GPU_SOURCES)
         add_library(collider_gpu STATIC ${EXISTING_GPU_SOURCES})
         target_link_libraries(collider_gpu
-            CUDA::cudart
+            ${CUDA_RT_TARGET}
         )
         # Link RCKangaroo if enabled
         if(COLLIDER_USE_RCKANGAROO AND TARGET rckangaroo)
@@ -796,6 +830,33 @@ if(COLLIDER_BACKEND STREQUAL "CUDA")
             CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             POSITION_INDEPENDENT_CODE ON
         )
+    endif()
+
+elseif(COLLIDER_BACKEND STREQUAL "ROCM")
+    # AMD ROCm/HIP: same .cu sources compiled with HIP language
+    set(ROCM_GPU_SOURCES
+        src/gpu/sha256.cu
+        src/gpu/secp256k1.cu
+        src/gpu/ripemd160.cu
+        src/gpu/h160_bloom_filter.cu
+        src/gpu/pipeline.cu
+        src/gpu/fused_pipeline.cu
+        src/gpu/puzzle_gpu.cu
+        src/gpu/puzzle_optimized.cu
+        src/gpu/kangaroo_kernel.cu
+    )
+    set(EXISTING_ROCM_SOURCES)
+    foreach(SRC ${ROCM_GPU_SOURCES})
+        if(EXISTS "${CMAKE_SOURCE_DIR}/${SRC}")
+            list(APPEND EXISTING_ROCM_SOURCES ${SRC})
+        endif()
+    endforeach()
+    if(EXISTING_ROCM_SOURCES)
+        # Tell CMake to compile .cu files as HIP (hipcc instead of nvcc)
+        set_source_files_properties(${EXISTING_ROCM_SOURCES} PROPERTIES LANGUAGE HIP)
+        add_library(collider_gpu STATIC ${EXISTING_ROCM_SOURCES})
+        target_link_libraries(collider_gpu hip::host)
+        set_target_properties(collider_gpu PROPERTIES POSITION_INDEPENDENT_CODE ON)
     endif()
 
 elseif(COLLIDER_BACKEND STREQUAL "METAL")
@@ -901,7 +962,9 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/main.cpp")
     endif()
 
     if(COLLIDER_BACKEND STREQUAL "CUDA")
-        list(APPEND MAIN_LIBS CUDA::cudart)
+        list(APPEND MAIN_LIBS ${CUDA_RT_TARGET})
+    elseif(COLLIDER_BACKEND STREQUAL "ROCM")
+        list(APPEND MAIN_LIBS hip::host)
     elseif(COLLIDER_BACKEND STREQUAL "METAL")
         list(APPEND MAIN_LIBS ${METAL_LIBRARY} ${FOUNDATION_LIBRARY})
     endif()
@@ -941,7 +1004,7 @@ if(COLLIDER_BUILD_TESTS)
         add_executable(test_platform tests/test_platform.cpp)
         target_link_libraries(test_platform collider_platform Threads::Threads)
         if(COLLIDER_BACKEND STREQUAL "CUDA")
-            target_link_libraries(test_platform CUDA::cudart)
+            target_link_libraries(test_platform ${CUDA_RT_TARGET})
         elseif(COLLIDER_BACKEND STREQUAL "METAL")
             target_link_libraries(test_platform ${METAL_LIBRARY} ${FOUNDATION_LIBRARY})
         endif()
@@ -1280,7 +1343,7 @@ if(COLLIDER_BUILD_TESTS)
                 CUDA_SEPARABLE_COMPILATION ON
                 CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
-            target_link_libraries(test_secp256k1_inv collider_gpu CUDA::cudart)
+            target_link_libraries(test_secp256k1_inv collider_gpu ${CUDA_RT_TARGET})
             add_test(NAME Secp256k1Inv COMMAND test_secp256k1_inv)
             set_tests_properties(Secp256k1Inv PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1297,7 +1360,7 @@ if(COLLIDER_BUILD_TESTS)
             )
             target_include_directories(test_device_hmac_sha512
                 PRIVATE ${CMAKE_SOURCE_DIR}/src)
-            target_link_libraries(test_device_hmac_sha512 CUDA::cudart)
+            target_link_libraries(test_device_hmac_sha512 ${CUDA_RT_TARGET})
             add_test(NAME DeviceHmacSha512KAT COMMAND test_device_hmac_sha512)
             set_tests_properties(DeviceHmacSha512KAT PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1308,7 +1371,7 @@ if(COLLIDER_BUILD_TESTS)
                 CUDA_SEPARABLE_COMPILATION ON
                 CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
-            target_link_libraries(test_ec_table_consistency collider_gpu CUDA::cudart)
+            target_link_libraries(test_ec_table_consistency collider_gpu ${CUDA_RT_TARGET})
             add_test(NAME EcTableConsistency COMMAND test_ec_table_consistency)
             set_tests_properties(EcTableConsistency PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1322,7 +1385,7 @@ if(COLLIDER_BUILD_TESTS)
                 CUDA_SEPARABLE_COMPILATION ON
                 CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
-            target_link_libraries(test_puzzle_optimized_inv collider_gpu CUDA::cudart)
+            target_link_libraries(test_puzzle_optimized_inv collider_gpu ${CUDA_RT_TARGET})
             add_test(NAME PuzzleOptimizedInv COMMAND test_puzzle_optimized_inv)
             set_tests_properties(PuzzleOptimizedInv PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1338,7 +1401,7 @@ if(COLLIDER_BUILD_TESTS)
                 CUDA_SEPARABLE_COMPILATION ON
                 CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
-            target_link_libraries(test_gpu_hash160 collider_gpu collider_core CUDA::cudart)
+            target_link_libraries(test_gpu_hash160 collider_gpu collider_core ${CUDA_RT_TARGET})
             add_test(NAME GpuHash160 COMMAND test_gpu_hash160)
             set_tests_properties(GpuHash160 PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1355,7 +1418,7 @@ if(COLLIDER_BUILD_TESTS)
                 CUDA_SEPARABLE_COMPILATION ON
                 CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
-            target_link_libraries(test_ec_mul_known_answers collider_gpu CUDA::cudart)
+            target_link_libraries(test_ec_mul_known_answers collider_gpu ${CUDA_RT_TARGET})
             add_test(NAME EcMulKnownAnswers COMMAND test_ec_mul_known_answers)
             set_tests_properties(EcMulKnownAnswers PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1375,7 +1438,7 @@ if(COLLIDER_BUILD_TESTS)
                 CUDA_SEPARABLE_COMPILATION ON
                 CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
             )
-            target_link_libraries(test_kangaroo_small_puzzle collider_gpu CUDA::cudart)
+            target_link_libraries(test_kangaroo_small_puzzle collider_gpu ${CUDA_RT_TARGET})
             add_test(NAME KangarooSmallPuzzle COMMAND test_kangaroo_small_puzzle)
             set_tests_properties(KangarooSmallPuzzle PROPERTIES SKIP_RETURN_CODE 77)
         endif()
@@ -1390,7 +1453,7 @@ if(COLLIDER_BUILD_BENCHMARKS AND COLLIDER_BACKEND STREQUAL "CUDA")
         add_executable(bench_gpu_pipeline benchmarks/bench_gpu_pipeline.cu)
         target_link_libraries(bench_gpu_pipeline
             collider_gpu
-            CUDA::cudart
+            ${CUDA_RT_TARGET}
         )
     endif()
 

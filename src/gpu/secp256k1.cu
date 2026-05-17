@@ -11,7 +11,7 @@
  * Target: 2.5B+ scalar multiplications per second per RTX 5090
  */
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdint>
 #include <cstdio>
 
@@ -202,37 +202,33 @@ __device__ __forceinline__ void uint256_load_const(uint256& a, const uint32_t* c
 // MODULAR ARITHMETIC (secp256k1 OPTIMIZED)
 // =============================================================================
 
-/**
- * PTX-optimized multiply-add with carry using IADD3 instruction.
- * IADD3 is a 3-input adder available on Volta+ (SM 7.0+) that's faster
- * than chained IMAD for carry propagation in multi-precision arithmetic.
- *
- * Computes: result = a * b + c + carry_in, returns carry_out
- */
+// Multiply-add with carry: result = a*b + c + carry_in, returns carry_out.
+// CUDA path: fused PTX (IADD3, Volta+). HIP/host path: uint64_t arithmetic.
 __device__ __forceinline__ uint32_t mul_add_carry_ptx(
     uint32_t a, uint32_t b, uint32_t c, uint32_t carry_in, uint32_t* result_lo
 ) {
+#if defined(__CUDA_ARCH__)
     uint32_t lo, hi;
-
-    // Use PTX inline assembly for optimal instruction selection
-    // mad.lo.cc.u32: multiply a*b, add c, with carry out
-    // madc.hi.u32: get high 32 bits with carry in
     asm volatile (
         "{\n\t"
         "  .reg .u32 tmp;\n\t"
-        "  mul.lo.u32 %0, %2, %3;\n\t"       // lo = a * b (low 32 bits)
-        "  mul.hi.u32 %1, %2, %3;\n\t"       // hi = a * b (high 32 bits)
-        "  add.cc.u32 %0, %0, %4;\n\t"       // lo += c with carry
-        "  addc.u32 %1, %1, 0;\n\t"          // hi += carry
-        "  add.cc.u32 %0, %0, %5;\n\t"       // lo += carry_in with carry
-        "  addc.u32 %1, %1, 0;\n\t"          // hi += carry
+        "  mul.lo.u32 %0, %2, %3;\n\t"
+        "  mul.hi.u32 %1, %2, %3;\n\t"
+        "  add.cc.u32 %0, %0, %4;\n\t"
+        "  addc.u32 %1, %1, 0;\n\t"
+        "  add.cc.u32 %0, %0, %5;\n\t"
+        "  addc.u32 %1, %1, 0;\n\t"
         "}\n\t"
         : "=r"(lo), "=r"(hi)
         : "r"(a), "r"(b), "r"(c), "r"(carry_in)
     );
-
     *result_lo = lo;
     return hi;
+#else
+    uint64_t prod = (uint64_t)a * b + c + carry_in;
+    *result_lo = (uint32_t)prod;
+    return (uint32_t)(prod >> 32);
+#endif
 }
 
 /**
@@ -250,36 +246,36 @@ __device__ void uint256_mul_512_ptx(
         result[i] = 0;
     }
 
-    // Schoolbook multiplication with PTX-optimized inner loop
+    // Schoolbook multiplication — CUDA uses fused PTX; HIP/host uses uint64.
     #pragma unroll
     for (int i = 0; i < 8; i++) {
         uint32_t carry = 0;
-
-        // Inner loop uses PTX for optimal carry propagation
         #pragma unroll
         for (int j = 0; j < 8; j++) {
+#if defined(__CUDA_ARCH__)
             uint32_t lo, hi;
-
-            // a[i] * b[j] + result[i+j] + carry
             asm volatile (
                 "{\n\t"
                 "  .reg .u32 t0, t1;\n\t"
-                "  mul.lo.u32 t0, %2, %3;\n\t"       // t0 = a*b low
-                "  mul.hi.u32 t1, %2, %3;\n\t"       // t1 = a*b high
-                "  add.cc.u32 t0, t0, %4;\n\t"       // t0 += result[i+j]
-                "  addc.u32 t1, t1, 0;\n\t"          // t1 += carry
-                "  add.cc.u32 %0, t0, %5;\n\t"       // lo = t0 + carry_in
-                "  addc.u32 %1, t1, 0;\n\t"          // hi = t1 + carry
+                "  mul.lo.u32 t0, %2, %3;\n\t"
+                "  mul.hi.u32 t1, %2, %3;\n\t"
+                "  add.cc.u32 t0, t0, %4;\n\t"
+                "  addc.u32 t1, t1, 0;\n\t"
+                "  add.cc.u32 %0, t0, %5;\n\t"
+                "  addc.u32 %1, t1, 0;\n\t"
                 "}\n\t"
                 : "=r"(lo), "=r"(hi)
                 : "r"(a.limbs[i]), "r"(b.limbs[j]), "r"(result[i+j]), "r"(carry)
             );
-
             result[i+j] = lo;
             carry = hi;
+#else
+            uint64_t prod = (uint64_t)a.limbs[i] * b.limbs[j]
+                          + result[i+j] + carry;
+            result[i+j] = (uint32_t)prod;
+            carry = (uint32_t)(prod >> 32);
+#endif
         }
-
-        // Propagate final carry
         result[i+8] += carry;
     }
 }
