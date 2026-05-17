@@ -289,6 +289,16 @@ bool HttpPoolClient::flush_batch() {
         std::cerr << "[StarMiner] Failed to submit batch of " << batch.size() << " DPs" << std::endl;
         return false;
     }
+
+    // Check if solution was found by another worker
+    try {
+        auto j = json::parse(response);
+        if (j.value("solution_found", false)) {
+            solution_found_.store(true);
+            solution_key_ = j.value("private_key", "");
+            std::cout << "\n[StarMiner] SOLUTION FOUND by another worker! Stopping...\n";
+        }
+    } catch (...) {}
     return true;
 }
 
@@ -347,6 +357,13 @@ PoolStats HttpPoolClient::get_stats() {
         stats.your_dps = j.value("your_dps", 0);
         stats.uptime_seconds = j.value("uptime_seconds", 0);
         stats.connected_workers = stats.active_workers;
+
+        // Check if puzzle was solved
+        if (j.value("solution_found", false)) {
+            solution_found_.store(true);
+            solution_key_ = j.value("solution_key", "");
+            std::cout << "\n[StarMiner] SOLUTION REPORTED! Key: " << solution_key_ << "\n";
+        }
 
         {
             std::lock_guard<std::mutex> lock(stats_mutex_);

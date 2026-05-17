@@ -65,6 +65,10 @@ public:
     void set_gpu_telemetry(const std::map<int, std::string>& gpu_names,
                            const std::map<int, double>& gpu_mhs);
 
+    // Solution detection
+    bool solution_found() const override { return solution_found_.load(); }
+    std::string solution_key() const { return solution_key_; }
+
 private:
     std::string base_url_;
     std::string worker_name_;
@@ -78,6 +82,8 @@ private:
 
     std::atomic<bool> connected_{false};
     std::atomic<bool> running_{false};
+    std::atomic<bool> solution_found_{false};
+    std::string solution_key_;
     std::atomic<uint32_t> dp_sequence_{0};
     std::atomic<uint64_t> current_work_id_{0};
 

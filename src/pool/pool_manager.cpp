@@ -209,6 +209,18 @@ PoolStats PoolManager::get_stats() const {
     return client_->get_stats();
 }
 
+void PoolManager::set_gpu_telemetry(const std::map<int, std::string>& gpu_names,
+                                    const std::map<int, double>& gpu_mhs) {
+    if (client_) {
+        client_->set_gpu_telemetry(gpu_names, gpu_mhs);
+    }
+}
+
+bool PoolManager::solution_found() const {
+    if (!client_) return false;
+    return client_->solution_found();
+}
+
 double PoolManager::get_submission_rate() const {
     auto now = std::chrono::steady_clock::now();
     double elapsed = std::chrono::duration<double>(now - start_time_).count();

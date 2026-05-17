@@ -1320,6 +1320,7 @@ void JLPPoolClient::handle_server_message(const JLPHeader& header,
 
         case JLPMessageType::SOLUTION: {  // Solution found (bidirectional)
             std::cout << "[Pool] SOLUTION FOUND!" << std::endl;
+            solution_found_.store(true);
             // v1.4.1 C.3: route through dedup helper so a server-side
             // retransmit (or any duplicate SOLUTION delivery) does not
             // fire the user's solution callback twice. Pre-1.4.1 the

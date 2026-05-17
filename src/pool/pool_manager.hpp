@@ -14,6 +14,7 @@
 #include <functional>
 #include <mutex>
 #include <condition_variable>
+#include <map>
 
 namespace collider {
 namespace pool {
@@ -86,6 +87,11 @@ public:
 
     // Status
     std::string get_status_string() const;
+    bool solution_found() const;  // true if another worker found the key
+
+    // v1.5: per-GPU telemetry forwarding
+    void set_gpu_telemetry(const std::map<int, std::string>& gpu_names,
+                           const std::map<int, double>& gpu_mhs);
 
     // For RCKangaroo integration - DP hook
     // Call this from the DP callback in RCKangaroo

@@ -22,6 +22,7 @@
 #include <atomic>
 #include <array>
 #include <limits>
+#include <map>
 
 // TLS support via OpenSSL
 #ifdef COLLIDER_HAS_OPENSSL
@@ -224,6 +225,13 @@ public:
 
     std::string get_pool_type() const override { return POOL_TYPE_JLP; }
 
+    bool solution_found() const override { return solution_found_.load(); }
+
+    void set_gpu_telemetry(const std::map<int, std::string>& /*gpu_names*/,
+                           const std::map<int, double>& /*gpu_mhs*/) override {
+        // JLP protocol does not transmit per-GPU telemetry; noop
+    }
+
     // JLP-specific settings
     void set_timeout(uint32_t timeout_ms) { timeout_ms_ = timeout_ms; }
     void set_reconnect(bool auto_reconnect) { auto_reconnect_ = auto_reconnect; }
@@ -333,6 +341,10 @@ private:
     std::array<uint8_t, 32> last_solution_pubkey_{};  // zero = none seen
     bool     solution_fired_ = false;
     uint64_t last_work_id_fired_ = std::numeric_limits<uint64_t>::max();
+
+    // v1.5: flag set when a remote SOLUTION message arrives so the solver
+    // can stop gracefully even though the key was found by another worker.
+    std::atomic<bool> solution_found_{false};
     void fire_solution_callback(const uint8_t* pubkey_bytes);
     void fire_work_callback(const WorkAssignment& work);
 

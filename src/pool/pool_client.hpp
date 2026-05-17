@@ -9,6 +9,7 @@
 #include <memory>
 #include <functional>
 #include <atomic>
+#include <map>
 
 namespace collider {
 namespace pool {
@@ -92,6 +93,13 @@ public:
 
     // Pool type identification
     virtual std::string get_pool_type() const = 0;
+
+    // v1.5: solution detection from other workers
+    virtual bool solution_found() const { return false; }
+
+    // v1.5: per-GPU telemetry (hash rate, temperature)
+    virtual void set_gpu_telemetry(const std::map<int, std::string>& gpu_names,
+                                   const std::map<int, double>& gpu_mhs) {}
 };
 
 // Factory function to create pool clients

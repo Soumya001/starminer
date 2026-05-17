@@ -301,6 +301,7 @@ set(PLATFORM_SOURCES
 
 if(COLLIDER_BACKEND STREQUAL "CUDA")
     list(APPEND PLATFORM_SOURCES src/platform/cuda_platform.cu)
+    list(APPEND PLATFORM_SOURCES src/platform/nvml_wrapper.cpp)
 elseif(COLLIDER_BACKEND STREQUAL "METAL")
     list(APPEND PLATFORM_SOURCES src/platform/metal_platform.mm)
 else()
@@ -322,6 +323,7 @@ elseif(COLLIDER_BACKEND STREQUAL "CUDA")
     target_link_libraries(collider_platform
         CUDA::cudart
         Threads::Threads
+        ${CMAKE_DL_LIBS}
     )
     set_target_properties(collider_platform PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
