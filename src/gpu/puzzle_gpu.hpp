@@ -5,9 +5,9 @@
  * Supports multi-GPU on CUDA and the unified GPU on Apple Silicon (Metal).
  *
  * Backend split:
- *   - COLLIDER_USE_CUDA: full multi-GPU path. Implementation in puzzle_gpu.cu
+ *   - STARMINER_USE_CUDA: full multi-GPU path. Implementation in puzzle_gpu.cu
  *     and puzzle_optimized.cu.
- *   - COLLIDER_USE_METAL: single-GPU path on Apple silicon. Implementation
+ *   - STARMINER_USE_METAL: single-GPU path on Apple silicon. Implementation
  *     in metal_multi_gpu_puzzle.mm and puzzle_metal.{hpp,mm}. The
  *     GPUPuzzleSolver class is intentionally still a stub here -- the
  *     CUDA single-GPU class was a v1.0-era convenience that the multi-GPU
@@ -26,16 +26,16 @@
 #include <functional>
 #include <map>
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 // Forward declare CUDA types OUTSIDE namespace to match global ::cudaStream_t
 struct CUstream_st;
 typedef CUstream_st* cudaStream_t;
 #endif
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 
 // Note: Optimized kernel API (init_puzzle_optimized, cleanup_puzzle_optimized,
 // puzzle_search_batch_optimized) are declared in puzzle_gpu.cu with proper
@@ -178,7 +178,7 @@ private:
     std::atomic<int> found_gpu_id_{-1};
 };
 
-#elif defined(COLLIDER_USE_METAL)
+#elif defined(STARMINER_USE_METAL)
 
 // =============================================================================
 // MULTI-GPU PUZZLE SOLVER (Metal, macOS)
@@ -193,7 +193,7 @@ private:
 // class is a v1.0-era convenience that the multi-GPU class supersedes;
 // puzzle_solver.cpp uses MultiGPUPuzzleSolver exclusively. Implementation
 // of MultiGPUPuzzleSolver is in src/gpu/metal_multi_gpu_puzzle.mm and is
-// built when APPLE && COLLIDER_USE_METAL.
+// built when APPLE && STARMINER_USE_METAL.
 // =============================================================================
 class GPUPuzzleSolver {
 public:
@@ -306,7 +306,7 @@ public:
     ProgressCallback progress_callback;
 };
 
-#endif  // COLLIDER_USE_CUDA / COLLIDER_USE_METAL / stub
+#endif  // STARMINER_USE_CUDA / STARMINER_USE_METAL / stub
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

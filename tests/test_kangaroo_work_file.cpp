@@ -59,7 +59,7 @@ void check_u32(const char* name, uint32_t expected, uint32_t got) {
 }  // namespace
 
 int main() {
-    using ::collider::KangarooWorkFile;
+    using ::starminer::KangarooWorkFile;
 
     // 1. Populate a source work file.
     KangarooWorkFile src;
@@ -76,7 +76,7 @@ int main() {
     // 2. Pick a temp path inside the build tree.
     const std::string tmp_path =
         (std::filesystem::temp_directory_path() /
-         "collider_test_kangaroo_work_file.tmp").string();
+         "starminer_test_kangaroo_work_file.tmp").string();
 
     // 3. Save -> Load -> compare.
     if (!src.save(tmp_path)) {

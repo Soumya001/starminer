@@ -8,10 +8,10 @@
 // with the .metal file. Mirrors the kangaroo_metal_source.h.in pattern.
 #pragma once
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 inline constexpr const char kPuzzleMetalSource[] = R"PUZZLE_METAL(@PUZZLE_METAL_SOURCE_BODY@)PUZZLE_METAL";
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

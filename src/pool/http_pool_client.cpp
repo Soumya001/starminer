@@ -14,14 +14,14 @@
 #include "../../third_party/nlohmann/json.hpp"
 using json = nlohmann::json;
 
-#ifdef COLLIDER_HAVE_CURL
+#ifdef STARMINER_HAVE_CURL
 #include <curl/curl.h>
 #endif
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
-#ifdef COLLIDER_HAVE_CURL
+#ifdef STARMINER_HAVE_CURL
 static size_t curl_write_callback(void* contents, size_t size, size_t nmemb, std::string* userp) {
     userp->append(static_cast<char*>(contents), size * nmemb);
     return size * nmemb;
@@ -52,7 +52,7 @@ HttpPoolClient::~HttpPoolClient() {
 // Connection
 // ---------------------------------------------------------------------------
 bool HttpPoolClient::connect(const std::string& host, uint16_t port) {
-#ifndef COLLIDER_HAVE_CURL
+#ifndef STARMINER_HAVE_CURL
     std::cerr << "[StarMiner] libcurl not available at build time. "
               << "HTTP pool support requires libcurl."
               << std::endl;
@@ -445,7 +445,7 @@ bool HttpPoolClient::retry_request(const std::string& method,
 // ---------------------------------------------------------------------------
 // Raw HTTP via libcurl
 // ---------------------------------------------------------------------------
-#ifdef COLLIDER_HAVE_CURL
+#ifdef STARMINER_HAVE_CURL
 bool HttpPoolClient::do_request(const std::string& method,
                                 const std::string& endpoint,
                                 const std::string& json_payload,
@@ -523,4 +523,4 @@ bool HttpPoolClient::hex_to_bytes(const std::string& hex, uint8_t* out, size_t o
 }
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

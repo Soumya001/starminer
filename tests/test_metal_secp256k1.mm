@@ -74,8 +74,8 @@ std::string bytes_to_hex(const uint8_t b[32]) {
 }  // namespace
 
 // Bring the shared codec into the unqualified scope used by main().
-using ::collider::be32_to_limbs_le;
-using ::collider::limbs_le_to_be32;
+using ::starminer::be32_to_limbs_le;
+using ::starminer::limbs_le_to_be32;
 
 int main() {
     @autoreleasepool {
@@ -83,7 +83,7 @@ int main() {
         if (!device) { std::fprintf(stderr, "no Metal device\n"); return 77; }
 
         NSString* src = [NSString stringWithUTF8String:
-                            ::collider::gpu::kKangarooMetalSource];
+                            ::starminer::gpu::kKangarooMetalSource];
         if (!src) {
             std::fprintf(stderr, "embedded MSL source is not valid UTF-8 (build corrupt)\n");
             return 1;

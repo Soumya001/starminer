@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace metal {
@@ -48,4 +48,4 @@ bool v2_metal_run_puzzle_only(
 }  // namespace metal
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

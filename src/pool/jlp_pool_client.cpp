@@ -27,7 +27,7 @@
 #include <random>
 #include <mutex>  // for std::once_flag, std::call_once
 
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
 #include <openssl/x509v3.h>
 #endif
 
@@ -40,7 +40,7 @@
 // X509_STORE. Linked via crypt32.lib (set in CMakeLists.txt). This mirrors
 // the bridge already used by tests/test_jlp_pool_handshake.cpp; if the two
 // drift, the handshake test fails first.
-#if defined(_WIN32) && defined(COLLIDER_HAS_OPENSSL)
+#if defined(_WIN32) && defined(STARMINER_HAS_OPENSSL)
     #ifndef NOMINMAX
         #define NOMINMAX
     #endif
@@ -54,12 +54,12 @@
     #include <openssl/err.h>
 #endif
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 bool JLPPoolClient::sockets_initialized_ = false;
 
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
 // Thread-safe OpenSSL initialization using std::call_once
 static std::once_flag ssl_init_flag;
 static bool ssl_init_success = false;
@@ -430,7 +430,7 @@ bool JLPPoolClient::connect(const std::string& host, uint16_t port) {
     freeaddrinfo(result);
 
     // Initialize TLS if enabled
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
     if (use_tls_) {
         if (!init_tls()) {
             closesocket(socket_);
@@ -516,7 +516,7 @@ void JLPPoolClient::disconnect() {
     }
 
     // Now safe to free TLS objects -- both I/O threads have exited.
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
     if (use_tls_) {
         cleanup_tls();
     }
@@ -779,7 +779,7 @@ bool JLPPoolClient::send_message(JLPMessageType type, const void* data, size_t s
     std::lock_guard<std::mutex> io_lock(ssl_write_mutex_);
 
     // Send header
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
     if (use_tls_ && ssl_) {
         if (ssl_send(&header, sizeof(header)) != (int)sizeof(header)) {
             connected_ = false;
@@ -796,7 +796,7 @@ bool JLPPoolClient::send_message(JLPMessageType type, const void* data, size_t s
 
     // Send payload
     if (size > 0 && data != nullptr) {
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
         if (use_tls_ && ssl_) {
             if (ssl_send(data, size) != (int)size) {
                 connected_ = false;
@@ -835,7 +835,7 @@ bool JLPPoolClient::receive_message(JLPHeader& header, std::vector<uint8_t>& pay
     std::unique_lock<std::mutex> io_lock(ssl_read_mutex_);
 
     // Receive header
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
     if (use_tls_ && ssl_) {
         received = ssl_recv(&header, sizeof(header));
         if (received != sizeof(header)) {
@@ -907,7 +907,7 @@ bool JLPPoolClient::receive_message(JLPHeader& header, std::vector<uint8_t>& pay
     // Receive payload
     if (header.payload_size > 0) {
         payload.resize(header.payload_size);
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
         if (use_tls_ && ssl_) {
             received = ssl_recv(payload.data(), header.payload_size);
         } else
@@ -945,7 +945,7 @@ void JLPPoolClient::receiver_loop() {
         } else if (connected_ && auto_reconnect_) {
             // Wave 4 D-L4: clean up TLS BEFORE closing the underlying socket
             // so we don't leak SSL_CTX/SSL on reconnect.
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
             if (use_tls_) {
                 cleanup_tls();
             }
@@ -1227,7 +1227,7 @@ void JLPPoolClient::handle_server_message(const JLPHeader& header,
                 // Debug: show parsed public key (only when debug enabled)
                 if (debug_mode_) {
                     char pk_hex[67];
-                    ::collider::hex_encode_lower(config->public_key, 33, pk_hex);
+                    ::starminer::hex_encode_lower(config->public_key, 33, pk_hex);
                     std::cerr << "[DEBUG] Parsed pubkey: " << pk_hex << std::endl;
                 }
 
@@ -1405,4 +1405,4 @@ std::unique_ptr<PoolClient> create_pool_client(const std::string& type) {
 }
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

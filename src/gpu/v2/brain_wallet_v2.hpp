@@ -21,23 +21,23 @@
 #include <string>
 
 // CUDA types are pulled in only when this header is consumed by a CUDA TU
-// or by host code that explicitly opts in (COLLIDER_USE_CUDA). The host
+// or by host code that explicitly opts in (STARMINER_USE_CUDA). The host
 // orchestrator (v2_orchestrator.cpp / .hpp) needs the struct definitions
 // (PuzzleTarget, V2MatchRecord, enums, masks, helper) but not the CUDA
 // kernel signatures, so we shim the CUDA-specific types when the include
 // isn't available. The kernel-launching APIs are themselves gated under
-// COLLIDER_USE_CUDA below.
-#if defined(COLLIDER_USE_CUDA) || defined(__CUDACC__)
+// STARMINER_USE_CUDA below.
+#if defined(STARMINER_USE_CUDA) || defined(__CUDACC__)
 #  include <cuda_runtime.h>
-#  define COLLIDER_V2_HAVE_CUDA 1
+#  define STARMINER_V2_HAVE_CUDA 1
 #else
    // Provide enough type stand-ins for the prototype declarations to parse.
    typedef int cudaError_t;
    typedef struct CUstream_st* cudaStream_t;
-#  define COLLIDER_V2_HAVE_CUDA 0
+#  define STARMINER_V2_HAVE_CUDA 0
 #endif
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -461,4 +461,4 @@ inline PuzzleTarget make_puzzle_target(uint16_t puzzle_n, const uint8_t priv_be[
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

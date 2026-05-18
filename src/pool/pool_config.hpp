@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 // Maximum backoff between reconnect attempts. The exponential backoff
@@ -25,4 +25,4 @@ namespace pool {
 inline constexpr std::uint32_t MAX_RECONNECT_BACKOFF_MS = 60'000;
 
 }  // namespace pool
-}  // namespace collider
+}  // namespace starminer

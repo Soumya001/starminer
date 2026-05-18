@@ -17,7 +17,7 @@
 #include <sstream>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 namespace {
@@ -166,4 +166,4 @@ Sha256MetalBenchResult run_sha256_metal_benchmark(int seconds, uint32_t batch_si
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

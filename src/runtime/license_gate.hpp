@@ -2,7 +2,7 @@
  * license_gate.hpp - Pre-dispatch license activation + startup validation.
  *
  * Extracted out of src/main.cpp during the v1.4.1 A.3 (6/6) refactor.
- * The whole TU is COLLIDER_PRO-only; the free build never sees any
+ * The whole TU is STARMINER_PRO-only; the free build never sees any
  * license-related symbols (the underlying license/license_check.hpp is
  * Pro-only too).
  *
@@ -20,9 +20,9 @@
  */
 #pragma once
 
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
 
-namespace collider::runtime {
+namespace starminer::runtime {
 
 /**
  * Handle `--activate KEY` from argv. If matched, returns true with the
@@ -39,6 +39,6 @@ bool process_activate_flag(int argc, char* argv[], int& out_exit_code);
  */
 bool validate_startup_license(int& out_exit_code);
 
-}  // namespace collider::runtime
+}  // namespace starminer::runtime
 
-#endif  // COLLIDER_PRO
+#endif  // STARMINER_PRO

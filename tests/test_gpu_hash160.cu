@@ -130,11 +130,11 @@ int main() {
         const std::string& pp = TEST_PASSPHRASES[i];
 
         // Step A: SHA256(passphrase) -> 32-byte private key
-        auto privkey_arr = collider::cpu::SHA256::hash(
+        auto privkey_arr = starminer::cpu::SHA256::hash(
             reinterpret_cast<const uint8_t*>(pp.data()), pp.size());
 
         // Step B: compute_hash160(privkey) does the rest of the chain on CPU
-        expected_h160[i] = collider::cpu::compute_hash160(privkey_arr.data());
+        expected_h160[i] = starminer::cpu::compute_hash160(privkey_arr.data());
     }
 
     // Step 3: build a bloom filter populated with all expected hash160s.

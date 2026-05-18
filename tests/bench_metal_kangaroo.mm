@@ -27,23 +27,23 @@
 
 namespace {
 
-std::array<collider::gpu::KangarooSeed, collider::gpu::kJumpTableSize>
+std::array<starminer::gpu::KangarooSeed, starminer::gpu::kJumpTableSize>
 make_bench_jumps()
 {
-    std::array<collider::gpu::KangarooSeed, collider::gpu::kJumpTableSize> jumps{};
-    for (size_t i = 0; i < collider::gpu::kJumpTableSize; ++i) {
-        ::collider::cpu::uint256_t scalar;
+    std::array<starminer::gpu::KangarooSeed, starminer::gpu::kJumpTableSize> jumps{};
+    for (size_t i = 0; i < starminer::gpu::kJumpTableSize; ++i) {
+        ::starminer::cpu::uint256_t scalar;
         scalar.d[0] = static_cast<uint64_t>(i + 1);
         scalar.d[1] = scalar.d[2] = scalar.d[3] = 0;
 
-        ::collider::cpu::ECPoint p;
-        ::collider::cpu::ec_mul(p, scalar);
-        ::collider::cpu::uint256_t px, py;
-        ::collider::cpu::ec_to_affine(px, py, p);
+        ::starminer::cpu::ECPoint p;
+        ::starminer::cpu::ec_mul(p, scalar);
+        ::starminer::cpu::uint256_t px, py;
+        ::starminer::cpu::ec_to_affine(px, py, p);
 
-        ::collider::limbs_le_to_be32(px.d,    jumps[i].x.data());
-        ::collider::limbs_le_to_be32(py.d,    jumps[i].y.data());
-        ::collider::limbs_le_to_be32(scalar.d, jumps[i].d.data());
+        ::starminer::limbs_le_to_be32(px.d,    jumps[i].x.data());
+        ::starminer::limbs_le_to_be32(py.d,    jumps[i].y.data());
+        ::starminer::limbs_le_to_be32(scalar.d, jumps[i].d.data());
         jumps[i].type = 0;
     }
     return jumps;
@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
 
         // Production-shaped config. dp_bits=20 keeps DP rate sane on
         // this scale (~1/1M chance per step).
-        collider::gpu::KangarooMetalConfig cfg;
+        starminer::gpu::KangarooMetalConfig cfg;
         cfg.num_kangaroos    = 1024;
         cfg.steps_per_round  = 1024;
         cfg.dp_bits          = 20;
@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
         if (argc >= 2) cfg.num_kangaroos   = (uint32_t)std::atoi(argv[1]);
         if (argc >= 3) cfg.steps_per_round = (uint32_t)std::atoi(argv[2]);
 
-        collider::gpu::KangarooMetalSolver solver;
+        starminer::gpu::KangarooMetalSolver solver;
         if (!solver.init(cfg)) {
             std::fprintf(stderr, "init failed: %s\n", solver.error().c_str());
             return 1;
@@ -87,21 +87,21 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        std::vector<collider::gpu::KangarooSeed> seeds;
+        std::vector<starminer::gpu::KangarooSeed> seeds;
         seeds.reserve(cfg.num_kangaroos);
         for (uint32_t i = 0; i < cfg.num_kangaroos; ++i) {
-            ::collider::cpu::uint256_t scalar;
+            ::starminer::cpu::uint256_t scalar;
             scalar.d[0] = static_cast<uint64_t>(1000000ULL + i);
             scalar.d[1] = scalar.d[2] = scalar.d[3] = 0;
-            ::collider::cpu::ECPoint p;
-            ::collider::cpu::ec_mul(p, scalar);
-            ::collider::cpu::uint256_t px, py;
-            ::collider::cpu::ec_to_affine(px, py, p);
+            ::starminer::cpu::ECPoint p;
+            ::starminer::cpu::ec_mul(p, scalar);
+            ::starminer::cpu::uint256_t px, py;
+            ::starminer::cpu::ec_to_affine(px, py, p);
 
-            collider::gpu::KangarooSeed s{};
-            ::collider::limbs_le_to_be32(px.d,    s.x.data());
-            ::collider::limbs_le_to_be32(py.d,    s.y.data());
-            ::collider::limbs_le_to_be32(scalar.d, s.d.data());
+            starminer::gpu::KangarooSeed s{};
+            ::starminer::limbs_le_to_be32(px.d,    s.x.data());
+            ::starminer::limbs_le_to_be32(py.d,    s.y.data());
+            ::starminer::limbs_le_to_be32(scalar.d, s.d.data());
             s.type = static_cast<uint8_t>(i & 1);
             seeds.push_back(s);
         }

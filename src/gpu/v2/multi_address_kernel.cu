@@ -19,9 +19,9 @@
 #include <cuda_runtime.h>
 
 // Forward declaration of the production probe defined in
-// src/gpu/h160_bloom_filter.cu. It lives in `collider::gpu`, so the
+// src/gpu/h160_bloom_filter.cu. It lives in `starminer::gpu`, so the
 // declaration must match that namespace exactly (mangled symbol).
-namespace collider {
+namespace starminer {
 namespace gpu {
 extern __device__ bool bloom_check_h160(
     const uint8_t* bloom_data,
@@ -30,9 +30,9 @@ extern __device__ bool bloom_check_h160(
     uint32_t seed,
     const uint8_t* h160);
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -55,7 +55,7 @@ __device__ __forceinline__ bool bloom_probe_h160(
     const uint8_t* bloom, uint64_t bits, int hashes, uint32_t seed)
 {
     if (!bloom || bits == 0) return false;
-    return ::collider::gpu::bloom_check_h160(
+    return ::starminer::gpu::bloom_check_h160(
         bloom, bits, (uint32_t)hashes, seed, h160);
 }
 
@@ -198,4 +198,4 @@ cudaError_t v2_multi_address_check(
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

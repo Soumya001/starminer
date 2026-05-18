@@ -8,7 +8,7 @@
  *   - draining V2MatchRecord results back to stdout / hits file
  *
  * All public functions are pure host code; they do NOT include cuda_runtime.h
- * unless COLLIDER_USE_CUDA is set. This lets us unit-test scheme parsing,
+ * unless STARMINER_USE_CUDA is set. This lets us unit-test scheme parsing,
  * puzzle-key loading, and the orchestrator wire-up without a GPU.
  */
 
@@ -19,7 +19,7 @@
 #include <string_view>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -128,7 +128,7 @@ struct OrchestratorOptions {
  * Run the v2 puzzle-only / multi-scheme orchestrator end-to-end.
  *
  * Implementation status:
- *   * On Pro builds with COLLIDER_USE_CUDA: dispatches to v2_brain_wallet_batch.
+ *   * On Pro builds with STARMINER_USE_CUDA: dispatches to v2_brain_wallet_batch.
  *   * On --dry-run: loads puzzle keys + prints the schemes/addr types
  *     that would be dispatched, then returns without touching the GPU.
  *   * On non-CUDA builds: prints a clear message and returns 64 (EX_USAGE).
@@ -227,4 +227,4 @@ int run_multi_address_batch(const MultiAddressBatch& batch);
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

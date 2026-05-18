@@ -34,7 +34,7 @@
 #include <cstdint>
 #include <functional>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace historical {
@@ -116,4 +116,4 @@ inline void iterate_all(
 }  // namespace historical
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

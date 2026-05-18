@@ -22,7 +22,7 @@
 #include <windows.h>
 #endif
 
-namespace collider {
+namespace starminer {
 namespace ui {
 
 /**
@@ -186,8 +186,8 @@ private:
      * Decide whether to use ASCII or Unicode block art for the logo.
      *
      * Honors explicit env-var overrides first:
-     *   COLLIDER_ASCII=1   -> force ASCII
-     *   COLLIDER_UNICODE=1 -> force Unicode (used for testing on Windows)
+     *   STARMINER_ASCII=1   -> force ASCII
+     *   STARMINER_UNICODE=1 -> force Unicode (used for testing on Windows)
      *
      * Otherwise:
      *   Windows: ASCII by default (cmd.exe + PowerShell default to legacy
@@ -200,8 +200,8 @@ private:
      *              "���" replacement-char triple per glyph instead.
      */
     bool use_ascii_fallback() const {
-        if (std::getenv("COLLIDER_ASCII") != nullptr)   return true;
-        if (std::getenv("COLLIDER_UNICODE") != nullptr) return false;
+        if (std::getenv("STARMINER_ASCII") != nullptr)   return true;
+        if (std::getenv("STARMINER_UNICODE") != nullptr) return false;
 #ifdef _WIN32
         // Windows console default code pages don't render U+2588 cleanly.
         return true;
@@ -211,7 +211,7 @@ private:
         // fonts) lack U+2588 FULL BLOCK and render it as the
         // replacement-glyph triple. ASCII is the safe default; users
         // who want the block-letter version can opt in via
-        // COLLIDER_UNICODE=1.
+        // STARMINER_UNICODE=1.
         return true;
 #else
         // Linux: probe LC_ALL > LC_CTYPE > LANG.
@@ -229,7 +229,7 @@ private:
 
     /**
      * Get the logo lines - clean block letters.
-     * THE on top, COLLIDER below.
+     * THE on top, STARMINER below.
      * Uses ASCII # on Windows for compatibility.
      */
     std::vector<std::string> get_logo_lines() {
@@ -320,7 +320,7 @@ private:
      * borders and alignment across long values (e.g. multi-GPU names).
      */
     std::string create_stats_box(const BannerStats& stats) {
-        namespace boxui = ::collider::ui::box;
+        namespace boxui = ::starminer::ui::box;
         std::ostringstream out;
 
         out << "\n";
@@ -565,7 +565,7 @@ public:
     }
 
     // Speed/rate formatting now lives at namespace scope as
-    // `collider::ui::format_rate(double, std::string_view)`. The previous
+    // `starminer::ui::format_rate(double, std::string_view)`. The previous
     // `format_speed(int mkeys_per_sec)` version mis-scaled M into T and
     // produced "1.21 TKeys/s" displays for ~1 MKey/s inputs; converting
     // its callers to multiply their value by 1e6 first is more honest.
@@ -615,7 +615,7 @@ public:
      * Render a "Found!" celebration banner.
      */
     static void render_found_banner(const std::string& what = "KEY FOUND") {
-        namespace boxui = ::collider::ui::box;
+        namespace boxui = ::starminer::ui::box;
         std::cout << "\n";
         boxui::top(std::cout);
         boxui::centered(std::cout, what, boxui::ansi::BRIGHT_GREEN);
@@ -639,4 +639,4 @@ using UI = ProfessionalUI;
 // client integration.
 
 } // namespace ui
-} // namespace collider
+} // namespace starminer

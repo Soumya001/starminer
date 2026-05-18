@@ -24,10 +24,10 @@ GPUDetectionResult detect_gpus(std::vector<int>& requested_ids) {
     std::cout << std::flush;
 
     try {
-        auto& platform = collider::platform::get_platform();
+        auto& platform = starminer::platform::get_platform();
         auto init_result = platform.initialize();
 
-        if (init_result.code == collider::platform::ErrorCode::Success) {
+        if (init_result.code == starminer::platform::ErrorCode::Success) {
             result.backend = platform.get_backend_name();
             int total_devices = platform.get_device_count();
 

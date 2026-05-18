@@ -19,7 +19,7 @@
 #include "ui/box_render.hpp"    // single-source-of-truth boxed UI
 #include "ui/pool_progress.hpp"
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 #include "platform/nvml_wrapper.hpp"
 #endif
 #include <chrono>
@@ -27,7 +27,7 @@
 #include <fstream>
 #include <filesystem>
 
-namespace collider::runtime {
+namespace starminer::runtime {
 
 namespace fs = std::filesystem;
 
@@ -40,7 +40,7 @@ static fs::path get_checkpoint_path() {
     return dir / "checkpoint.json";
 }
 
-static bool save_checkpoint(const ::collider::pool::WorkAssignment& work) {
+static bool save_checkpoint(const ::starminer::pool::WorkAssignment& work) {
     try {
         fs::path path = get_checkpoint_path();
         std::ofstream f(path);
@@ -66,7 +66,7 @@ static bool save_checkpoint(const ::collider::pool::WorkAssignment& work) {
     }
 }
 
-static bool load_checkpoint(::collider::pool::WorkAssignment& work) {
+static bool load_checkpoint(::starminer::pool::WorkAssignment& work) {
     try {
         fs::path path = get_checkpoint_path();
         if (!fs::exists(path)) return false;
@@ -129,10 +129,10 @@ static bool load_checkpoint(::collider::pool::WorkAssignment& work) {
 // only so the final "Disconnected from pool" message lands deterministically
 // before the session summary.
 int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
-    using namespace ::collider::pool;
+    using namespace ::starminer::pool;
 
     {
-        namespace boxui = ::collider::ui::box;
+        namespace boxui = ::starminer::ui::box;
         std::cout << "\n";
         boxui::top(std::cout);
         boxui::centered(std::cout, "STAR POOL MODE - Distributed Kangaroo Solving");
@@ -213,7 +213,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
 
     // Set solution callback
     pool_manager.set_solution_callback([](const uint8_t* key, const std::string& worker) {
-        namespace boxui = ::collider::ui::box;
+        namespace boxui = ::starminer::ui::box;
         std::cout << "\n";
         boxui::top(std::cout);
         boxui::centered(std::cout, "SOLUTION FOUND!", boxui::ansi::BRIGHT_GREEN);
@@ -236,7 +236,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
     // IKangarooBackend interface. The factory picks the right one for
     // this build configuration; everything past this point is
     // backend-agnostic.
-    auto backend = ::collider::kangaroo::create_kangaroo_backend(args.gpu_ids);
+    auto backend = ::starminer::kangaroo::create_kangaroo_backend(args.gpu_ids);
 
     std::cout << "[*] Initializing " << backend->name() << " for pool solving...\n";
     if (!backend->initialize(work)) {
@@ -245,7 +245,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         return 1;
     }
 
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
     // Bloom filter loading is a Pro feature and is supported only by the
     // CUDA backend today. Other backends silently return false from
     // try_set_bloom_filter (interface default).
@@ -264,25 +264,25 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
 
     // Pool Solving header. Backend supplies its own name + device summary.
     std::cout << "\n";
-    ::collider::ui::ProfessionalUI::render_section("Pool Solving - " + backend->name());
-    ::collider::ui::ProfessionalUI::render_kv("Pool",
+    ::starminer::ui::ProfessionalUI::render_section("Pool Solving - " + backend->name());
+    ::starminer::ui::ProfessionalUI::render_kv("Pool",
         pool_config.host + ":" + std::to_string(pool_config.port));
-    ::collider::ui::ProfessionalUI::render_kv("Worker", pool_config.worker_name);
-    ::collider::ui::ProfessionalUI::render_kv("Device", backend->device_summary());
-    ::collider::ui::ProfessionalUI::render_kv("DP Bits", std::to_string(work.dp_bits));
+    ::starminer::ui::ProfessionalUI::render_kv("Worker", pool_config.worker_name);
+    ::starminer::ui::ProfessionalUI::render_kv("Device", backend->device_summary());
+    ::starminer::ui::ProfessionalUI::render_kv("DP Bits", std::to_string(work.dp_bits));
     std::cout << "\n";
-    ::collider::ui::ProfessionalUI::render_footer("Press Ctrl+C to stop");
+    ::starminer::ui::ProfessionalUI::render_footer("Press Ctrl+C to stop");
 
     // Wire the backend callbacks. Pool-side baseline capture for the
     // session-share % is owned by PoolProgressDisplay; the lambdas here
     // are pure adapters between IKangarooBackend's surface and the pool
     // client / progress widget.
-    ::collider::ui::PoolProgressDisplay progress;
-    ::collider::kangaroo::BackendCallbacks cb;
+    ::starminer::ui::PoolProgressDisplay progress;
+    ::starminer::kangaroo::BackendCallbacks cb;
 
     // v1.5: NVML thermal monitoring and telemetry
-#ifdef COLLIDER_USE_CUDA
-    ::collider::platform::NvmlWrapper nvml;
+#ifdef STARMINER_USE_CUDA
+    ::starminer::platform::NvmlWrapper nvml;
     bool nvml_ok = nvml.init();
     if (nvml_ok) {
         std::cout << "[*] NVML initialized - GPU thermal monitoring active\n";
@@ -300,7 +300,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         pool_manager.submit_dp(x_be, d_be, type, dp_bits);
     };
     cb.on_progress = [&progress, &pool_manager,
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
                       &nvml,
 #endif
                       nvml_ok, &last_telemetry_time,
@@ -308,7 +308,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                       &work, &args](double ops_per_sec,
                                     uint64_t local_dps) -> bool {
         if (g_shutdown.load()) return false;
-        const ::collider::pool::PoolStats ps = pool_manager.get_stats();
+        const ::starminer::pool::PoolStats ps = pool_manager.get_stats();
         progress.tick(ops_per_sec,
                       local_dps,
                       pool_manager.get_submitted_count(),
@@ -327,7 +327,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         }
 
         // v1.5: periodic telemetry upload
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
         if (nvml_ok) {
             auto now = std::chrono::steady_clock::now();
             if (now - last_telemetry_time >= telemetry_interval) {
@@ -358,7 +358,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         pool_manager.report_solution(key);
     };
     cb.should_continue = [&pool_manager
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
                           , &nvml
 #endif
                           , nvml_ok]() {
@@ -368,12 +368,12 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
             return false;
         }
         // v1.5: thermal protection
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
         if (nvml_ok) {
             bool overheat = nvml.check_thermal_protection(
                 75,  // warn threshold
                 85,  // critical threshold
-                [](const ::collider::platform::GpuTelemetry& gt) {
+                [](const ::starminer::platform::GpuTelemetry& gt) {
                     std::cerr << "[NVML] WARNING: GPU " << gt.index << " (" << gt.name
                               << ") temp " << gt.temperature_c << "C\n";
                 });
@@ -403,4 +403,4 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
     return 0;
 }
 
-}  // namespace collider::runtime
+}  // namespace starminer::runtime

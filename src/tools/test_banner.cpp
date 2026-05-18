@@ -10,7 +10,7 @@
 #include "../ui/banner.hpp"
 
 int main(int argc, char* argv[]) {
-    using namespace collider::ui;
+    using namespace starminer::ui;
 
     BannerConfig config;
     config.enable_animation = true;

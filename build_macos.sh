@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build collider-pro on macOS (Apple Silicon / Metal)
+# Build starminer-pro on macOS (Apple Silicon / Metal)
 set -e
 
 cd "$(dirname "$0")"
@@ -10,20 +10,20 @@ git pull origin develop
 echo "=== Configuring CMake (Metal) ==="
 cmake -B build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCOLLIDER_EDITION_PRO=ON \
-  -DCOLLIDER_USE_METAL=ON \
-  -DCOLLIDER_USE_CUDA=OFF \
-  -DCOLLIDER_BUILD_TESTS=OFF \
-  -DCOLLIDER_BUILD_BENCHMARKS=OFF \
-  -DCOLLIDER_BUILD_TOOLS=OFF
+  -DSTARMINER_EDITION_PRO=ON \
+  -DSTARMINER_USE_METAL=ON \
+  -DSTARMINER_USE_CUDA=OFF \
+  -DSTARMINER_BUILD_TESTS=OFF \
+  -DSTARMINER_BUILD_BENCHMARKS=OFF \
+  -DSTARMINER_BUILD_TOOLS=OFF
 
 echo "=== Building ==="
 cmake --build build --parallel $(sysctl -n hw.ncpu)
 
-if [ -f build/collider_pro ]; then
+if [ -f build/starminer_pro ]; then
   echo "=== SUCCESS ==="
-  ls -lh build/collider_pro
-  file build/collider_pro
+  ls -lh build/starminer_pro
+  file build/starminer_pro
 else
   echo "=== FAILED ==="
   exit 1

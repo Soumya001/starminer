@@ -36,7 +36,7 @@
 #include <cstring>
 #include <string>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -371,4 +371,4 @@ inline void cpu_derive_address_fingerprint(
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

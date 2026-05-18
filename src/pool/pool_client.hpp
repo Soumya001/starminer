@@ -11,7 +11,7 @@
 #include <atomic>
 #include <map>
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 // Distinguished Point data structure
@@ -111,4 +111,4 @@ constexpr const char* POOL_TYPE_HTTP = "http";            // HTTP/JSON pool (cus
 constexpr const char* POOL_TYPE_WS = "websocket";         // Not implemented
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

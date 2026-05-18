@@ -14,11 +14,11 @@
  * (skipping ANSI escape codes) and pads or truncates as needed.
  *
  * Usage:
- *   collider::ui::box::top(std::cout);
- *   collider::ui::box::centered(std::cout, "PUZZLE SOLVED!", ANSI_GREEN);
- *   collider::ui::box::sep(std::cout);
- *   collider::ui::box::kv(std::cout, "Private Key", "0x2832...", ANSI_YELLOW);
- *   collider::ui::box::bottom(std::cout);
+ *   starminer::ui::box::top(std::cout);
+ *   starminer::ui::box::centered(std::cout, "PUZZLE SOLVED!", ANSI_GREEN);
+ *   starminer::ui::box::sep(std::cout);
+ *   starminer::ui::box::kv(std::cout, "Private Key", "0x2832...", ANSI_YELLOW);
+ *   starminer::ui::box::bottom(std::cout);
  */
 
 #pragma once
@@ -27,7 +27,7 @@
 #include <string>
 #include <string_view>
 
-namespace collider {
+namespace starminer {
 namespace ui {
 namespace box {
 
@@ -140,4 +140,4 @@ inline void line(std::ostream& os,
 
 }  // namespace box
 }  // namespace ui
-}  // namespace collider
+}  // namespace starminer

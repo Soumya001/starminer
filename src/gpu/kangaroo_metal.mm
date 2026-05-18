@@ -17,7 +17,7 @@
 #include <cstring>
 #include <sstream>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // Pimpl payload. All `id<MTL...>` fields are strong references owned by
@@ -277,9 +277,9 @@ bool KangarooMetalSolver::set_jump_table(const std::array<KangarooSeed, kJumpTab
     uint64_t* jy = (uint64_t*)[impl_->b_jump_y contents];
     uint64_t* jd = (uint64_t*)[impl_->b_jump_d contents];
     for (size_t i = 0; i < kJumpTableSize; ++i) {
-        ::collider::be32_to_limbs_le(jumps[i].x.data(), jx + i * 4);
-        ::collider::be32_to_limbs_le(jumps[i].y.data(), jy + i * 4);
-        ::collider::be32_to_limbs_le(jumps[i].d.data(), jd + i * 4);
+        ::starminer::be32_to_limbs_le(jumps[i].x.data(), jx + i * 4);
+        ::starminer::be32_to_limbs_le(jumps[i].y.data(), jy + i * 4);
+        ::starminer::be32_to_limbs_le(jumps[i].d.data(), jd + i * 4);
     }
     return true;
 }
@@ -297,9 +297,9 @@ bool KangarooMetalSolver::seed_kangaroos(const std::vector<KangarooSeed>& seeds)
     uint64_t* d = (uint64_t*)[impl_->b_d contents];
     uint8_t*  t = (uint8_t*) [impl_->b_type contents];
     for (size_t i = 0; i < seeds.size(); ++i) {
-        ::collider::be32_to_limbs_le(seeds[i].x.data(), x + i * 4);
-        ::collider::be32_to_limbs_le(seeds[i].y.data(), y + i * 4);
-        ::collider::be32_to_limbs_le(seeds[i].d.data(), d + i * 4);
+        ::starminer::be32_to_limbs_le(seeds[i].x.data(), x + i * 4);
+        ::starminer::be32_to_limbs_le(seeds[i].y.data(), y + i * 4);
+        ::starminer::be32_to_limbs_le(seeds[i].d.data(), d + i * 4);
         // Seeds are AFFINE points: Jacobian Z = 1 (1 in LE-by-limb is
         // (1, 0, 0, 0)). The kernel updates Z as the walk progresses.
         z[i * 4 + 0] = 1;
@@ -322,9 +322,9 @@ bool KangarooMetalSolver::replace_seed(uint32_t index, const KangarooSeed& seed)
     uint64_t* z = (uint64_t*)[impl_->b_z contents];
     uint64_t* d = (uint64_t*)[impl_->b_d contents];
     uint8_t*  t = (uint8_t*) [impl_->b_type contents];
-    ::collider::be32_to_limbs_le(seed.x.data(), x + index * 4);
-    ::collider::be32_to_limbs_le(seed.y.data(), y + index * 4);
-    ::collider::be32_to_limbs_le(seed.d.data(), d + index * 4);
+    ::starminer::be32_to_limbs_le(seed.x.data(), x + index * 4);
+    ::starminer::be32_to_limbs_le(seed.y.data(), y + index * 4);
+    ::starminer::be32_to_limbs_le(seed.d.data(), d + index * 4);
     // Reset Z = 1 so the freshly-reseeded kangaroo enters the kernel
     // in affine form. Without this, a previously-walked kangaroo's
     // stale non-1 Z would corrupt the (X, Y) interpretation.
@@ -447,4 +447,4 @@ std::vector<KangarooMetalDP> KangarooMetalSolver::step_round()
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

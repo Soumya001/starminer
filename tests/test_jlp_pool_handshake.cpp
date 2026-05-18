@@ -22,7 +22,7 @@
  *     valid worker registration on the pool's side.
  *
  * Skip semantics (return 77):
- *   - Environment variable COLLIDER_SKIP_NETWORK_TESTS is set (any value).
+ *   - Environment variable STARMINER_SKIP_NETWORK_TESTS is set (any value).
  *   - TCP connect to collisionprotocol.com:17403 fails or DNS resolution
  *     fails inside the 5-second connect deadline. Network tests must not
  *     break offline / firewalled CI machines.
@@ -236,8 +236,8 @@ int main() {
     // -----------------------------------------------------------------------
     // Skip-by-environment-variable check.
     // -----------------------------------------------------------------------
-    if (const char* skip = std::getenv("COLLIDER_SKIP_NETWORK_TESTS"); skip && skip[0] != '\0') {
-        printf("Skipping: COLLIDER_SKIP_NETWORK_TESTS is set (=\"%s\")\n", skip);
+    if (const char* skip = std::getenv("STARMINER_SKIP_NETWORK_TESTS"); skip && skip[0] != '\0') {
+        printf("Skipping: STARMINER_SKIP_NETWORK_TESTS is set (=\"%s\")\n", skip);
         return 77;
     }
 

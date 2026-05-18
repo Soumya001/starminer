@@ -27,7 +27,7 @@
 #include <atomic>
 #include <chrono>
 
-namespace collider {
+namespace starminer {
 
 /**
  * UTXO entry with balance information.
@@ -509,7 +509,7 @@ private:
 class HitHandler {
 public:
     struct Config {
-        std::string potfile_path = "collider.pot";
+        std::string potfile_path = "starminer.pot";
         std::string hits_log_path = "hits.log";
         bool console_output = true;
         bool json_output = false;
@@ -555,7 +555,7 @@ public:
                       << "Private Key: ";
 
             char pk_hex[65];
-            ::collider::hex_encode_lower(hit.private_key, 32, pk_hex);
+            ::starminer::hex_encode_lower(hit.private_key, 32, pk_hex);
             hits_log_ << pk_hex;
 
             hits_log_ << "\n"
@@ -602,4 +602,4 @@ private:
     std::atomic<uint64_t> total_satoshis_{0};
 };
 
-}  // namespace collider
+}  // namespace starminer

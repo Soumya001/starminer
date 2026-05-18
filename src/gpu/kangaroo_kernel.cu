@@ -38,18 +38,18 @@
 #include <memory>
 
 // Shared jump-table size (must come BEFORE namespace block: the
-// header opens its own collider::gpu, which would nest if pulled in
+// header opens its own starminer::gpu, which would nest if pulled in
 // inside an already-open namespace).
 #include "kangaroo_jump_table_size.hpp"
 
 // File-scope MSL boundary check: the Metal kernel hard-codes 32 via
 // #define KANGAROO_JUMP_TABLE_SIZE; if the host-side constant is ever
 // retuned, the MSL kernel needs the same change in lockstep.
-static_assert(::collider::gpu::kKangarooJumpTableSize == 32u,
+static_assert(::starminer::gpu::kKangarooJumpTableSize == 32u,
               "kangaroo.metal hard-codes KANGAROO_JUMP_TABLE_SIZE 32; "
               "update the .metal kernel together with this constant.");
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // ============================================================================
@@ -68,14 +68,14 @@ __device__ const uint64_t SECP256K1_P[4] = {
 // Number of jump table entries. Sourced from the shared header so the
 // CUDA host path agrees with the Metal host path (kangaroo_metal.hpp
 // pulls from the same kangaroo_jump_table_size.hpp). The include
-// happens above the `namespace collider { namespace gpu {` block at
-// the top of this file (an include here would nest collider::gpu
+// happens above the `namespace starminer { namespace gpu {` block at
+// the top of this file (an include here would nest starminer::gpu
 // inside itself); see the static_assert at file scope below for the
 // MSL boundary check. Kept as a #define because the kernel uses it
 // in shared-memory array sizing and that requires a compile-time
 // integer constant expression visible without namespace qualification
 // at __device__ scope.
-#define NUM_JUMPS  ((int)::collider::gpu::kKangarooJumpTableSize)
+#define NUM_JUMPS  ((int)::starminer::gpu::kKangarooJumpTableSize)
 #define JUMP_MASK  (NUM_JUMPS - 1)
 
 // DP check interval: batch convert to affine every N steps for correct DP detection
@@ -1849,7 +1849,7 @@ private:
 };
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer
 
 // ============================================================================
 // GPUKangarooManager Implementation (must be in same .cu file as kernels)
@@ -1877,7 +1877,7 @@ inline int clz64_local(uint64_t x) {
 #define CLZ64_LOCAL(x) __builtin_clzll(x)
 #endif
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 /**
@@ -3241,4 +3241,4 @@ GPUKangarooResult MultiGPUKangarooManager::solve() {
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

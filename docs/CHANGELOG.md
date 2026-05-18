@@ -78,7 +78,7 @@ Major release driven by a multi-track adversarial review on the v1.3.0-dev branc
 ### Added
 
 - GPU correctness test suite (`test_secp256k1_inv.cu`, `test_ec_table_consistency.cu`, `test_gpu_hash160.cu`, `test_cli_parser.cpp`). CUDA tests skip cleanly with code 77 on hosts without a GPU.
-- `COLLIDER_PRO` build option. Default OFF (Free).
+- `STARMINER_PRO` build option. Default OFF (Free).
 - Per-batch pinned host buffers in `MultiGPUBrainWallet::process_batch` **(PRO VERSION ONLY)**.
 - `MEGA_FUSED_MAX_ITEMS_PER_LAUNCH = UINT32_MAX` cap **(PRO VERSION ONLY)**.
 

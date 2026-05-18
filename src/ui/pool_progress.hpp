@@ -10,12 +10,12 @@
  *     contribute more, and fall when more workers come online
  *     totals;
  *   - rate formatting that auto-picks units (KKeys / MKeys / GKeys /
- *     TKeys) based on magnitude, via collider::ui::format_rate;
+ *     TKeys) based on magnitude, via starminer::ui::format_rate;
  *   - the colored single-line layout, identical across backends, with
  *     ANSI escapes suppressed when stdout is not a TTY or NO_COLOR is
  *     set.
  *
- * Caller passes primitive ints (not collider::pool::PoolStats) so this
+ * Caller passes primitive ints (not starminer::pool::PoolStats) so this
  * UI header stays free of any pool-module dependency.
  */
 
@@ -31,15 +31,15 @@
 
 #ifdef _WIN32
 #include <io.h>
-#define COLLIDER_FILENO  _fileno
-#define COLLIDER_ISATTY  _isatty
+#define STARMINER_FILENO  _fileno
+#define STARMINER_ISATTY  _isatty
 #else
 #include <unistd.h>
-#define COLLIDER_FILENO  fileno
-#define COLLIDER_ISATTY  isatty
+#define STARMINER_FILENO  fileno
+#define STARMINER_ISATTY  isatty
 #endif
 
-namespace collider {
+namespace starminer {
 namespace ui {
 
 class PoolProgressDisplay {
@@ -51,7 +51,7 @@ public:
         // (logs, CI), suppress the carriage-return repaint too so each
         // sample lands as its own line in the captured stream.
         const bool no_color = (std::getenv("NO_COLOR") != nullptr);
-        const bool is_tty   = COLLIDER_ISATTY(COLLIDER_FILENO(stdout)) != 0;
+        const bool is_tty   = STARMINER_ISATTY(STARMINER_FILENO(stdout)) != 0;
         use_color_  = !no_color && is_tty;
         use_repaint_ = is_tty;
     }
@@ -124,7 +124,7 @@ private:
 };
 
 }  // namespace ui
-}  // namespace collider
+}  // namespace starminer
 
-#undef COLLIDER_FILENO
-#undef COLLIDER_ISATTY
+#undef STARMINER_FILENO
+#undef STARMINER_ISATTY

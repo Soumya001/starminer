@@ -54,7 +54,7 @@
 #include "runtime/puzzle_solver.hpp"
 #include "runtime/runtime_globals.hpp"
 #include "ui/interactive_ui.hpp"
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
 #include "runtime/brain_wallet_runner.hpp"
 #include "runtime/license_gate.hpp"
 #include "ui/brainwallet_setup.hpp"
@@ -77,7 +77,7 @@
 //                                          validate_startup_license   (6 PRO)
 // ============================================================================
 
-using namespace collider;
+using namespace starminer;
 
 // Global shutdown flag set ONLY by signal_handler (must be async-signal-
 // safe per POSIX signal-safety(7)). All logging/printing of the shutdown
@@ -171,14 +171,14 @@ int main(int argc, char* argv[]) {
     // Parse arguments. CLIFlags carries explicit per-arg "was set" bits,
     // populated inside parse_args at the moment argv supplied each value
     // (track-e refactor, Wave 5).
-    collider::CLIFlags cli_flags;
+    starminer::CLIFlags cli_flags;
     Arguments args = parse_args(argc, argv, &cli_flags);
 
     // Load config file (config.yml in cwd or ~/.starminer/config.yml).
     // Command-line arguments take precedence over config file.
-    collider::AppConfig app_config;
+    starminer::AppConfig app_config;
     if (app_config.load(args.config_file)) {
-        collider::apply_config_to_args(args, app_config, cli_flags);
+        starminer::apply_config_to_args(args, app_config, cli_flags);
     }
 
     if (args.help) {
@@ -186,7 +186,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-#ifndef COLLIDER_PRO
+#ifndef STARMINER_PRO
     // Free build: brain-wallet code is not compiled in. Reject early
     // with a pointer to the Pro upgrade. Both --brainwallet (CLI) and
     // brainwallet_enabled (config.yml) end up setting brainwallet_mode.
@@ -197,18 +197,18 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
     // --activate KEY: save and validate a new license key, then exit.
     {
         int activate_exit = 0;
-        if (collider::runtime::process_activate_flag(argc, argv, activate_exit)) {
+        if (starminer::runtime::process_activate_flag(argc, argv, activate_exit)) {
             return activate_exit;
         }
     }
     // Startup license check (cache-backed, 24h).
     {
         int license_exit = 0;
-        if (!collider::runtime::validate_startup_license(license_exit)) {
+        if (!starminer::runtime::validate_startup_license(license_exit)) {
             return license_exit;
         }
     }
@@ -218,7 +218,7 @@ int main(int argc, char* argv[]) {
     // free build rejected --brainwallet-setup at parse time via the
     // brainwallet_mode early-exit above when applicable).
     if (args.brainwallet_setup) {
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
         ui::enable_windows_ansi();
         ui::BrainwalletSetup::run_wizard();
         return 0;
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
 #endif
     }
 
-    if (args.debug) std::cout << "[DEBUG] Starting collider...\n" << std::flush;
+    if (args.debug) std::cout << "[DEBUG] Starting starminer...\n" << std::flush;
 
     // Setup signal handler.
     signal(SIGINT, signal_handler);
@@ -269,13 +269,13 @@ int main(int argc, char* argv[]) {
     // ---- Mode dispatch -----------------------------------------------------
     // POOL MODE first (its banner/header comes from the runtime driver).
     if (args.pool_mode) {
-        return collider::runtime::run_pool_mode(args, gpu_info);
+        return starminer::runtime::run_pool_mode(args, gpu_info);
     }
 
     // BRAINWALLET MODE / --puzzle-only-v2 (Pro-only).
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
     if (args.puzzle_only_v2 || args.brainwallet_mode) {
-        return collider::runtime::run_brain_wallet_mode(args);
+        return starminer::runtime::run_brain_wallet_mode(args);
     }
 #endif
 
@@ -284,12 +284,12 @@ int main(int argc, char* argv[]) {
 
     // BENCHMARK MODE.
     if (args.benchmark) {
-        return collider::runtime::run_benchmark(args, gpu_info);
+        return starminer::runtime::run_benchmark(args, gpu_info);
     }
 
     // PUZZLE MODE (default).
     if (args.puzzle_mode) {
-        return collider::runtime::run_puzzle_mode(args, gpu_info);
+        return starminer::runtime::run_puzzle_mode(args, gpu_info);
     }
 
     // No mode resolved (shouldn't be reachable after auto_enable).

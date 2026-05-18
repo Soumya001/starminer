@@ -31,7 +31,7 @@
 #define XXH_INLINE_ALL
 #include "xxhash.h"
 
-namespace collider {
+namespace starminer {
 
 /**
  * Lock-free Bloom filter for deduplication.
@@ -260,4 +260,4 @@ private:
     std::unordered_set<std::string> local_set_;
 };
 
-}  // namespace collider
+}  // namespace starminer

@@ -12,7 +12,7 @@
 
 #include "platform.hpp"
 
-#if defined(COLLIDER_BACKEND_CPU)
+#if defined(STARMINER_BACKEND_CPU)
 
 #include <thread>
 #include <mutex>
@@ -29,7 +29,7 @@
 #include <unistd.h>
 #endif
 
-namespace collider {
+namespace starminer {
 namespace platform {
 
 /**
@@ -523,6 +523,6 @@ IPlatform& get_platform() {
 }
 
 }  // namespace platform
-}  // namespace collider
+}  // namespace starminer
 
-#endif  // COLLIDER_BACKEND_CPU
+#endif  // STARMINER_BACKEND_CPU

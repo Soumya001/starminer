@@ -12,7 +12,7 @@
 #include <set>
 #include <string>
 
-using namespace collider;
+using namespace starminer;
 
 void test_basic_push_pop() {
     CandidatePriorityQueue queue(1000, 10000);

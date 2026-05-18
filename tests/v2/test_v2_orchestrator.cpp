@@ -20,7 +20,7 @@
 #include <string>
 #include <system_error>
 
-using namespace collider::gpu::v2;
+using namespace starminer::gpu::v2;
 
 static int failures = 0;
 #define CHECK(cond, msg) do {                                       \

@@ -25,7 +25,7 @@
 #include "interactive.hpp"
 #include "../generators/pcfg.hpp"
 
-namespace collider {
+namespace starminer {
 namespace ui {
 
 namespace fs = std::filesystem;
@@ -638,4 +638,4 @@ public:
 };
 
 } // namespace ui
-} // namespace collider
+} // namespace starminer

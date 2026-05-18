@@ -16,7 +16,7 @@
 #include "brain_wallet_v2.hpp"
 #include <cuda_runtime.h>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -88,4 +88,4 @@ static __device__ __forceinline__ void v2_check_priv_against_puzzles(
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

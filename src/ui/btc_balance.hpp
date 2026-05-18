@@ -6,7 +6,7 @@
  * someone already claimed the 6.6 BTC) or is still sitting on the
  * address (likely a reorg / partial-claim case).
  *
- * Compile-time gated on COLLIDER_HAVE_CURL: if libcurl wasn't found
+ * Compile-time gated on STARMINER_HAVE_CURL: if libcurl wasn't found
  * at configure time, fetch_balance_btc() unconditionally returns
  * nullopt and the banner falls back to the bundled reward field.
  *
@@ -21,7 +21,7 @@
 #include <string>
 #include <string_view>
 
-namespace collider {
+namespace starminer {
 namespace ui {
 
 // Returns the unspent balance (BTC) at `address` if reachable, else
@@ -35,4 +35,4 @@ std::optional<double> fetch_balance_btc(std::string_view address);
 std::string format_balance(std::optional<double> balance);
 
 }  // namespace ui
-}  // namespace collider
+}  // namespace starminer

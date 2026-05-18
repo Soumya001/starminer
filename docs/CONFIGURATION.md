@@ -28,10 +28,10 @@ StarMiner searches for `config.yml` in this order:
 
 1. `./config.yml`
 2. `./config.yaml`
-3. `~/.collider/config.yml` (Linux / macOS)
-4. `~/.collider/config.yaml`
-5. `%USERPROFILE%\.collider\config.yml` (Windows)
-6. `%USERPROFILE%\.collider\config.yaml`
+3. `~/.starminer/config.yml` (Linux / macOS)
+4. `~/.starminer/config.yaml`
+5. `%USERPROFILE%\.starminer\config.yml` (Windows)
+6. `%USERPROFILE%\.starminer\config.yaml`
 
 Override with `--config <path>` (also `-c`).
 

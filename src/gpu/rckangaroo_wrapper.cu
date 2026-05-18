@@ -60,7 +60,7 @@ static const uint32_t SHA256_K[64] = {
 // implementation below; RIPEMD's left-rotate is unified in
 // ripemd160_device.cuh in a follow-up task.
 inline uint32_t rotr32(uint32_t x, int n) {
-    return collider::gpu::sha256::rotr(x, n);
+    return starminer::gpu::sha256::rotr(x, n);
 }
 inline uint32_t rotl32(uint32_t x, int n) { return (x << n) | (x >> (32 - n)); }
 
@@ -338,9 +338,9 @@ struct BloomFilter {
 
 static BloomFilter s_bloom_filter;
 static std::atomic<uint64_t> s_bloom_checks{0};
-static std::vector<collider::gpu::BloomHit> s_bloom_hits;
+static std::vector<starminer::gpu::BloomHit> s_bloom_hits;
 static std::mutex s_bloom_hits_mutex;
-static std::function<void(const collider::gpu::BloomHit&)> s_bloom_hit_callback;
+static std::function<void(const starminer::gpu::BloomHit&)> s_bloom_hit_callback;
 static std::function<void(const uint8_t*, const uint8_t*, uint8_t)> s_dp_callback;
 
 // ============================================================================
@@ -398,7 +398,7 @@ static bool s_GenMode = false;
 // Active-instance tracker. NULL when no RCKangarooManager exists; non-
 // null only between construct/destroy of the single permitted instance.
 // Stored as void* to dodge forward-declaration namespace resolution
-// (RCKangarooManager lives in collider::gpu, declared further below);
+// (RCKangarooManager lives in starminer::gpu, declared further below);
 // we only need atomic compare-exchange semantics, not pointer
 // dereferences.
 static std::atomic<void*> g_active_rckangaroo{nullptr};
@@ -424,7 +424,7 @@ void AddPointsToList(u32* data, int pnt_cnt, u64 ops_cnt) {
 // Namespace for StarMiner integration
 // ============================================================================
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // Thread procedure for GPU workers
@@ -534,7 +534,7 @@ static void check_dp_bloom(const DBRec& nrec, Ec& ec) {
     // Check bloom filter
     if (s_bloom_filter.check(h160)) {
         // Potential hit! Record it
-        collider::gpu::BloomHit hit;
+        starminer::gpu::BloomHit hit;
 
         // Compute the private key for this position
         EcInt priv_key;
@@ -552,7 +552,7 @@ static void check_dp_bloom(const DBRec& nrec, Ec& ec) {
 
         // Convert H160 to hex for logging
         char h160_hex[41];
-        ::collider::hex_encode_lower(h160, 20, h160_hex);
+        ::starminer::hex_encode_lower(h160, 20, h160_hex);
 
         std::cout << "\n[BLOOM HIT] Potential match! H160=" << h160_hex << std::endl;
 
@@ -1316,4 +1316,4 @@ bool hex_to_private_key(const std::string& hex, std::array<uint64_t, 4>& key) {
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

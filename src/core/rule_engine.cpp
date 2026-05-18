@@ -8,7 +8,7 @@
 #include <fstream>
 #include <sstream>
 
-namespace collider {
+namespace starminer {
 
 RuleSet RuleEngine::load_ruleset(const std::string& path) {
     RuleSet ruleset;
@@ -35,4 +35,4 @@ RuleSet RuleEngine::load_ruleset(const std::string& path) {
     return ruleset;
 }
 
-}  // namespace collider
+}  // namespace starminer

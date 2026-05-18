@@ -2,14 +2,14 @@
 REM ============================================================================
 REM Local FREE-build test harness.
 REM
-REM Configures, builds, and runs ctest with -DCOLLIDER_PRO=OFF in a dedicated
+REM Configures, builds, and runs ctest with  in a dedicated
 REM build directory (build-free) so it does not stomp on a Pro build sitting in
 REM build-wave1 / build-wave0. Mirrors the configure flags used by the GitHub
 REM Actions release workflow (.github/workflows/release.yml) so a green run
 REM here is the same shape as a green CI run.
 REM
 REM Expected: 15 tests pass. test_gpu_hash160 is excluded by CMake when
-REM COLLIDER_PRO=OFF because it links against the brain-wallet pipeline.
+REM STARMINER_PRO=OFF because it links against the brain-wallet pipeline.
 REM
 REM Usage:
 REM   .\test-free-build.bat            REM incremental build
@@ -24,7 +24,7 @@ set REPO_ROOT=%~dp0
 if "%REPO_ROOT:~-1%"=="\" set REPO_ROOT=%REPO_ROOT:~0,-1%
 
 echo =====================================================
-echo StarMiner FREE Build (COLLIDER_PRO=OFF)
+echo StarMiner FREE Build (STARMINER_PRO=OFF)
 echo Build dir: %REPO_ROOT%\%BUILD_DIR%
 echo =====================================================
 echo.
@@ -97,8 +97,8 @@ echo [*] Configuring (CUDA, NATIVE arch)...
 cmake -B "%REPO_ROOT%\%BUILD_DIR%" -S "%REPO_ROOT%" -G Ninja ^
     -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
     -DCMAKE_CUDA_ARCHITECTURES=native ^
-    -DCOLLIDER_PRO=OFF ^
-    -DCOLLIDER_BUILD_TESTS=ON ^
+     ^
+    -DSTARMINER_BUILD_TESTS=ON ^
     "-DCMAKE_TOOLCHAIN_FILE=!VCPKG_ROOT!\scripts\buildsystems\vcpkg.cmake"
 if errorlevel 1 (
     echo [!] CMake configure FAILED

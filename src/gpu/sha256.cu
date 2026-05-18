@@ -10,16 +10,16 @@
 
 #include "hash_rounds.cuh"
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
-using ::collider::gpu::sha256::rotr;
-using ::collider::gpu::sha256::ch;
-using ::collider::gpu::sha256::maj;
-using ::collider::gpu::sha256::sigma0;
-using ::collider::gpu::sha256::sigma1;
-using ::collider::gpu::sha256::gamma0;
-using ::collider::gpu::sha256::gamma1;
+using ::starminer::gpu::sha256::rotr;
+using ::starminer::gpu::sha256::ch;
+using ::starminer::gpu::sha256::maj;
+using ::starminer::gpu::sha256::sigma0;
+using ::starminer::gpu::sha256::sigma1;
+using ::starminer::gpu::sha256::gamma0;
+using ::starminer::gpu::sha256::gamma1;
 
 // SHA256 constants
 static __constant__ uint32_t K[64] = {
@@ -424,4 +424,4 @@ cudaError_t sha256_pubkey65_batch(
 }  // extern "C"
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

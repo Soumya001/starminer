@@ -16,7 +16,7 @@
 #include <array>
 #include <string>
 
-namespace collider {
+namespace starminer {
 namespace cpu {
 
 // ============================================================================
@@ -931,4 +931,4 @@ inline void key_to_bytes(uint8_t* out, uint64_t lo, uint64_t hi = 0) {
 }
 
 }  // namespace cpu
-}  // namespace collider
+}  // namespace starminer

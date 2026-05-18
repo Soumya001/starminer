@@ -13,12 +13,12 @@
 
 #include "platform.hpp"
 
-#if defined(COLLIDER_BACKEND_CUDA)
+#if defined(STARMINER_BACKEND_CUDA)
 
 #include <cuda_runtime.h>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace platform {
 
 /**
@@ -465,6 +465,6 @@ IPlatform& get_platform() {
 }
 
 }  // namespace platform
-}  // namespace collider
+}  // namespace starminer
 
-#endif  // COLLIDER_BACKEND_CUDA
+#endif  // STARMINER_BACKEND_CUDA

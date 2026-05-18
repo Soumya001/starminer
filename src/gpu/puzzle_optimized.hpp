@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 #include <cuda_runtime.h>
 
 extern "C" {
@@ -67,4 +67,4 @@ cudaError_t puzzle_search_batch_optimized(
 
 }  // extern "C"
 
-#endif  // COLLIDER_USE_CUDA
+#endif  // STARMINER_USE_CUDA

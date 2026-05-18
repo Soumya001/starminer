@@ -34,11 +34,11 @@
 #include <sstream>
 #include <string>
 
-using collider::pool::PoolConfig;
-using collider::pool::parse_pool_url;
-using collider::pool::DistinguishedPoint;
-using collider::pool::PoolStats;
-using collider::pool::POOL_TYPE_JLP;
+using starminer::pool::PoolConfig;
+using starminer::pool::parse_pool_url;
+using starminer::pool::DistinguishedPoint;
+using starminer::pool::PoolStats;
+using starminer::pool::POOL_TYPE_JLP;
 
 namespace {
 

@@ -14,7 +14,7 @@
 #include "../core/puzzle_config.hpp"
 #include "../core/crypto_cpu.hpp"
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 /**
@@ -28,7 +28,7 @@ struct GPUKangarooResult {
     double elapsed_seconds;
 };
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 
 /**
  * High-level GPU Kangaroo Solver (CUDA)
@@ -101,7 +101,7 @@ private:
     Impl* impl_;
 };
 
-#elif defined(COLLIDER_USE_METAL)
+#elif defined(STARMINER_USE_METAL)
 
 /**
  * GPU Kangaroo Solver (Metal, macOS).
@@ -119,7 +119,7 @@ private:
  * MultiGPU surface that puzzle_solver.cpp actually calls.
  *
  * Implementation lives in src/gpu/metal_multi_gpu_kangaroo.mm and
- * is built when APPLE && COLLIDER_USE_METAL.
+ * is built when APPLE && STARMINER_USE_METAL.
  */
 class GPUKangarooManager {
 public:
@@ -225,7 +225,7 @@ public:
     GPUKangarooResult solve() { return GPUKangarooResult{false, {}, 0, 0, 0}; }
 };
 
-#endif  // COLLIDER_USE_CUDA / COLLIDER_USE_METAL / stub
+#endif  // STARMINER_USE_CUDA / STARMINER_USE_METAL / stub
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

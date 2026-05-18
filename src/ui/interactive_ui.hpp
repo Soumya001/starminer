@@ -9,14 +9,14 @@
  *
  * `run_interactive_mode` mutates a base Arguments and returns the user's
  * selection; main() then dispatches to the matching mode runner. The
- * brain wallet submenu is gated on COLLIDER_PRO inside the .cpp; this
+ * brain wallet submenu is gated on STARMINER_PRO inside the .cpp; this
  * header is identical in Free + Pro builds.
  */
 #pragma once
 
 #include "cli/cli_parser.hpp"  // Arguments
 
-namespace collider::ui {
+namespace starminer::ui {
 
 /**
  * Enable ANSI escape codes on Windows console.
@@ -30,7 +30,7 @@ void enable_windows_ansi();
  */
 Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys);
 
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
 /**
  * Run brain wallet interactive submenu (wordlist setup, bloom filter
  * detection / build, resume prompt). PRO-only.
@@ -45,4 +45,4 @@ Arguments run_brainwallet_interactive(Arguments base_args);
  */
 Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys);
 
-}  // namespace collider::ui
+}  // namespace starminer::ui

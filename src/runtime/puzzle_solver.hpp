@@ -34,7 +34,7 @@
 #include "cli/cli_parser.hpp"           // Arguments
 #include "runtime/runtime_globals.hpp"  // GPUDetectionResult
 
-namespace collider::runtime {
+namespace starminer::runtime {
 
 /**
  * Run the GPU performance benchmark (--benchmark). In the Pro build this
@@ -58,4 +58,4 @@ int run_puzzle_mode(const Arguments& args, const GPUDetectionResult& gpu_info);
  */
 void analyze_solved_puzzles();
 
-}  // namespace collider::runtime
+}  // namespace starminer::runtime

@@ -40,7 +40,7 @@
 #include <unistd.h>
 #endif
 
-namespace collider {
+namespace starminer {
 
 /**
  * Brain wallet search state - for resuming passphrase scanning.
@@ -517,4 +517,4 @@ public:
     }
 };
 
-}  // namespace collider
+}  // namespace starminer

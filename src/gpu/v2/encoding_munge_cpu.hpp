@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace encmunge {
@@ -208,4 +208,4 @@ inline bool munge(Encoding enc, const uint8_t* in, size_t in_len,
 }  // namespace encmunge
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

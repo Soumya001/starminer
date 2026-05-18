@@ -5,7 +5,7 @@
  * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor
  * (commit 5/6); no behavior changes. Available in BOTH Free and Pro
  * builds. The Pro-only branches inside the benchmark and puzzle paths
- * remain gated by #ifdef COLLIDER_PRO.
+ * remain gated by #ifdef STARMINER_PRO.
  */
 #include "runtime/puzzle_solver.hpp"
 
@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
 #include <openssl/sha.h>
 #endif
 
@@ -59,11 +59,11 @@
 #include <CommonCrypto/CommonDigest.h>
 #endif
 
-#if defined(__APPLE__) && defined(COLLIDER_USE_METAL)
+#if defined(__APPLE__) && defined(STARMINER_USE_METAL)
 #include "gpu/sha256_metal_bench.hpp"
 #endif
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 #include <cuda_runtime.h>
 // Forward decl from src/gpu/sha256.cu (no header for that one yet).
 extern "C" cudaError_t sha256_batch(
@@ -86,10 +86,10 @@ extern "C" cudaError_t sha256_batch(
 #include "core/types.hpp"
 #include "gpu/kangaroo_solver_gpu.hpp"
 #include "gpu/puzzle_gpu.hpp"
-#ifdef COLLIDER_USE_RCKANGAROO
+#ifdef STARMINER_USE_RCKANGAROO
 #include "gpu/rckangaroo_wrapper.hpp"
 #endif
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
 #include "gpu/brain_wallet_gpu.hpp"
 #endif
 #include "runtime/runtime_globals.hpp"
@@ -101,13 +101,13 @@ extern "C" cudaError_t sha256_batch(
 // File-scope using directives that mirror main.cpp's behavior so the
 // extracted code resolves the same names. The puzzle-mode body relies on
 // unqualified PuzzleInfo, PuzzleDatabase, UInt256, KangarooSolver, gpu::,
-// cpu::, ui::, Logger, etc., which all live in namespace collider.
-using namespace collider;
+// cpu::, ui::, Logger, etc., which all live in namespace starminer.
+using namespace starminer;
 
-// Pull collider::ui::format_rate into the global namespace exactly the
+// Pull starminer::ui::format_rate into the global namespace exactly the
 // way main.cpp did. The kangaroo / brain-wallet status lines below call
 // `format_rate(rate)` unqualified.
-using collider::ui::format_rate;
+using starminer::ui::format_rate;
 
 // ============================================================================
 // Center-Heavy Scanning Strategy (based on solved puzzle analysis)
@@ -341,7 +341,7 @@ inline int calculate_optimal_dp_bits(int puzzle_bits, int num_kangaroos) {
 // that commit.
 //
 // They are intentionally kept at namespace global scope (not in
-// collider::runtime::) to match the existing forward-decls without
+// starminer::runtime::) to match the existing forward-decls without
 // touching three other translation units.
 
 /**
@@ -412,7 +412,7 @@ std::string normalize_path(const std::string& path) {
  */
 void check_balance_async(const std::string& address, const std::string& passphrase) {
     std::thread([address, passphrase]() {
-        using namespace collider::ui::ansi;
+        using namespace starminer::ui::ansi;
         try {
             // Build curl command to check balance
             std::string cmd;
@@ -467,7 +467,7 @@ void check_balance_async(const std::string& address, const std::string& passphra
             std::cout << "\n";
             if (balance_sats > 0) {
                 // TRUE HIT - Green celebration!
-                namespace boxui = ::collider::ui::box;
+                namespace boxui = ::starminer::ui::box;
                 boxui::top(std::cout);
                 boxui::centered(std::cout, "*** VERIFIED HIT - ADDRESS HAS BALANCE! ***",
                                 boxui::ansi::BRIGHT_GREEN);
@@ -509,7 +509,7 @@ void check_balance_async(const std::string& address, const std::string& passphra
 /**
  * Analyze a single puzzle for ROI.
  */
-PuzzleAnalysis analyze_puzzle(const collider::PuzzleInfo* puzzle, double gpu_speed_mkeys) {
+PuzzleAnalysis analyze_puzzle(const starminer::PuzzleInfo* puzzle, double gpu_speed_mkeys) {
     PuzzleAnalysis result;
     result.number = puzzle->number;
     result.bits = puzzle->bits;
@@ -558,7 +558,7 @@ PuzzleAnalysis analyze_puzzle(const collider::PuzzleInfo* puzzle, double gpu_spe
  * Analyze all unsolved puzzles and print ranking.
  */
 void print_puzzle_analysis(double gpu_speed_mkeys) {
-    auto unsolved = collider::PuzzleDatabase::get_unsolved();
+    auto unsolved = starminer::PuzzleDatabase::get_unsolved();
     std::vector<PuzzleAnalysis> analyses;
 
     for (const auto* puzzle : unsolved) {
@@ -632,7 +632,7 @@ void print_puzzle_analysis(double gpu_speed_mkeys) {
  * Returns puzzle number, or 0 if none suitable.
  */
 int get_best_puzzle(double gpu_speed_mkeys) {
-    auto unsolved = collider::PuzzleDatabase::get_unsolved();
+    auto unsolved = starminer::PuzzleDatabase::get_unsolved();
     if (unsolved.empty()) return 0;
 
     double best_roi = -1e9;
@@ -657,7 +657,7 @@ int get_best_puzzle(double gpu_speed_mkeys) {
 // PUZZLE-MODE / BENCHMARK RUNTIME ENTRY POINTS
 // =============================================================================
 
-namespace collider::runtime {
+namespace starminer::runtime {
 
 // Display the project banner with mode-aware stats. Pre-dispatch UI
 // shared by run_benchmark and run_puzzle_mode (it lived inline in
@@ -668,7 +668,7 @@ namespace collider::runtime {
 namespace {
 
 void display_dispatch_banner(Arguments& args, const GPUDetectionResult& gpu_info) {
-    ::collider::ui::BannerConfig banner_config;
+    ::starminer::ui::BannerConfig banner_config;
     banner_config.enable_animation = !args.verbose;
     banner_config.enable_color = true;
     banner_config.animation_frames = 2;
@@ -676,14 +676,14 @@ void display_dispatch_banner(Arguments& args, const GPUDetectionResult& gpu_info
 
     // Set operation mode for context-aware display
     if (args.puzzle_mode) {
-        banner_config.mode = ::collider::ui::OperationMode::PUZZLE_SEARCH;
+        banner_config.mode = ::starminer::ui::OperationMode::PUZZLE_SEARCH;
     } else if (args.benchmark) {
-        banner_config.mode = ::collider::ui::OperationMode::BENCHMARK;
+        banner_config.mode = ::starminer::ui::OperationMode::BENCHMARK;
     } else {
-        banner_config.mode = ::collider::ui::OperationMode::PUZZLE_SEARCH;  // Default
+        banner_config.mode = ::starminer::ui::OperationMode::PUZZLE_SEARCH;  // Default
     }
 
-    ::collider::ui::BannerStats banner_stats;
+    ::starminer::ui::BannerStats banner_stats;
     banner_stats.gpu_count = gpu_info.device_count;
     banner_stats.gpu_names = gpu_info.gpu_names;
     banner_stats.backend = gpu_info.backend;
@@ -762,7 +762,7 @@ void display_dispatch_banner(Arguments& args, const GPUDetectionResult& gpu_info
     }
 
     if (args.debug) std::cout << "[DEBUG] Displaying banner...\n" << std::flush;
-    ::collider::ui::display_banner(banner_stats, banner_config);
+    ::starminer::ui::display_banner(banner_stats, banner_config);
     if (args.debug) std::cout << "[DEBUG] Banner displayed.\n" << std::flush;
 }
 
@@ -802,15 +802,15 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
     Arguments args = args_in;
     display_dispatch_banner(args, gpu_info);
 
-#ifndef COLLIDER_PRO
+#ifndef STARMINER_PRO
         // Free benchmark: SHA-256 throughput on CPU + GPU/backend info.
         // Gives users a real number to validate their hardware without
         // requiring the brain-wallet pipeline (Pro-only).
         {
-            namespace boxui = ::collider::ui::box;
+            namespace boxui = ::starminer::ui::box;
             std::cout << "\n";
             boxui::top(std::cout);
-            boxui::centered(std::cout, "COLLIDER FREE BENCHMARK");
+            boxui::centered(std::cout, "STARMINER FREE BENCHMARK");
             boxui::top(std::cout);
             boxui::kv(std::cout, "Hardware",
                       gpu_info.gpu_names.empty()
@@ -848,7 +848,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
             bytes_hashed += buf.size();
             streams_done += 1;
         }
-#elif defined(COLLIDER_HAS_OPENSSL)
+#elif defined(STARMINER_HAS_OPENSSL)
         sha_backend = "OpenSSL EVP";
         while (std::chrono::steady_clock::now() - t0 < bench_dur) {
             SHA256_CTX ctx;
@@ -885,11 +885,11 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
         // GPU SHA-256 benchmark
         // -------------------------------------------------------------
         std::cout << "\n[GPU]\n";
-#if defined(__APPLE__) && defined(COLLIDER_USE_METAL)
+#if defined(__APPLE__) && defined(STARMINER_USE_METAL)
         {
             std::cout << "  Running Metal sha256_bench kernel ("
                       << args.benchmark_seconds << "s)...\n";
-            auto gpu = collider::gpu::run_sha256_metal_benchmark(
+            auto gpu = starminer::gpu::run_sha256_metal_benchmark(
                 args.benchmark_seconds);
             if (gpu.ok) {
                 std::cout << "  Backend:    Metal (" << gpu.device_name << ")\n";
@@ -900,7 +900,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
                 std::cout << "  Metal benchmark failed: " << gpu.error << "\n";
             }
         }
-#elif defined(COLLIDER_USE_CUDA)
+#elif defined(STARMINER_USE_CUDA)
         {
             // Allocate a 64-byte * batch input buffer and run sha256_batch
             // for the configured number of seconds.
@@ -962,14 +962,14 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
 
         std::cout << "\nFor sustained-rate Kangaroo throughput on this hardware,\n";
         std::cout << "connect to the live pool:\n";
-        std::cout << "  ./collider --pool jlps://collisionprotocol.com:17403 --worker bc1q...\n";
+        std::cout << "  ./starminer --pool jlps://collisionprotocol.com:17403 --worker bc1q...\n";
         std::cout << "\nFor the full brain-wallet pipeline benchmark, StarMiner Pro\n";
         std::cout << "exercises SHA256 -> EC -> hash160 -> bloom across all GPUs.\n";
         std::cout << "https://collisionprotocol.com/pro\n";
         return 0;
 #else
         {
-            namespace boxui = ::collider::ui::box;
+            namespace boxui = ::starminer::ui::box;
             std::cout << "\n";
             boxui::top(std::cout);
             boxui::centered(std::cout, "GPU PERFORMANCE BENCHMARK");
@@ -1025,7 +1025,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
         std::cout << "[*] Starting GPU benchmark...\n";
         std::cout << "    (Full SHA256 -> secp256k1 -> RIPEMD160 -> Bloom pipeline)\n\n";
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
         // Initialize GPU pipeline for benchmarking
         gpu::MultiGPUBrainWallet::Config bench_config;
         bench_config.gpu_ids = args.gpu_ids;
@@ -1060,7 +1060,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
         auto last_status = bench_start;
 
         while (std::chrono::steady_clock::now() < bench_end && !g_shutdown) {
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
             // Run actual GPU pipeline
             auto result = bench_pipeline.process_batch(test_candidates);
             total_hashed += result.processed;
@@ -1102,7 +1102,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
         double efficiency = (final_rate / expected) * 100.0;
 
         {
-            namespace boxui = ::collider::ui::box;
+            namespace boxui = ::starminer::ui::box;
             std::cout << "\n\n";
             boxui::top(std::cout);
             boxui::centered(std::cout, "BENCHMARK RESULTS");
@@ -1133,7 +1133,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
             std::cout << "\n";
         }
 
-#ifndef COLLIDER_USE_CUDA
+#ifndef STARMINER_USE_CUDA
         std::cout << "[!] Note: CUDA not available - benchmark used CPU simulation.\n";
         std::cout << "    Real GPU performance will be significantly higher.\n";
         std::cout << "    Build with CUDA enabled for actual GPU benchmarks.\n";
@@ -1146,7 +1146,7 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
 #endif
 
         return 0;
-#endif // COLLIDER_PRO (benchmark)
+#endif // STARMINER_PRO (benchmark)
 }
 
 int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info) {
@@ -1179,7 +1179,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
         config.load();
 
         // GPU batch size calibration (CUDA only)
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
         // Check if calibration is needed or requested
         bool need_calibration = args.calibrate || args.force_calibrate;
         if (!config.calibration_done && !need_calibration) {
@@ -1273,7 +1273,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
 
             // Show progress for auto-progression mode
             if (is_multi_puzzle && puzzle_idx > 0) {
-                namespace boxui = ::collider::ui::box;
+                namespace boxui = ::starminer::ui::box;
                 std::cout << "\n\n";
                 boxui::top(std::cout);
                 {
@@ -1289,9 +1289,9 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
         const PuzzleInfo* puzzle = PuzzleDatabase::get_puzzle(current_puzzle);
 
         std::cout << "\n";
-        ::collider::ui::box::top(std::cout);
-        ::collider::ui::box::centered(std::cout, "BITCOIN PUZZLE CHALLENGE (1000 BTC)");
-        ::collider::ui::box::top(std::cout);
+        ::starminer::ui::box::top(std::cout);
+        ::starminer::ui::box::centered(std::cout, "BITCOIN PUZZLE CHALLENGE (1000 BTC)");
+        ::starminer::ui::box::top(std::cout);
 
         // Determine range and target
         UInt256 range_start, range_end;
@@ -1304,7 +1304,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
             range_end = UInt256(args.puzzle_range_end);
             bits = range_end.bit_length();
             target_address = args.puzzle_target;
-            ::collider::ui::box::kv(std::cout, "Mode", "Custom Range");
+            ::starminer::ui::box::kv(std::cout, "Mode", "Custom Range");
         } else if (puzzle) {
             // Use known puzzle data
             range_start = puzzle->range_start();
@@ -1320,7 +1320,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                 puzzle_label << " (" << std::fixed << std::setprecision(1)
                              << puzzle->btc_reward << " BTC reward)";
             }
-            ::collider::ui::box::kv(std::cout, "Puzzle", puzzle_label.str());
+            ::starminer::ui::box::kv(std::cout, "Puzzle", puzzle_label.str());
         } else {
             std::cerr << "[!] Error: Unknown puzzle number: " << current_puzzle << "\n";
             std::cerr << "    Use --puzzle-start and --puzzle-end for custom ranges.\n";
@@ -1330,15 +1330,15 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
         {
             std::ostringstream bits_str;
             bits_str << bits << " (2^" << (bits - 1) << " keys in range)";
-            ::collider::ui::box::kv(std::cout, "Bits", bits_str.str());
+            ::starminer::ui::box::kv(std::cout, "Bits", bits_str.str());
         }
-        ::collider::ui::box::kv(std::cout, "Target",  target_address);
-        ::collider::ui::box::kv(std::cout, "Search",  args.puzzle_random ? "Random" : "Sequential");
-        ::collider::ui::box::kv(std::cout, "Backend", gpu_info.backend);
-        ::collider::ui::box::top(std::cout);
-        ::collider::ui::box::kv(std::cout, "Range Start", range_start.to_hex());
-        ::collider::ui::box::kv(std::cout, "Range End",   range_end.to_hex());
-        ::collider::ui::box::top(std::cout);
+        ::starminer::ui::box::kv(std::cout, "Target",  target_address);
+        ::starminer::ui::box::kv(std::cout, "Search",  args.puzzle_random ? "Random" : "Sequential");
+        ::starminer::ui::box::kv(std::cout, "Backend", gpu_info.backend);
+        ::starminer::ui::box::top(std::cout);
+        ::starminer::ui::box::kv(std::cout, "Range Start", range_start.to_hex());
+        ::starminer::ui::box::kv(std::cout, "Range End",   range_end.to_hex());
+        ::starminer::ui::box::top(std::cout);
         std::cout << "\n";
 
         // Calculate search space info
@@ -1543,7 +1543,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
             }
             std::cout << "[*] Target public key decompressed successfully\n";
 
-#ifdef COLLIDER_USE_RCKANGAROO
+#ifdef STARMINER_USE_RCKANGAROO
             // ================================================================
             // RCKangaroo - High-performance Kangaroo solver (8 GKeys/s on 4090)
             // ================================================================
@@ -1590,7 +1590,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     // free build clears args.bloom_file at config merge,
                     // so this block is a no-op there. #ifdef-guard the
                     // load as defense-in-depth.
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
                     if (!args.bloom_file.empty()) {
                         if (rc_kangaroo.load_bloom_filter(args.bloom_file)) {
                             std::cout << "[*] Bloom filter loaded - opportunistic address checking enabled\n";
@@ -1688,8 +1688,8 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                         ui::ProfessionalUI::render_kv("Private Key", "0x" + key_hex);
                         ui::ProfessionalUI::render_kv("Address", target_address);
                         ui::ProfessionalUI::render_kv("Balance",
-                            ::collider::ui::format_balance(
-                                ::collider::ui::fetch_balance_btc(target_address)));
+                            ::starminer::ui::format_balance(
+                                ::starminer::ui::fetch_balance_btc(target_address)));
                         ui::ProfessionalUI::render_kv("Algorithm", "RCKangaroo (K=" + std::to_string(rc_result.k_value).substr(0,5) + ")");
                         ui::ProfessionalUI::render_kv("Duration", ui::ProfessionalUI::format_duration(total_seconds));
                         ui::ProfessionalUI::render_kv("Total Ops", format_number(rc_result.total_ops));
@@ -1722,7 +1722,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     std::cout << "[!] RCKangaroo initialization failed, falling back to standard solver\n";
                 }
             }
-#endif  // COLLIDER_USE_RCKANGAROO
+#endif  // STARMINER_USE_RCKANGAROO
 
             // Try Multi-GPU Kangaroo (fallback if RCKangaroo not available)
             bool use_gpu_kangaroo = false;
@@ -1852,7 +1852,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     }
 
                     {
-                        namespace boxui = ::collider::ui::box;
+                        namespace boxui = ::starminer::ui::box;
                         std::cout << "\n\n";
                         std::cout << boxui::ansi::BRIGHT_GREEN;
                         boxui::top(std::cout);
@@ -1866,8 +1866,8 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                         boxui::kv(std::cout, "Private Key", key_hex,                  boxui::ansi::BRIGHT_YELLOW);
                         boxui::kv(std::cout, "Address",     target_address,           boxui::ansi::BRIGHT_YELLOW);
                         boxui::kv(std::cout, "Balance",
-                                  ::collider::ui::format_balance(
-                                      ::collider::ui::fetch_balance_btc(target_address)),
+                                  ::starminer::ui::format_balance(
+                                      ::starminer::ui::fetch_balance_btc(target_address)),
                                   boxui::ansi::BRIGHT_MAGENTA);
                         boxui::sep(std::cout);
                         boxui::kv(std::cout, "Duration",    dur.str(),                            boxui::ansi::BRIGHT_CYAN);
@@ -1968,7 +1968,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                               std::localtime(&solve_time_t));
 
                 {
-                    namespace boxui = ::collider::ui::box;
+                    namespace boxui = ::starminer::ui::box;
                     std::cout << "\n\n";
                     std::cout << boxui::ansi::BRIGHT_GREEN;
                     boxui::top(std::cout);
@@ -1982,8 +1982,8 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     boxui::kv(std::cout, "Private Key", key_hex,                        boxui::ansi::BRIGHT_YELLOW);
                     boxui::kv(std::cout, "Address",     target_address,                 boxui::ansi::BRIGHT_YELLOW);
                     boxui::kv(std::cout, "Balance",
-                              ::collider::ui::format_balance(
-                                  ::collider::ui::fetch_balance_btc(target_address)),
+                              ::starminer::ui::format_balance(
+                                  ::starminer::ui::fetch_balance_btc(target_address)),
                               boxui::ansi::BRIGHT_MAGENTA);
                     boxui::sep(std::cout);
                     boxui::kv(std::cout, "Solved At",   timestamp,                      boxui::ansi::BRIGHT_CYAN);
@@ -2177,7 +2177,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     }
 
                     {
-                        namespace boxui = ::collider::ui::box;
+                        namespace boxui = ::starminer::ui::box;
                         std::cout << "\n\n";
                         std::cout << boxui::ansi::BRIGHT_GREEN;
                         boxui::top(std::cout);
@@ -2192,8 +2192,8 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                         boxui::kv(std::cout, "Private Key",  key_hex,                        boxui::ansi::BRIGHT_YELLOW);
                         boxui::kv(std::cout, "Address",      target_address,                 boxui::ansi::BRIGHT_YELLOW);
                         boxui::kv(std::cout, "Balance",
-                                  ::collider::ui::format_balance(
-                                      ::collider::ui::fetch_balance_btc(target_address)),
+                                  ::starminer::ui::format_balance(
+                                      ::starminer::ui::fetch_balance_btc(target_address)),
                                   boxui::ansi::BRIGHT_MAGENTA);
                         boxui::sep(std::cout);
                         boxui::kv(std::cout, "Solved At",    timestamp,                      boxui::ansi::BRIGHT_CYAN);
@@ -2232,7 +2232,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     logger.log_found(found_key_lo, found_key_hi, target_address);
 
                     // Clear saved state - puzzle solved!
-                    collider::SearchStateManager::clear_puzzle_state(current_puzzle);
+                    starminer::SearchStateManager::clear_puzzle_state(current_puzzle);
 
                     // Continue to next puzzle in auto-progression mode
                     if (is_multi_puzzle) {
@@ -2278,14 +2278,14 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
 
                 // Save state periodically (every 30 seconds)
                 if (std::chrono::duration_cast<std::chrono::seconds>(now - last_state_save).count() >= 30) {
-                    collider::PuzzleSearchState state;
+                    starminer::PuzzleSearchState state;
                     state.puzzle_number = current_puzzle;
                     state.zone_idx = current_zone_idx;
                     state.position_lo = current_lo;
                     state.position_hi = current_hi;
                     state.total_checked = total_checked;
                     state.zone_checked = zone_checked;
-                    collider::SearchStateManager::save_puzzle_state(state);
+                    starminer::SearchStateManager::save_puzzle_state(state);
                     last_state_save = now;
                 }
 
@@ -2308,14 +2308,14 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
 
             // Save state on shutdown for resume
             if (g_shutdown) {
-                collider::PuzzleSearchState state;
+                starminer::PuzzleSearchState state;
                 state.puzzle_number = current_puzzle;
                 state.zone_idx = current_zone_idx;
                 state.position_lo = current_lo;
                 state.position_hi = current_hi;
                 state.total_checked = total_checked;
                 state.zone_checked = zone_checked;
-                collider::SearchStateManager::save_puzzle_state(state);
+                starminer::SearchStateManager::save_puzzle_state(state);
                 std::cout << "\n[*] State saved - run again to resume from "
                           << format_number(total_checked) << " keys\n";
 
@@ -2335,7 +2335,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
             logger.log_shutdown(shutdown_reason, total_checked, elapsed_sec);
 
             {
-                namespace boxui = ::collider::ui::box;
+                namespace boxui = ::starminer::ui::box;
                 std::cout << "\n\n";
                 boxui::top(std::cout);
                 boxui::centered(std::cout, "GPU PUZZLE SEARCH RESULTS");
@@ -2454,7 +2454,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                     }
 
                     {
-                        namespace boxui = ::collider::ui::box;
+                        namespace boxui = ::starminer::ui::box;
                         std::cout << "\n\n";
                         std::cout << boxui::ansi::BRIGHT_GREEN;
                         boxui::top(std::cout);
@@ -2469,8 +2469,8 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                         boxui::kv(std::cout, "Private Key",  key_hex,                                boxui::ansi::BRIGHT_YELLOW);
                         boxui::kv(std::cout, "Address",      target_address,                         boxui::ansi::BRIGHT_YELLOW);
                         boxui::kv(std::cout, "Balance",
-                                  ::collider::ui::format_balance(
-                                      ::collider::ui::fetch_balance_btc(target_address)),
+                                  ::starminer::ui::format_balance(
+                                      ::starminer::ui::fetch_balance_btc(target_address)),
                                   boxui::ansi::BRIGHT_MAGENTA);
                         boxui::sep(std::cout);
                         boxui::kv(std::cout, "Solved At",    timestamp,                               boxui::ansi::BRIGHT_CYAN);
@@ -2516,7 +2516,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                             std::cout << "\n[*] Next unsolved puzzle: #" << unsolved[0]->number
                                       << " (" << unsolved[0]->bits << "-bit, "
                                       << std::fixed << std::setprecision(1) << unsolved[0]->btc_reward << " BTC)\n";
-                            std::cout << "    Run: collider --puzzle " << unsolved[0]->number << "\n";
+                            std::cout << "    Run: starminer --puzzle " << unsolved[0]->number << "\n";
                         }
                     }
 
@@ -2590,7 +2590,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
         double days_to_complete = time_to_complete_sec / 86400;
 
         {
-            namespace boxui = ::collider::ui::box;
+            namespace boxui = ::starminer::ui::box;
             std::cout << "\n\n";
             boxui::top(std::cout);
             boxui::centered(std::cout, "PUZZLE SEARCH RESULTS");
@@ -2633,7 +2633,7 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
 
         // All puzzles completed (auto-progression) or single puzzle done
         if (is_multi_puzzle && puzzles_to_solve.size() > 1) {
-            namespace boxui = ::collider::ui::box;
+            namespace boxui = ::starminer::ui::box;
             std::cout << "\n";
             boxui::top(std::cout);
             boxui::centered(std::cout, "AUTO-PROGRESSION COMPLETE");
@@ -2650,4 +2650,4 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
         return 0;
 }
 
-}  // namespace collider::runtime
+}  // namespace starminer::runtime

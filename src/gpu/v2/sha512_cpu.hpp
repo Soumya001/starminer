@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace internal {
@@ -261,4 +261,4 @@ inline void pbkdf2_hmac_sha256(
 }  // namespace internal
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

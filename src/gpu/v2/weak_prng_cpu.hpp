@@ -36,7 +36,7 @@
 #include <cstring>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace prng {
@@ -200,4 +200,4 @@ inline void trust_wallet_ext_entropy(uint32_t seed, uint8_t out[16]) {
 }  // namespace prng
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

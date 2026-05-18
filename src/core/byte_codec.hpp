@@ -18,7 +18,7 @@
 #include <cstddef>  // size_t (required on Apple clang; MSVC pulls it in via cstdint)
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 
 // Convert 32-byte big-endian byte array to 4-limb little-endian-by-limb
 // uint64 array. out[0] holds bits 0..63 (i.e., the low 8 bytes of the
@@ -158,4 +158,4 @@ inline int range_bits_from_be(const uint8_t start_be[32],
     return 0;
 }
 
-}  // namespace collider
+}  // namespace starminer

@@ -1,6 +1,6 @@
 # StarMiner v1.4.1 -- example config.yml
 #
-# Copy this file to ./config.yml (or ~/.collider/config.yml) and edit
+# Copy this file to ./config.yml (or ~/.starminer/config.yml) and edit
 # in place. Anything unset falls back to the built-in default. CLI
 # flags ALWAYS win over config.yml values when both are supplied.
 #

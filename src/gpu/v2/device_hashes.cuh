@@ -20,7 +20,7 @@
 
 #include "../hash_rounds.cuh"
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace device {
@@ -43,7 +43,7 @@ namespace device {
 #include "../sha256_k_constants.cuh"
 
 __device__ __constant__ static const uint32_t kSha256_K[64] =
-    COLLIDER_SHA256_K_INIT;
+    STARMINER_SHA256_K_INIT;
 
 // SHA-256 right-rotate: forward to the canonical primitive in
 // hash_rounds.cuh. Kept as a TU-local alias (rather than a using-decl)
@@ -51,7 +51,7 @@ __device__ __constant__ static const uint32_t kSha256_K[64] =
 // name into every TU that includes it. The sha512_rotr below is a
 // distinct 64-bit primitive and stays local.
 __device__ __forceinline__ uint32_t sha256_rotr(uint32_t x, int n) {
-    return ::collider::gpu::sha256::rotr(x, n);
+    return ::starminer::gpu::sha256::rotr(x, n);
 }
 
 // `__noinline__` for the same reason as sha512_compress below: the W[64]
@@ -684,4 +684,4 @@ __device__ __forceinline__ void hash160(const uint8_t* msg, uint32_t len, uint8_
 }  // namespace device
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

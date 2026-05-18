@@ -25,7 +25,7 @@
 #include <sstream>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 namespace {
@@ -315,4 +315,4 @@ bool PuzzleMetalSolver::verify_one(uint64_t priv_lo, uint64_t priv_hi,
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

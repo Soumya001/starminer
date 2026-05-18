@@ -80,7 +80,7 @@ int main() {
         }
     }
 
-    collider::gpu::PuzzleMetalSolver solver;
+    starminer::gpu::PuzzleMetalSolver solver;
     if (!solver.init()) {
         std::fprintf(stderr, "[fail] PuzzleMetalSolver::init: %s\n",
                      solver.error().c_str());

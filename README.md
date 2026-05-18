@@ -35,7 +35,7 @@ Download `starminer-worker.exe` from [Releases](../../releases) and double-click
 
 ```bash
 mkdir build && cd build
-cmake .. -DCOLLIDER_USE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86
+cmake .. -DSTARMINER_USE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86
 make starminer -j$(nproc)
 ```
 

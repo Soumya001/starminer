@@ -53,7 +53,7 @@ inline int kangaroo_clz64(uint64_t x) {
 #define KANGAROO_CLZ64(x) __builtin_clzll(x)
 #endif
 
-namespace collider {
+namespace starminer {
 
 /**
  * Jump configuration for kangaroo algorithm
@@ -973,4 +973,4 @@ private:
     }
 };
 
-}  // namespace collider
+}  // namespace starminer

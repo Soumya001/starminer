@@ -2,7 +2,7 @@
  * cli_parser.cpp - StarMiner CLI argument parser.
  *
  * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor; no
- * behavior changes. Pro-only flags stay gated by COLLIDER_PRO so the free
+ * behavior changes. Pro-only flags stay gated by STARMINER_PRO so the free
  * build still compiles cleanly.
  */
 #include "cli/cli_parser.hpp"
@@ -45,9 +45,9 @@ int validate_mode_mutex(const Arguments& args, std::string& msg) {
 }
 
 int parse_args_core(int argc, char* argv[], Arguments& args,
-                    collider::CLIFlags& cli, std::string& err_msg) {
+                    starminer::CLIFlags& cli, std::string& err_msg) {
     args = Arguments{};
-    cli = collider::CLIFlags{};
+    cli = starminer::CLIFlags{};
 
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
@@ -126,7 +126,7 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             args.dp_bits = std::stoi(argv[++i]);
             cli.dp_bits_set = true;
         } else if (arg == "--bloom" && i + 1 < argc) {
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
             args.bloom_file = argv[++i];
             cli.bloom_file_set = true;
 #else
@@ -146,7 +146,7 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
         } else if (arg == "--brainwallet-setup") {
             args.brainwallet_setup = true;
         } else if (arg == "--puzzle-only-v2") {
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
             // Phase 9, v1.4.0: enable v2 puzzle-mode kernel + multi-scheme.
             args.puzzle_only_v2 = true;
             args.brainwallet_mode = true;   // Goes through the brainwallet pipeline
@@ -208,9 +208,9 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
     return validate_mode_mutex(args, err_msg);
 }
 
-Arguments parse_args(int argc, char* argv[], collider::CLIFlags* cli_out) {
+Arguments parse_args(int argc, char* argv[], starminer::CLIFlags* cli_out) {
     Arguments args;
-    collider::CLIFlags cli;
+    starminer::CLIFlags cli;
     std::string err;
     if (parse_args_core(argc, argv, args, cli, err) != 0) {
         std::cerr << err;
@@ -222,7 +222,7 @@ Arguments parse_args(int argc, char* argv[], collider::CLIFlags* cli_out) {
 }
 
 int parse_args_for_test(int argc, char* argv[], Arguments& args,
-                        collider::CLIFlags& cli, std::string* err_out) {
+                        starminer::CLIFlags& cli, std::string* err_out) {
     std::string err;
     int rc = parse_args_core(argc, argv, args, cli, err);
     if (err_out) *err_out = err;
@@ -291,7 +291,7 @@ Smart Selection:
                               controls within-range search direction.
 
 )";
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
     std::cout << R"(License:
   --activate <KEY>        Activate your Pro license key (run once after purchase)
                           Example: ./starminer --activate YOUR-LICENSE-KEY
@@ -337,48 +337,48 @@ Configuration:
 
 Examples:
   # Auto-select easiest unsolved puzzle
-  collider
+  starminer
 
   # Target specific puzzle
-  collider --puzzle 71
+  starminer --puzzle 71
 
   # Target puzzle with Kangaroo algorithm (if pubkey known)
-  collider --puzzle 135 --kangaroo
+  starminer --puzzle 135 --kangaroo
 
   # Kangaroo with manual dp_bits override (for tuning)
-  collider --puzzle 135 --kangaroo --dp-bits 25
+  starminer --puzzle 135 --kangaroo --dp-bits 25
 
   # Use random search pattern
-  collider --puzzle 71 --random
+  starminer --puzzle 71 --random
 
   # Auto-progress through all unsolved puzzles
-  collider --all-unsolved
+  starminer --all-unsolved
 
   # Use specific GPUs
-  collider --puzzle 71 --gpus 0,1
+  starminer --puzzle 71 --gpus 0,1
 
   # Run GPU benchmark
-  collider --benchmark
+  starminer --benchmark
 
 )";
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
     std::cout << R"(  # Brainwallet mode - scan for compromised brainwallets (PRO)
-  collider --brainwallet --bloom funded_addresses.blf
+  starminer --brainwallet --bloom funded_addresses.blf
 
 )";
 #endif
     std::cout << R"(  # Custom address + range, brute force (no kangaroo because no
   # revealed pubkey for an arbitrary address; see README on which
   # puzzles ARE kangaroo-able).
-  collider --puzzle-target 13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so \
+  starminer --puzzle-target 13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so \
            --puzzle-start 0x20000000000000000 \
            --puzzle-end   0x3ffffffffffffffff
 
   # Join Collision Protocol for distributed solving
-  collider --pool jlps://collisionprotocol.com:17403 --worker 1YourBitcoinAddress...
+  starminer --pool jlps://collisionprotocol.com:17403 --worker 1YourBitcoinAddress...
 
   # Pool mode with HTTP API
-  collider --pool http://api.collisionprotocol.com --worker 1YourBitcoinAddress...
+  starminer --pool http://api.collisionprotocol.com --worker 1YourBitcoinAddress...
 
 Performance: see the GitHub release notes for benchmarked numbers per
 GPU architecture. The figures depend strongly on driver version, batch

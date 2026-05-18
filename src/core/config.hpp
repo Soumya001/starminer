@@ -14,7 +14,7 @@
 #include <iostream>
 #include <map>
 
-namespace collider {
+namespace starminer {
 
 struct UserConfig {
     int default_puzzle = 71;       // Default puzzle number to target
@@ -141,4 +141,4 @@ struct UserConfig {
     }
 };
 
-}  // namespace collider
+}  // namespace starminer

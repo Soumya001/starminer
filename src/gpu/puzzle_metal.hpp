@@ -7,7 +7,7 @@
  * dispatch (src/gpu/puzzle_optimized.cu and src/gpu/puzzle_gpu.cu) but in
  * C++/Obj-C++ for Mac builds.
  *
- * Compiled only on APPLE && COLLIDER_USE_METAL.
+ * Compiled only on APPLE && STARMINER_USE_METAL.
  */
 
 #pragma once
@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <string>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // Threadgroup width used when dispatching the puzzle_search kernel. Apple
@@ -111,4 +111,4 @@ private:
 };
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

@@ -14,20 +14,20 @@
 #include <cstring>
 #include <thread>
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 namespace {
 
 UInt256 bytes_to_uint256(const uint8_t* b) {
     UInt256 v;
-    ::collider::be32_to_limbs_le(b, v.parts);
+    ::starminer::be32_to_limbs_le(b, v.parts);
     return v;
 }
 
 }  // namespace
 
-bool CpuKangarooBackend::initialize(const collider::pool::WorkAssignment& work) {
+bool CpuKangarooBackend::initialize(const starminer::pool::WorkAssignment& work) {
     error_.clear();
 
     // Range from work assignment.
@@ -44,7 +44,7 @@ bool CpuKangarooBackend::initialize(const collider::pool::WorkAssignment& work) 
 
     // Decompress the 33-byte pool pubkey into (X, Y).
     char hex[67];
-    ::collider::hex_encode_lower(work.public_key, 33, hex);
+    ::starminer::hex_encode_lower(work.public_key, 33, hex);
     cpu::uint256_t target_x, target_y;
     if (!cpu::decompress_pubkey(target_x, target_y, std::string(hex))) {
         error_ = std::string("failed to decompress pool target pubkey: ") + hex;
@@ -70,8 +70,8 @@ void CpuKangarooBackend::solve(BackendCallbacks cb) {
                                                 const cpu::uint256_t& dist,
                                                 bool is_tame) {
         uint8_t x_be[32], d_be[32];
-        ::collider::limbs_le_to_be32(x.d,    x_be);
-        ::collider::limbs_le_to_be32(dist.d, d_be);
+        ::starminer::limbs_le_to_be32(x.d,    x_be);
+        ::starminer::limbs_le_to_be32(dist.d, d_be);
         cb.on_dp(x_be, d_be, is_tame ? 0u : 1u, dp_bits_u32);
     });
 
@@ -87,7 +87,7 @@ void CpuKangarooBackend::solve(BackendCallbacks cb) {
     if (result.found) {
         // Convert little-endian limbs to BE 32-byte key for the pool.
         uint8_t key[32];
-        ::collider::limbs_le_to_be32(result.private_key.d, key);
+        ::starminer::limbs_le_to_be32(result.private_key.d, key);
         if (cb.on_solution) cb.on_solution(key);
     }
 }
@@ -99,4 +99,4 @@ std::string CpuKangarooBackend::device_summary() const {
 }
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

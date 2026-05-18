@@ -14,7 +14,7 @@
 
 #include <cuda_runtime.h>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -183,4 +183,4 @@ cudaError_t v2_electrum_v2_brute(
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

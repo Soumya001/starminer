@@ -78,19 +78,19 @@ int main() {
         uint8_t start[32], end[32];
         encode_pow2(74, start);          // 2^74
         encode_pow2_minus_1(75, end);    // 2^75 - 1
-        check("puzzle 75", 75, ::collider::range_bits_from_be(start, end));
+        check("puzzle 75", 75, ::starminer::range_bits_from_be(start, end));
     }
     {
         uint8_t start[32], end[32];
         encode_pow2(134, start);
         encode_pow2_minus_1(135, end);
-        check("puzzle 135", 135, ::collider::range_bits_from_be(start, end));
+        check("puzzle 135", 135, ::starminer::range_bits_from_be(start, end));
     }
     {
         uint8_t start[32], end[32];
         encode_pow2(159, start);
         encode_pow2_minus_1(160, end);
-        check("puzzle 160", 160, ::collider::range_bits_from_be(start, end));
+        check("puzzle 160", 160, ::starminer::range_bits_from_be(start, end));
     }
 
     // Edge: end == start -> empty range -> 0.
@@ -99,7 +99,7 @@ int main() {
         encode_be(0x0000000000000001ull, 0x0000000000000000ull, start);
         std::memcpy(end, start, 32);
         check("empty range start==end", 0,
-              ::collider::range_bits_from_be(start, end));
+              ::starminer::range_bits_from_be(start, end));
     }
 
     // Edge: end < start -> inverted -> 0.
@@ -108,7 +108,7 @@ int main() {
         encode_be(0, 100, start);
         encode_be(0, 50, end);
         check("inverted range end<start", 0,
-              ::collider::range_bits_from_be(start, end));
+              ::starminer::range_bits_from_be(start, end));
     }
 
     // size = end - start + 1 = 2 -> bit_length(2) = 2.
@@ -117,7 +117,7 @@ int main() {
         encode_be(0, 100, start);
         encode_be(0, 101, end);
         check("size = 2 (end=start+1)", 2,
-              ::collider::range_bits_from_be(start, end));
+              ::starminer::range_bits_from_be(start, end));
     }
 
     // size = 0x10000 (17 bits to represent 2^16) -> bit_length is 17.
@@ -126,7 +126,7 @@ int main() {
         encode_be(0, 0, start);
         encode_be(0, 0xFFFF, end);
         check("size = 2^16 (end=0xFFFF)", 17,
-              ::collider::range_bits_from_be(start, end));
+              ::starminer::range_bits_from_be(start, end));
     }
 
     // diff = 2^65 -> size = 2^65 + 1, bit_length is 66.
@@ -135,7 +135,7 @@ int main() {
         encode_be(0, 0, start);
         encode_be(2u, 0, end);  // bits 0..63 are zero, bit 65 set
         check("size = 2^65 + 1", 66,
-              ::collider::range_bits_from_be(start, end));
+              ::starminer::range_bits_from_be(start, end));
     }
 
     if (g_failures > 0) {

@@ -35,11 +35,11 @@ The Collision Protocol pool is the shared DP store plus the orchestration around
 ## Joining the public pool in 30 seconds
 
 ```bash
-./collider --pool jlps://collisionprotocol.com:17403 \
+./starminer --pool jlps://collisionprotocol.com:17403 \
            --worker 1YourBitcoinAddressForRewards
 ```
 
-That is the entire setup. The first time you connect successfully, guided mode persists your worker address to `~/.collider/config.yml` so you do not have to repeat it on every launch.
+That is the entire setup. The first time you connect successfully, guided mode persists your worker address to `~/.starminer/config.yml` so you do not have to repeat it on every launch.
 
 Required:
 
@@ -164,9 +164,9 @@ StarMiner prints rolling telemetry to the terminal: GPU step rate, DPs submitted
 For headless operation:
 
 ```bash
-./collider --pool jlps://collisionprotocol.com:17403 \
+./starminer --pool jlps://collisionprotocol.com:17403 \
            --worker bc1qYourBtcAddress \
-           --verbose 2>&1 | tee -a collider.log
+           --verbose 2>&1 | tee -a starminer.log
 ```
 
 `--verbose` adds per-DP submission lines (useful for debugging, noisy for steady-state). `--debug` adds the resolved configuration dump at startup so you can see exactly which config / CLI fields took effect.
@@ -227,9 +227,9 @@ If your worker is banned in error (genuine client bug, fixed and updated), conta
 StarMiner's pool client is server-agnostic. Any server that speaks the JLP wire protocol works.
 
 ```bash
-./collider --pool jlps://your-pool.example.com:17403 --worker bc1qYourAddr
-./collider --pool jlp://10.0.0.5:17403 --worker bc1qYourAddr            # plaintext, LAN
-./collider --pool http://api.your-pool.example.com --worker bc1qYourAddr # HTTP variant
+./starminer --pool jlps://your-pool.example.com:17403 --worker bc1qYourAddr
+./starminer --pool jlp://10.0.0.5:17403 --worker bc1qYourAddr            # plaintext, LAN
+./starminer --pool http://api.your-pool.example.com --worker bc1qYourAddr # HTTP variant
 ```
 
 Schemes:
@@ -272,7 +272,7 @@ Second-most-common: malformed worker name. Verify it is a real Bitcoin address b
 Diagnose:
 
 ```bash
-./collider --pool jlps://collisionprotocol.com:17403 \
+./starminer --pool jlps://collisionprotocol.com:17403 \
            --worker bc1qYourBtcAddress \
            --verbose --debug
 ```

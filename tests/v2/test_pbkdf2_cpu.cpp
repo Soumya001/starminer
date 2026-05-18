@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-using namespace collider::gpu::v2::internal;
+using namespace starminer::gpu::v2::internal;
 
 static int failures = 0;
 #define CHECK(cond, msg) do {                                       \

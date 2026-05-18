@@ -19,7 +19,7 @@
 #include <sstream>
 #include <string>
 
-namespace collider {
+namespace starminer {
 
 class Logger {
 public:
@@ -62,7 +62,7 @@ public:
             return false;
         }
 
-        log_path_ = dir + "/collider.log";
+        log_path_ = dir + "/starminer.log";
 
         // Rotate log if too large (> 10MB)
         try {
@@ -296,9 +296,9 @@ private:
 };
 
 // Convenience macros
-#define LOG_INFO(msg)  collider::Logger::instance().log(collider::Logger::Level::INFO, msg)
-#define LOG_WARN(msg)  collider::Logger::instance().log(collider::Logger::Level::WARN, msg)
-#define LOG_ERROR(msg) collider::Logger::instance().log(collider::Logger::Level::ERR, msg)
-#define LOG_DEBUG(msg) collider::Logger::instance().log(collider::Logger::Level::DEBUG, msg)
+#define LOG_INFO(msg)  starminer::Logger::instance().log(starminer::Logger::Level::INFO, msg)
+#define LOG_WARN(msg)  starminer::Logger::instance().log(starminer::Logger::Level::WARN, msg)
+#define LOG_ERROR(msg) starminer::Logger::instance().log(starminer::Logger::Level::ERR, msg)
+#define LOG_DEBUG(msg) starminer::Logger::instance().log(starminer::Logger::Level::DEBUG, msg)
 
-}  // namespace collider
+}  // namespace starminer

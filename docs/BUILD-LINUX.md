@@ -2,7 +2,7 @@
 
 Platform-specific build reference for Linux x64 with the CUDA backend. For a step-by-step first-time install (distro packages, CUDA Toolkit install, environment setup), see [INSTALL.md](INSTALL.md). This document is the reference for CMake options, build flags, multi-GPU layouts, and Linux-specific troubleshooting.
 
-This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `-DCOLLIDER_PRO=ON|OFF` flag selects which.
+This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `|OFF` flag selects which.
 
 ---
 
@@ -24,25 +24,25 @@ This document covers both the Free and **(PRO VERSION ONLY)** editions. The same
 
 ```bash
 git clone https://github.com/Soumya001/starminer.git
-cd collider
+cd starminer
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
-Output: `build/collider`.
+Output: `build/starminer`.
 
 For the **(PRO VERSION ONLY)** edition (private repo, license required):
 
 ```bash
 git clone git@github.com:Soumya001/starminer.git
-cd collider-pro
+cd starminer-pro
 
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCOLLIDER_PRO=ON
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release 
 cmake --build build --parallel
 ```
 
-Outputs: `build/collider` and `build/collider_pro` (Pro builds produce both binaries for release packaging).
+Outputs: `build/starminer` and `build/starminer_pro` (Pro builds produce both binaries for release packaging).
 
 ---
 
@@ -52,13 +52,13 @@ Options recognized by the project (defaults in `CMakeLists.txt`):
 
 | Option                      | Default     | Description                                                             |
 | --------------------------- | ----------- | ----------------------------------------------------------------------- |
-| `COLLIDER_USE_CUDA`         | `ON`        | Enable the CUDA backend. Required for GPU compute on Linux.             |
-| `COLLIDER_USE_METAL`        | `ON`        | Enable the Metal backend (no effect on Linux).                          |
-| `COLLIDER_USE_CPU`          | `ON`        | Enable the CPU fallback backend.                                        |
-| `COLLIDER_BUILD_TESTS`      | `ON`        | Build unit tests (`ctest` runs from `build/`).                          |
-| `COLLIDER_BUILD_BENCHMARKS` | `ON`        | Build the standalone benchmark targets.                                 |
-| `COLLIDER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, ...).               |
-| `COLLIDER_PRO`              | `OFF`       | Enable the Pro brain-wallet pipeline. Requires the private source tree. |
+| `STARMINER_USE_CUDA`         | `ON`        | Enable the CUDA backend. Required for GPU compute on Linux.             |
+| `STARMINER_USE_METAL`        | `ON`        | Enable the Metal backend (no effect on Linux).                          |
+| `STARMINER_USE_CPU`          | `ON`        | Enable the CPU fallback backend.                                        |
+| `STARMINER_BUILD_TESTS`      | `ON`        | Build unit tests (`ctest` runs from `build/`).                          |
+| `STARMINER_BUILD_BENCHMARKS` | `ON`        | Build the standalone benchmark targets.                                 |
+| `STARMINER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, ...).               |
+| `STARMINER_PRO`              | `OFF`       | Enable the Pro brain-wallet pipeline. Requires the private source tree. |
 | `CMAKE_BUILD_TYPE`          | `Release`   | `Release`, `Debug`, or `RelWithDebInfo`.                                |
 | `CMAKE_CUDA_ARCHITECTURES`  | `86;89;100` | Target SM versions. Override for faster local builds.                   |
 
@@ -66,7 +66,7 @@ Override at configure time:
 
 ```bash
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-                       -DCOLLIDER_BUILD_TESTS=OFF \
+                       -DSTARMINER_BUILD_TESTS=OFF \
                        -DCMAKE_CUDA_ARCHITECTURES="89"
 ```
 
@@ -163,7 +163,7 @@ CUDA enumerates devices via `cudaGetDeviceCount`; the order matches `nvidia-smi 
 By default, StarMiner uses every visible GPU. To restrict:
 
 ```bash
-./collider --gpus 0,2          # CLI: skip GPU 1
+./starminer --gpus 0,2          # CLI: skip GPU 1
 ```
 
 Or in `config.yml`:
@@ -176,7 +176,7 @@ gpu:
 Or via the environment (also hides them from `nvidia-smi`):
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,2 ./collider
+CUDA_VISIBLE_DEVICES=0,2 ./starminer
 ```
 
 Each GPU runs an independent kangaroo walk with its own DP queue. Cross-GPU work distribution is automatic; you do not need to partition the search range manually.
@@ -262,8 +262,8 @@ Linux Free release artifacts are built in CI on tag push (`v*`). The local equiv
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
                        -DCMAKE_CUDA_ARCHITECTURES="75;86;89;100"
 cmake --build build --parallel
-strip build/collider
-sha256sum build/collider > build/collider.sha256
+strip build/starminer
+sha256sum build/starminer > build/starminer.sha256
 ```
 
 The release artifact bundles every supported CUDA architecture in one binary; CUDA's runtime picks the closest match at launch.

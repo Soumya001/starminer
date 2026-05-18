@@ -27,7 +27,7 @@
 #include <climits>
 #include <cuda_runtime.h>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -358,4 +358,4 @@ cudaError_t v2_weak_prng_brute(
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

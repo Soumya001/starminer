@@ -14,7 +14,7 @@
 
 #include <string>
 
-#include "core/puzzle_config.hpp"  // collider::PuzzleInfo
+#include "core/puzzle_config.hpp"  // starminer::PuzzleInfo
 
 /**
  * Puzzle analysis result for ROI comparison.
@@ -35,7 +35,7 @@ struct PuzzleAnalysis {
  * Analyze a single puzzle for ROI. Pure function over the static puzzle
  * database; no side effects.
  */
-PuzzleAnalysis analyze_puzzle(const collider::PuzzleInfo* puzzle,
+PuzzleAnalysis analyze_puzzle(const starminer::PuzzleInfo* puzzle,
                               double gpu_speed_mkeys);
 
 /**

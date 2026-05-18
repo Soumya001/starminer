@@ -21,7 +21,7 @@
    static void     dl_close(DlHandle h)        { dlclose(h); }
 #endif
 
-namespace collider {
+namespace starminer {
 namespace platform {
 
 // NVML temperature sensor enum value (NVML_TEMPERATURE_GPU = 0)
@@ -197,4 +197,4 @@ bool NvmlWrapper::check_thermal_protection(
 }
 
 } // namespace platform
-} // namespace collider
+} // namespace starminer

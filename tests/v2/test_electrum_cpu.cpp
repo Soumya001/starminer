@@ -19,8 +19,8 @@
 #include <cstring>
 #include <string>
 
-using namespace collider::gpu::v2::electrum;
-using namespace collider::gpu::v2::internal;
+using namespace starminer::gpu::v2::electrum;
+using namespace starminer::gpu::v2::internal;
 
 static int failures = 0;
 #define CHECK(cond, msg) do {                                       \

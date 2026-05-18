@@ -18,7 +18,7 @@
 #include <cstdint>
 #include <cstdio>
 
-using namespace collider::gpu::v2::prng;
+using namespace starminer::gpu::v2::prng;
 
 static int failures = 0;
 #define CHECK(cond, msg) do {                                       \

@@ -17,7 +17,7 @@
 
 #include "platform.hpp"
 
-#if defined(COLLIDER_PLATFORM_MACOS) && defined(COLLIDER_BACKEND_METAL)
+#if defined(STARMINER_PLATFORM_MACOS) && defined(STARMINER_BACKEND_METAL)
 
 #import <Metal/Metal.h>
 #import <Foundation/Foundation.h>
@@ -25,7 +25,7 @@
 #include <unordered_map>
 #include <iostream>
 
-namespace collider {
+namespace starminer {
 namespace platform {
 
 /**
@@ -438,6 +438,6 @@ IPlatform& get_platform() {
 }
 
 }  // namespace platform
-}  // namespace collider
+}  // namespace starminer
 
-#endif  // COLLIDER_PLATFORM_MACOS && COLLIDER_BACKEND_METAL
+#endif  // STARMINER_PLATFORM_MACOS && STARMINER_BACKEND_METAL

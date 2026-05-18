@@ -36,7 +36,7 @@ extern "C" {
     );
 }
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // =============================================================================
@@ -579,4 +579,4 @@ std::map<int, uint64_t> MultiGPUPuzzleSolver::calibrate_all(int iterations_per_t
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

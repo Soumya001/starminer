@@ -9,7 +9,7 @@
  * flexibility that would justify the duplication.
  *
  * v1.4.1 D.2: one canonical header, primitives live under
- * `collider::gpu::ripemd160::*`. Each consuming TU includes this
+ * `starminer::gpu::ripemd160::*`. Each consuming TU includes this
  * header and brings the names in via using-decls. The round LOOPS
  * stay per-TU because their unroll factor and intermediate-state
  * layout are register-budget-tuned per kernel.
@@ -23,7 +23,7 @@
 
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace ripemd160 {
 
@@ -59,4 +59,4 @@ __host__ __device__ __forceinline__ uint32_t f4(uint32_t x, uint32_t y, uint32_t
 
 }  // namespace ripemd160
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

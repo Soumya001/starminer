@@ -25,7 +25,7 @@
 #include <iostream>
 #include <random>
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 namespace {
@@ -37,7 +37,7 @@ bool decompress_target_pubkey(const uint8_t pubkey33[33],
                               std::string& error_out)
 {
     char hex[67];
-    ::collider::hex_encode_lower(pubkey33, 33, hex);
+    ::starminer::hex_encode_lower(pubkey33, 33, hex);
     if (!cpu::decompress_pubkey(x, y, std::string(hex))) {
         error_out = std::string("failed to decompress pool target pubkey: ") + hex;
         return false;
@@ -64,9 +64,9 @@ build_jump_table(uint32_t dp_bits)
         cpu::uint256_t jx, jy;
         cpu::ec_to_affine(jx, jy, jp);
 
-        ::collider::limbs_le_to_be32(jx.d, jumps[i].x.data());
-        ::collider::limbs_le_to_be32(jy.d, jumps[i].y.data());
-        ::collider::limbs_le_to_be32(jd.d, jumps[i].d.data());
+        ::starminer::limbs_le_to_be32(jx.d, jumps[i].x.data());
+        ::starminer::limbs_le_to_be32(jy.d, jumps[i].y.data());
+        ::starminer::limbs_le_to_be32(jd.d, jumps[i].d.data());
         jumps[i].type = 0;
     }
     return jumps;
@@ -92,9 +92,9 @@ build_one_seed(bool is_tame,
         cpu::ec_mul(p, scalar);
         cpu::uint256_t px, py;
         cpu::ec_to_affine(px, py, p);
-        ::collider::limbs_le_to_be32(px.d,    s.x.data());
-        ::collider::limbs_le_to_be32(py.d,    s.y.data());
-        ::collider::limbs_le_to_be32(scalar.d, s.d.data());
+        ::starminer::limbs_le_to_be32(px.d,    s.x.data());
+        ::starminer::limbs_le_to_be32(py.d,    s.y.data());
+        ::starminer::limbs_le_to_be32(scalar.d, s.d.data());
         s.type = 0;
     } else {
         cpu::ECPoint op;
@@ -108,9 +108,9 @@ build_one_seed(bool is_tame,
         cpu::ec_add(wp, wp, ox, oy);
         cpu::uint256_t wx, wy;
         cpu::ec_to_affine(wx, wy, wp);
-        ::collider::limbs_le_to_be32(wx.d, s.x.data());
-        ::collider::limbs_le_to_be32(wy.d, s.y.data());
-        ::collider::limbs_le_to_be32(off.d, s.d.data());
+        ::starminer::limbs_le_to_be32(wx.d, s.x.data());
+        ::starminer::limbs_le_to_be32(wy.d, s.y.data());
+        ::starminer::limbs_le_to_be32(off.d, s.d.data());
         s.type = 1;
     }
     return s;
@@ -143,7 +143,7 @@ build_seeds(uint32_t num_kangaroos,
 
 }  // namespace
 
-bool MetalKangarooBackend::initialize(const collider::pool::WorkAssignment& work) {
+bool MetalKangarooBackend::initialize(const starminer::pool::WorkAssignment& work) {
     error_.clear();
 
     cpu::uint256_t target_x, target_y;
@@ -152,7 +152,7 @@ bool MetalKangarooBackend::initialize(const collider::pool::WorkAssignment& work
     }
 
     cpu::uint256_t range_start;
-    ::collider::be32_to_limbs_le(work.range_start, range_start.d);
+    ::starminer::be32_to_limbs_le(work.range_start, range_start.d);
 
     // Cache range_start + target so solve()'s identity-recovery loop
     // can re-seed dead kangaroos without re-running the pubkey decode.
@@ -259,4 +259,4 @@ std::string MetalKangarooBackend::device_summary() const {
 }
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

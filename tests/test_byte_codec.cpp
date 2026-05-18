@@ -51,7 +51,7 @@ int main() {
         // All zeros.
         const uint8_t in[16] = {0};
         char out[33] = {};
-        ::collider::hex_encode_lower(in, 16, out);
+        ::starminer::hex_encode_lower(in, 16, out);
         check_str("hex_encode_lower(zeros 16)",
                   "00000000000000000000000000000000", out);
     }
@@ -60,7 +60,7 @@ int main() {
         uint8_t in[16];
         for (int i = 0; i < 16; ++i) in[i] = static_cast<uint8_t>(i);
         char out[33] = {};
-        ::collider::hex_encode_lower(in, 16, out);
+        ::starminer::hex_encode_lower(in, 16, out);
         check_str("hex_encode_lower(0..15)",
                   "000102030405060708090a0b0c0d0e0f", out);
     }
@@ -68,7 +68,7 @@ int main() {
         // High-byte values exercise the >>4 nibble path.
         const uint8_t in[4] = {0xDE, 0xAD, 0xBE, 0xEF};
         char out[9] = {};
-        ::collider::hex_encode_lower(in, 4, out);
+        ::starminer::hex_encode_lower(in, 4, out);
         check_str("hex_encode_lower(deadbeef)", "deadbeef", out);
     }
     {
@@ -76,7 +76,7 @@ int main() {
         uint8_t in[32];
         for (int i = 0; i < 32; ++i) in[i] = static_cast<uint8_t>(0xA0 + i);
         char out[65] = {};
-        ::collider::hex_encode_lower(in, 32, out);
+        ::starminer::hex_encode_lower(in, 32, out);
         // Manually computed expected: a0 a1 a2 ... bf
         const std::string expected =
             "a0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebf";
@@ -93,7 +93,7 @@ int main() {
             0x59, 0xF2, 0x81, 0x5B, 0x16, 0xF8, 0x17, 0x98
         };
         uint64_t limbs[4];
-        ::collider::be32_to_limbs_le(Gx_be, limbs);
+        ::starminer::be32_to_limbs_le(Gx_be, limbs);
         // limb[0] = low 8 bytes of BE input -> 0x59F2815B16F81798
         check_u64("be32_to_limbs_le(Gx)[0]", 0x59F2815B16F81798ULL, limbs[0]);
         check_u64("be32_to_limbs_le(Gx)[1]", 0x029BFCDB2DCE28D9ULL, limbs[1]);
@@ -102,7 +102,7 @@ int main() {
 
         // Roundtrip: limbs back to BE bytes.
         uint8_t roundtrip[32];
-        ::collider::limbs_le_to_be32(limbs, roundtrip);
+        ::starminer::limbs_le_to_be32(limbs, roundtrip);
         if (std::memcmp(Gx_be, roundtrip, 32) != 0) {
             std::printf("[FAIL] be<->limbs roundtrip\n");
             ++g_failures;
@@ -120,7 +120,7 @@ int main() {
             0x3132333435363738ULL,  // -> bytes  0.. 7 (high BE)
         };
         uint8_t out[32];
-        ::collider::limbs_le_to_be32(limbs, out);
+        ::starminer::limbs_le_to_be32(limbs, out);
         const uint8_t expected[32] = {
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
             0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
@@ -141,10 +141,10 @@ int main() {
         uint8_t in[32];
         for (int i = 0; i < 32; ++i) in[i] = static_cast<uint8_t>(i * 7 + 1);
         char encoded[65];
-        ::collider::hex_encode_lower(in, 32, encoded);
+        ::starminer::hex_encode_lower(in, 32, encoded);
 
         uint8_t roundtrip[32];
-        if (!::collider::hex_decode(encoded, 64, roundtrip, 32)) {
+        if (!::starminer::hex_decode(encoded, 64, roundtrip, 32)) {
             std::printf("[FAIL] hex_decode(roundtrip): returned false\n");
             ++g_failures;
         } else if (std::memcmp(in, roundtrip, 32) != 0) {
@@ -158,7 +158,7 @@ int main() {
         // 0x prefix accepted.
         const char* hex = "0xdeadbeef";
         uint8_t out[4];
-        if (!::collider::hex_decode(hex, 10, out, 4)) {
+        if (!::starminer::hex_decode(hex, 10, out, 4)) {
             std::printf("[FAIL] hex_decode(0xdeadbeef): returned false\n");
             ++g_failures;
         } else if (out[0] != 0xDE || out[1] != 0xAD ||
@@ -174,7 +174,7 @@ int main() {
         // Mixed case input.
         const char* hex = "AbCdEf";
         uint8_t out[3];
-        if (!::collider::hex_decode(hex, 6, out, 3)) {
+        if (!::starminer::hex_decode(hex, 6, out, 3)) {
             std::printf("[FAIL] hex_decode(mixed case): returned false\n");
             ++g_failures;
         } else if (out[0] != 0xAB || out[1] != 0xCD || out[2] != 0xEF) {
@@ -187,7 +187,7 @@ int main() {
     {
         // Reject odd length.
         uint8_t out[1];
-        if (::collider::hex_decode("abc", 3, out, 1)) {
+        if (::starminer::hex_decode("abc", 3, out, 1)) {
             std::printf("[FAIL] hex_decode: should reject odd-length input\n");
             ++g_failures;
         } else {
@@ -197,7 +197,7 @@ int main() {
     {
         // Reject invalid char.
         uint8_t out[2];
-        if (::collider::hex_decode("ab!d", 4, out, 2)) {
+        if (::starminer::hex_decode("ab!d", 4, out, 2)) {
             std::printf("[FAIL] hex_decode: should reject non-hex char\n");
             ++g_failures;
         } else {
@@ -207,7 +207,7 @@ int main() {
     {
         // Reject length mismatch.
         uint8_t out[5];
-        if (::collider::hex_decode("abcdef", 6, out, 5)) {
+        if (::starminer::hex_decode("abcdef", 6, out, 5)) {
             std::printf("[FAIL] hex_decode: should reject length mismatch\n");
             ++g_failures;
         } else {

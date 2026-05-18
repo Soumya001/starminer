@@ -23,7 +23,7 @@
 #include <chrono>
 #include "getopt_compat.h"
 
-using namespace collider;
+using namespace starminer;
 
 void print_usage(const char* prog) {
     std::cout << "UTXO Bloom Filter Builder\n"

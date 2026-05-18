@@ -6,7 +6,7 @@
  * dispatch (driven by MultiGPUKangarooManager::step in
  * kangaroo_kernel.cu) but in C++/Obj-C++ for Mac builds.
  *
- * Compiled only on APPLE && COLLIDER_USE_METAL.
+ * Compiled only on APPLE && STARMINER_USE_METAL.
  */
 
 #pragma once
@@ -18,13 +18,13 @@
 #include <vector>
 
 // Shared jump-table size header. The header opens its own
-// `namespace collider { namespace gpu {` block, so it must be included
-// BEFORE this file's namespace block to avoid nesting collider::gpu
+// `namespace starminer { namespace gpu {` block, so it must be included
+// BEFORE this file's namespace block to avoid nesting starminer::gpu
 // inside itself (Mac CI Pro pass on 9637518 caught the nested form
 // when this include lived inside the open namespace).
 #include "kangaroo_jump_table_size.hpp"
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // Jump-table size for the kangaroo walk. The canonical definition
@@ -142,4 +142,4 @@ private:
 };
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

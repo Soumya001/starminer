@@ -37,7 +37,7 @@ inline int clz64(uint64_t x) {
 #define CLZ64(x) __builtin_clzll(x)
 #endif
 
-namespace collider {
+namespace starminer {
 
 /**
  * Represents a 256-bit unsigned integer for private key ranges.
@@ -462,7 +462,7 @@ public:
 
             // Extract H160 (bytes 1-20)
             char buf[41];
-            ::collider::hex_encode_lower(decoded.data() + 1, 20, buf);
+            ::starminer::hex_encode_lower(decoded.data() + 1, 20, buf);
             return std::string(buf, 40);
 
         } catch (const std::exception&) {
@@ -550,4 +550,4 @@ struct PuzzleConfig {
     std::string output_file = "puzzle_found.txt";  // Output for found keys
 };
 
-}  // namespace collider
+}  // namespace starminer

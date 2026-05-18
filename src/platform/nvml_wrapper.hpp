@@ -8,7 +8,7 @@
 #include <map>
 #include <functional>
 
-namespace collider {
+namespace starminer {
 namespace platform {
 
 struct GpuTelemetry {
@@ -77,4 +77,4 @@ private:
 };
 
 } // namespace platform
-} // namespace collider
+} // namespace starminer

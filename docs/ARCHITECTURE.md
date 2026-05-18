@@ -45,10 +45,10 @@ This document describes the **free** edition. **(PRO VERSION ONLY)** modules (br
 
 The build produces one of two executables from this tree:
 
-- `collider` (free): puzzle solver (kangaroo + brute force) plus JLP pool client plus benchmark.
-- `collider_pro` **(PRO VERSION ONLY)**: same plus brain-wallet pipeline plus license-gated features.
+- `starminer` (free): puzzle solver (kangaroo + brute force) plus JLP pool client plus benchmark.
+- `starminer_pro` **(PRO VERSION ONLY)**: same plus brain-wallet pipeline plus license-gated features.
 
-Both are linked from the same CMake project, gated by `-DCOLLIDER_PRO=ON|OFF`.
+Both are linked from the same CMake project, gated by `|OFF`.
 
 ---
 
@@ -58,14 +58,14 @@ The build is split into focused static libraries so that platforms missing a bac
 
 | Target              | Purpose                                                                             |
 | ------------------- | ----------------------------------------------------------------------------------- |
-| `collider_platform` | Platform abstraction over CUDA / Metal / CPU. Backend selection at configure time.  |
-| `collider_core`     | CPU-side solver logic: rule engine, priority queue, host orchestration.             |
-| `collider_gpu`      | GPU kernels: SHA-256, secp256k1, RIPEMD-160, bloom filter, kangaroo, puzzle solver. |
-| `collider_pool`     | JLP wire client, HTTP fallback, pool manager. Links OpenSSL for TLS.                |
-| `collider_license`  | **(PRO VERSION ONLY)** Ed25519 license verification with a 256-byte patchable slot. |
+| `starminer_platform` | Platform abstraction over CUDA / Metal / CPU. Backend selection at configure time.  |
+| `starminer_core`     | CPU-side solver logic: rule engine, priority queue, host orchestration.             |
+| `starminer_gpu`      | GPU kernels: SHA-256, secp256k1, RIPEMD-160, bloom filter, kangaroo, puzzle solver. |
+| `starminer_pool`     | JLP wire client, HTTP fallback, pool manager. Links OpenSSL for TLS.                |
+| `starminer_license`  | **(PRO VERSION ONLY)** Ed25519 license verification with a 256-byte patchable slot. |
 | `rckangaroo`        | Third-party Kangaroo solver (GPLv3, in `third_party/RCKangaroo/`).                  |
 
-Compile definitions follow the platform: `COLLIDER_USE_CUDA=1`, `COLLIDER_USE_METAL=1`, or `COLLIDER_USE_CPU=1`, plus exactly one of `COLLIDER_PLATFORM_WINDOWS`, `COLLIDER_PLATFORM_LINUX`, `COLLIDER_PLATFORM_MACOS`. `COLLIDER_PRO=1` is set for Pro builds.
+Compile definitions follow the platform: `STARMINER_USE_CUDA=1`, `STARMINER_USE_METAL=1`, or `STARMINER_USE_CPU=1`, plus exactly one of `STARMINER_PLATFORM_WINDOWS`, `STARMINER_PLATFORM_LINUX`, `STARMINER_PLATFORM_MACOS`. `STARMINER_PRO=1` is set for Pro builds.
 
 ---
 
@@ -170,11 +170,11 @@ Lyrics / quotes scrapers used to seed brain-wallet wordlists.
 
 CMake auto-selects exactly one backend at configure time, in this priority order:
 
-1. **Metal** if `APPLE` and `COLLIDER_USE_METAL=ON`.
-2. **CUDA** if `find_package(CUDAToolkit)` succeeds and `COLLIDER_USE_CUDA=ON`.
+1. **Metal** if `APPLE` and `STARMINER_USE_METAL=ON`.
+2. **CUDA** if `find_package(CUDAToolkit)` succeeds and `STARMINER_USE_CUDA=ON`.
 3. **CPU** fallback otherwise.
 
-The detected backend is written to `COLLIDER_BACKEND` (string: `"CUDA"` / `"METAL"` / `"CPU"`) and exported as a compile definition. Code that needs to branch on backend uses these definitions (`#ifdef COLLIDER_USE_CUDA`, etc.); host orchestration code is backend-agnostic and goes through the platform HAL.
+The detected backend is written to `STARMINER_BACKEND` (string: `"CUDA"` / `"METAL"` / `"CPU"`) and exported as a compile definition. Code that needs to branch on backend uses these definitions (`#ifdef STARMINER_USE_CUDA`, etc.); host orchestration code is backend-agnostic and goes through the platform HAL.
 
 CUDA-specific compile flags (Release):
 
@@ -193,16 +193,16 @@ Default CUDA architectures: `86;89;100` (Ampere, Ada, Blackwell). Override with 
 
 ### What is gated
 
-`-DCOLLIDER_PRO=ON` flips three things:
+`` flips three things:
 
-1. The `COLLIDER_PRO=1` compile definition is exposed to every target.
+1. The `STARMINER_PRO=1` compile definition is exposed to every target.
 2. Brain-wallet sources (`src/generators/`, `src/rules/`, `src/scrapers/`, `src/license/`, several `.cu` kernels) are added to the build.
 3. The compiled banner says "PRO".
 
-When `COLLIDER_PRO=OFF` (the public Free repo's default):
+When `STARMINER_PRO=OFF` (the public Free repo's default):
 
 - Pro source files are not compiled.
-- `#ifdef COLLIDER_PRO` blocks compile out cleanly.
+- `#ifdef STARMINER_PRO` blocks compile out cleanly.
 - Pro CLI flags are still parsed (so the user gets a clear error message instead of "unknown flag"), but the runner short-circuits with a "Pro feature" hint.
 
 ### How the public repo stays clean
@@ -259,7 +259,7 @@ The client serializes `SSL_write` and `SSL_read` behind a mutex (one connection,
 | `tests/test_platform`                    | Platform HAL smoke tests.                                           |
 | `tests/protocol/` **(PRO VERSION ONLY)** | Protocol-drift round-trip tests (Python codegen vs. C++).           |
 
-CUDA tests skip cleanly with code 77 on hosts without a GPU. Tests are gated by `-DCOLLIDER_BUILD_TESTS=ON` (default ON).
+CUDA tests skip cleanly with code 77 on hosts without a GPU. Tests are gated by `-DSTARMINER_BUILD_TESTS=ON` (default ON).
 
 ---
 
@@ -284,7 +284,7 @@ C++ standard: C++20. CUDA standard: CUDA C++ 20.
 
 If you are debugging a feature, walk down from the entry point: `src/main.cpp` -> `src/runtime/<mode>_solver.cpp` -> the GPU dispatcher -> the kernel. Most code paths terminate in one or two kernels.
 
-If you are adding a CLI flag: edit `src/cli/cli_parser.cpp`, add a matching `CLIFlags` bit in `src/core/yaml_config.hpp`, propagate it in `apply_config_to_args()`, then update [README.md](../README.md) and [CONFIGURATION.md](CONFIGURATION.md). The flag must appear in `print_usage()` in `cli_parser.cpp` (gated by `COLLIDER_PRO` if Pro-only).
+If you are adding a CLI flag: edit `src/cli/cli_parser.cpp`, add a matching `CLIFlags` bit in `src/core/yaml_config.hpp`, propagate it in `apply_config_to_args()`, then update [README.md](../README.md) and [CONFIGURATION.md](CONFIGURATION.md). The flag must appear in `print_usage()` in `cli_parser.cpp` (gated by `STARMINER_PRO` if Pro-only).
 
 If you are touching the wire protocol: edit `protocol/jlp.yaml`, regenerate via `tools/codegen/jlp_codegen.py`, update both the C++ and Python sides in lockstep, and update [JLP-PROTOCOL.md](JLP-PROTOCOL.md). Wire changes also require a corresponding update in the `collision-protocol` repo (the Python pool server) plus a passing protocol-drift round-trip test.
 

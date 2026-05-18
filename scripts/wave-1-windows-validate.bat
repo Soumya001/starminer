@@ -129,7 +129,7 @@ echo [*] Configuring with CUDA + Pro features (NATIVE arch -- detects your GPU, 
 cmake -B %BUILD_DIR% -G Ninja ^
     -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
     -DCMAKE_CUDA_ARCHITECTURES=native ^
-    -DCOLLIDER_PRO=ON ^
+     ^
     "-DCMAKE_TOOLCHAIN_FILE=!VCPKG_ROOT!\scripts\buildsystems\vcpkg.cmake"
 if errorlevel 1 (
     echo [!] CMake configure FAILED
@@ -160,7 +160,7 @@ echo =====================================================
 echo.
 echo To verify the JLP pool client manually:
 echo   1. Run a local collision-protocol server.
-echo   2. %BUILD_DIR%\collider.exe --pool jlps://localhost:8443 --worker bc1q...
+echo   2. %BUILD_DIR%\starminer.exe --pool jlps://localhost:8443 --worker bc1q...
 echo   3. Confirm AUTH succeeds and DPs are submitted.
 echo.
 echo To verify TLS hostname rejection:
@@ -174,7 +174,7 @@ echo =====================================================
 echo.
 echo To verify the full brain wallet pipeline against a known answer:
 echo   1. Build a tiny bloom containing the puzzle-65 hash160 (or any known address).
-echo   2. %BUILD_DIR%\collider.exe --brainwallet --bloom test.blf --wordlist wordlist.txt
+echo   2. %BUILD_DIR%\starminer.exe --brainwallet --bloom test.blf --wordlist wordlist.txt
 echo   3. The known passphrase should produce a hit.
 echo.
 

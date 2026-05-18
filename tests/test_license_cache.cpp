@@ -19,7 +19,7 @@
  * real TLS endpoint and live in tests/test_license_e2e.cpp (follow-up).
  */
 
-#ifndef COLLIDER_PRO
+#ifndef STARMINER_PRO
 int main() { return 77; }   // skip on Free builds
 #else
 
@@ -30,7 +30,7 @@ int main() { return 77; }   // skip on Free builds
 #include <cstdio>
 #include <string>
 
-using namespace collider::license;
+using namespace starminer::license;
 
 static int failures = 0;
 #define CHECK(cond, msg) do {                                       \
@@ -155,4 +155,4 @@ int main() {
     return 0;
 }
 
-#endif  // COLLIDER_PRO
+#endif  // STARMINER_PRO

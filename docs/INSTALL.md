@@ -100,7 +100,7 @@ nvidia-smi
 
 ```bash
 git clone https://github.com/Soumya001/starminer.git
-cd collider
+cd starminer
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
@@ -115,7 +115,7 @@ cmake --build build --parallel
 
 The default architecture list is `86;89;100` (Ampere, Ada, Blackwell).
 
-Output: `build/collider`.
+Output: `build/starminer`.
 
 ### Step 4: run the test suite
 
@@ -160,7 +160,7 @@ From "x64 Native Tools Command Prompt for VS 2022":
 
 ```cmd
 git clone https://github.com/Soumya001/starminer.git
-cd collider
+cd starminer
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
@@ -168,7 +168,7 @@ cmake --build build --parallel
 
 The CMake configure step auto-bootstraps vcpkg in `./vcpkg/` if `VCPKG_ROOT` is not already set. This downloads OpenSSL on first run.
 
-Output: `build\collider.exe`.
+Output: `build\starminer.exe`.
 
 ### Step 5: run the test suite
 
@@ -202,7 +202,7 @@ The canonical entry point on macOS is `./build_macos.sh`, which sets `OPENSSL_RO
 
 ```bash
 git clone https://github.com/Soumya001/starminer.git
-cd collider
+cd starminer
 ./build_macos.sh free
 ```
 
@@ -212,7 +212,7 @@ For a clean rebuild:
 ./build_macos.sh free clean
 ```
 
-Output: `build/collider`.
+Output: `build/starminer`.
 
 For a deeper Mac-specific reference (CMake options, embedded Metal shaders, troubleshooting), see [BUILD-MACOS.md](BUILD-MACOS.md).
 
@@ -224,12 +224,12 @@ CMake options recognized by the project:
 
 | Option                      | Default     | Description                                                        |
 | --------------------------- | ----------- | ------------------------------------------------------------------ |
-| `COLLIDER_USE_CUDA`         | `ON`        | Enable the CUDA backend (Linux / Windows).                         |
-| `COLLIDER_USE_METAL`        | `ON`        | Enable the Metal backend (macOS).                                  |
-| `COLLIDER_USE_CPU`          | `ON`        | Enable the CPU fallback backend.                                   |
-| `COLLIDER_BUILD_TESTS`      | `ON`        | Build unit tests (`ctest` runs from `build/`).                     |
-| `COLLIDER_BUILD_BENCHMARKS` | `ON`        | Build the benchmark targets.                                       |
-| `COLLIDER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, etc.).         |
+| `STARMINER_USE_CUDA`         | `ON`        | Enable the CUDA backend (Linux / Windows).                         |
+| `STARMINER_USE_METAL`        | `ON`        | Enable the Metal backend (macOS).                                  |
+| `STARMINER_USE_CPU`          | `ON`        | Enable the CPU fallback backend.                                   |
+| `STARMINER_BUILD_TESTS`      | `ON`        | Build unit tests (`ctest` runs from `build/`).                     |
+| `STARMINER_BUILD_BENCHMARKS` | `ON`        | Build the benchmark targets.                                       |
+| `STARMINER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, etc.).         |
 | `CMAKE_BUILD_TYPE`          | `Release`   | `Release`, `Debug`, or `RelWithDebInfo`.                           |
 | `CMAKE_CUDA_ARCHITECTURES`  | `86;89;100` | Target SM versions. Set to a single value for faster local builds. |
 
@@ -254,10 +254,10 @@ cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES="8
 
 ```bash
 # Quick benchmark (defaults to 30 seconds).
-./collider --benchmark
+./starminer --benchmark
 
 # Help / CLI surface.
-./collider --help
+./starminer --help
 
 # Full unit-test suite.
 cd build

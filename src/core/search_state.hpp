@@ -30,7 +30,7 @@
 #include <unistd.h>
 #endif
 
-namespace collider {
+namespace starminer {
 
 /**
  * Puzzle search state - for resuming Bitcoin puzzle search.
@@ -324,4 +324,4 @@ public:
     }
 };
 
-}  // namespace collider
+}  // namespace starminer

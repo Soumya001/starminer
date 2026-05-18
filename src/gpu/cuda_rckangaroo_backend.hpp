@@ -3,7 +3,7 @@
  *
  * Wraps the third-party RCKangarooManager (RetiredCoder's RCKangaroo)
  * behind the IKangarooBackend interface. Only built when
- * COLLIDER_USE_RCKANGAROO is defined; the factory in
+ * STARMINER_USE_RCKANGAROO is defined; the factory in
  * kangaroo_backend_factory.cpp picks this on Windows/Linux + CUDA
  * builds.
  */
@@ -15,14 +15,14 @@
 
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 class CudaRCKangarooBackend final : public IKangarooBackend {
 public:
     explicit CudaRCKangarooBackend(std::vector<int> gpu_ids);
 
-    bool initialize(const collider::pool::WorkAssignment& work) override;
+    bool initialize(const starminer::pool::WorkAssignment& work) override;
     bool try_set_bloom_filter(const std::string& path) override;
     void solve(BackendCallbacks cb) override;
 
@@ -39,4 +39,4 @@ private:
 };
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

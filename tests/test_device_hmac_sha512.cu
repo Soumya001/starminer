@@ -32,7 +32,7 @@
 #include <cstring>
 #include <string>
 
-using namespace collider::gpu::v2;
+using namespace starminer::gpu::v2;
 
 namespace {
 

@@ -4,13 +4,13 @@
  * Consolidates the v2 kernel sources into a single .cu so nvcc / nvlink
  * have ONE device-symbol graph to resolve instead of N. On Windows,
  * nvlink has a 1MB default stack that overflows at C00000FD on the
- * cumulative symbol graph of collider_gpu + several v2 kernel TUs --
+ * cumulative symbol graph of starminer_gpu + several v2 kernel TUs --
  * see the v1.4.0 build investigation log.
  *
  * Each #include below is treated as raw source paste (NOT a header). The
  * individual files are NOT compiled as standalone TUs (CMakeLists adds
  * only this unity file to GPU_SOURCES). Their layout was already designed
- * to be #include-friendly: each opens the same `collider::gpu::v2`
+ * to be #include-friendly: each opens the same `starminer::gpu::v2`
  * namespace and uses anonymous namespaces for internals.
  *
  * If you add a new v2 kernel .cu file, append its #include here and

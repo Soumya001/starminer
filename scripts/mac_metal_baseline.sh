@@ -5,7 +5,7 @@
 # inversion changes.
 #
 # Usage (on Mac):
-#   cd ~/dev/collider-pro                  # or wherever this repo lives
+#   cd ~/dev/starminer-pro                  # or wherever this repo lives
 #   git pull
 #   bash scripts/mac_metal_baseline.sh > /tmp/metal_baseline.log 2>&1
 #   tail -40 /tmp/metal_baseline.log
@@ -32,12 +32,12 @@ echo "==== configure ===="
 if [ ! -f build_mac/CMakeCache.txt ]; then
     cmake -B build_mac -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCOLLIDER_PRO=ON \
-        -DCOLLIDER_USE_METAL=ON \
-        -DCOLLIDER_USE_CUDA=OFF \
-        -DCOLLIDER_BUILD_TESTS=ON \
-        -DCOLLIDER_BUILD_BENCHMARKS=OFF \
-        -DCOLLIDER_BUILD_TOOLS=OFF
+         \
+        -DSTARMINER_USE_METAL=ON \
+        -DSTARMINER_USE_CUDA=OFF \
+        -DSTARMINER_BUILD_TESTS=ON \
+        -DSTARMINER_BUILD_BENCHMARKS=OFF \
+        -DSTARMINER_BUILD_TOOLS=OFF
 fi
 
 echo

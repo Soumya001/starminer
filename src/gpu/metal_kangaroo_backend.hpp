@@ -2,7 +2,7 @@
  * Apple Metal Kangaroo backend adapter.
  *
  * Wraps KangarooMetalSolver behind the IKangarooBackend interface.
- * Only built when APPLE && COLLIDER_USE_METAL; the factory in
+ * Only built when APPLE && STARMINER_USE_METAL; the factory in
  * kangaroo_backend_factory.cpp picks this on Mac builds.
  *
  * Unlike the CUDA backend (which has a third-party blocking solve()),
@@ -16,12 +16,12 @@
 #include "../core/crypto_cpu.hpp"
 #include "kangaroo_metal.hpp"
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 class MetalKangarooBackend final : public IKangarooBackend {
 public:
-    bool initialize(const collider::pool::WorkAssignment& work) override;
+    bool initialize(const starminer::pool::WorkAssignment& work) override;
     void solve(BackendCallbacks cb) override;
 
     std::string name()           const override { return "Metal Kangaroo"; }
@@ -44,4 +44,4 @@ private:
 };
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

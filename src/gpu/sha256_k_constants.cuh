@@ -23,7 +23,7 @@
  * Usage in a .cu file:
  *
  *   #include "sha256_k_constants.cuh"
- *   __device__ __constant__ uint32_t SHA256_K[64] = COLLIDER_SHA256_K_INIT;
+ *   __device__ __constant__ uint32_t SHA256_K[64] = STARMINER_SHA256_K_INIT;
  *
  * The macro expands to a brace-enclosed 64-element initializer list
  * the same way each TU used to write inline.
@@ -34,7 +34,7 @@
 // FIPS 180-4 SHA-256 round constants. Do not edit without re-deriving
 // from sqrt(p) for p = first 64 primes; any change here invalidates
 // every SHA-256 hash the GPU produces, with no compile-time signal.
-#define COLLIDER_SHA256_K_INIT {                                              \
+#define STARMINER_SHA256_K_INIT {                                              \
     0x428a2f98u, 0x71374491u, 0xb5c0fbcfu, 0xe9b5dba5u,                       \
     0x3956c25bu, 0x59f111f1u, 0x923f82a4u, 0xab1c5ed5u,                       \
     0xd807aa98u, 0x12835b01u, 0x243185beu, 0x550c7dc3u,                       \

@@ -22,7 +22,7 @@
 
 #include "crypto_cpu.hpp"
 
-namespace collider {
+namespace starminer {
 namespace warpwallet {
 
 // ============================================================================
@@ -439,4 +439,4 @@ private:
 };
 
 }  // namespace warpwallet
-}  // namespace collider
+}  // namespace starminer

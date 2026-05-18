@@ -7,7 +7,7 @@
  *
  * Implementation lives in src/gpu/sha256_metal_bench.mm; this header
  * is the only Free/Pro-shared declaration. Compiled only on macOS
- * (APPLE && COLLIDER_USE_METAL).
+ * (APPLE && STARMINER_USE_METAL).
  */
 
 #pragma once
@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <string>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 struct Sha256MetalBenchResult {
@@ -32,4 +32,4 @@ Sha256MetalBenchResult run_sha256_metal_benchmark(
     uint32_t batch_size = 1u << 18);   // 262144 inputs/dispatch by default
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

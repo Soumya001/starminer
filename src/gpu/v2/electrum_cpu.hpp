@@ -41,7 +41,7 @@
 #include <string_view>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 namespace electrum {
@@ -143,4 +143,4 @@ inline void v2_seed(
 }  // namespace electrum
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

@@ -1,7 +1,7 @@
 /**
  * MultiGPUPuzzleSolver -- Metal backend for standalone puzzle brute-force.
  *
- * Pre-1.4.1 the Mac build of `collider --puzzle N` (without --kangaroo)
+ * Pre-1.4.1 the Mac build of `starminer --puzzle N` (without --kangaroo)
  * hit the no-CUDA stub of MultiGPUPuzzleSolver (puzzle_gpu.hpp) which
  * returned false from init() and silently fell back to the CPU reference
  * implementation at ~30 KKeys/s. This file closes that gap by implementing
@@ -21,11 +21,11 @@
  *     sizes; on Metal the dispatch overhead is low enough that the
  *     default (4M) is already in the sweet spot for M1/M2/M3, and the
  *     runtime puzzle solver only invokes calibration under
- *     COLLIDER_USE_CUDA anyway. Returning the current batch keeps any
+ *     STARMINER_USE_CUDA anyway. Returning the current batch keeps any
  *     hypothetical Mac caller well-behaved without burning startup
  *     cycles on a no-op probe.
  *
- * Compiled only on APPLE && COLLIDER_USE_METAL.
+ * Compiled only on APPLE && STARMINER_USE_METAL.
  */
 
 #import <Foundation/Foundation.h>
@@ -36,7 +36,7 @@
 #include <chrono>
 #include <iostream>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // ---------------------------------------------------------------------------
@@ -102,7 +102,7 @@ uint64_t MultiGPUPuzzleSolver::get_batch_size() const {
 
 std::map<int, uint64_t> MultiGPUPuzzleSolver::calibrate_all(int /*iters*/) {
     // The runtime puzzle solver only calls calibrate_all under
-    // COLLIDER_USE_CUDA today, so this Metal implementation is a stable
+    // STARMINER_USE_CUDA today, so this Metal implementation is a stable
     // baseline rather than a probing routine. Return the current batch
     // size for the single Apple GPU. If a future caller decides to run
     // calibration on Metal, a real probe (vary batch size, time
@@ -195,4 +195,4 @@ MultiGPUPuzzleSolver::Result MultiGPUPuzzleSolver::search_range(
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

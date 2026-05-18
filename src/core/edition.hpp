@@ -1,5 +1,5 @@
 /**
- * edition.hpp - collider Feature Edition Control
+ * edition.hpp - starminer Feature Edition Control
  * 
  * Controls which features are available based on build configuration.
  * Free edition supports pool mining with any pool.
@@ -11,8 +11,8 @@
 // ============================================================================
 // Version Information
 // ============================================================================
-#define COLLIDER_VERSION "1.0.0"
-#define COLLIDER_MAJOR_VERSION 1
+#define STARMINER_VERSION "1.0.0"
+#define STARMINER_MAJOR_VERSION 1
 
 // ============================================================================
 // Edition Feature Gates
@@ -20,27 +20,27 @@
 
     // --- Free Edition Features ---
     // Solo is available via CLI flags (--puzzle), but default is pool mode
-    #define COLLIDER_HAS_SOLO           1
-    #define COLLIDER_HAS_BRAINWALLET    0
-    #define COLLIDER_HAS_BLOOM          0
-    #define COLLIDER_HAS_GENERATORS     0
-    #define COLLIDER_HAS_RULES          0
-    #define COLLIDER_HAS_SCRAPERS       0
-    #define COLLIDER_HAS_CUSTOM_POOL    0
-    #define COLLIDER_EDITION_NAME       "collider"
-    #define COLLIDER_FREE_POOL_URL      "jlps://collisionprotocol.com:17403"
+    #define STARMINER_HAS_SOLO           1
+    #define STARMINER_HAS_BRAINWALLET    0
+    #define STARMINER_HAS_BLOOM          0
+    #define STARMINER_HAS_GENERATORS     0
+    #define STARMINER_HAS_RULES          0
+    #define STARMINER_HAS_SCRAPERS       0
+    #define STARMINER_HAS_CUSTOM_POOL    0
+    #define STARMINER_EDITION_NAME       "starminer"
+    #define STARMINER_FREE_POOL_URL      "jlps://collisionprotocol.com:17403"
 
 // ============================================================================
 // Feature Check Macros
 // ============================================================================
 
-#define COLLIDER_FEATURE_AVAILABLE(feature_name) (COLLIDER_HAS_##feature_name)
+#define STARMINER_FEATURE_AVAILABLE(feature_name) (STARMINER_HAS_##feature_name)
 
 // ============================================================================
 // Edition Information
 // ============================================================================
 
-namespace collider {
+namespace starminer {
 namespace edition {
 
 /**
@@ -61,32 +61,32 @@ constexpr bool is_free() {
  * Get edition name
  */
 constexpr const char* name() {
-    return COLLIDER_EDITION_NAME;
+    return STARMINER_EDITION_NAME;
 }
 
 /**
  * Get version string
  */
 constexpr const char* version() {
-    return COLLIDER_VERSION;
+    return STARMINER_VERSION;
 }
 
 /**
  * Get major version
  */
 constexpr int major_version() {
-    return COLLIDER_MAJOR_VERSION;
+    return STARMINER_MAJOR_VERSION;
 }
 
 /**
  * Check if a specific feature is available
  */
-constexpr bool has_solo() { return COLLIDER_HAS_SOLO; }
-constexpr bool has_brainwallet() { return COLLIDER_HAS_BRAINWALLET; }
-constexpr bool has_bloom() { return COLLIDER_HAS_BLOOM; }
-constexpr bool has_generators() { return COLLIDER_HAS_GENERATORS; }
-constexpr bool has_rules() { return COLLIDER_HAS_RULES; }
-constexpr bool has_scrapers() { return COLLIDER_HAS_SCRAPERS; }
+constexpr bool has_solo() { return STARMINER_HAS_SOLO; }
+constexpr bool has_brainwallet() { return STARMINER_HAS_BRAINWALLET; }
+constexpr bool has_bloom() { return STARMINER_HAS_BLOOM; }
+constexpr bool has_generators() { return STARMINER_HAS_GENERATORS; }
+constexpr bool has_rules() { return STARMINER_HAS_RULES; }
+constexpr bool has_scrapers() { return STARMINER_HAS_SCRAPERS; }
 
 } // namespace edition
-} // namespace collider
+} // namespace starminer

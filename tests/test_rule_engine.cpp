@@ -8,7 +8,7 @@
 #include <iostream>
 #include <cassert>
 
-using namespace collider;
+using namespace starminer;
 
 void test_basic_operations() {
     RuleEngine engine;

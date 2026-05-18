@@ -9,16 +9,16 @@
 
 #include "ripemd160_device.cuh"
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // v1.4.1 D.2: round primitives now live in ripemd160_device.cuh.
-using collider::gpu::ripemd160::rotl;
-using collider::gpu::ripemd160::f0;
-using collider::gpu::ripemd160::f1;
-using collider::gpu::ripemd160::f2;
-using collider::gpu::ripemd160::f3;
-using collider::gpu::ripemd160::f4;
+using starminer::gpu::ripemd160::rotl;
+using starminer::gpu::ripemd160::f0;
+using starminer::gpu::ripemd160::f1;
+using starminer::gpu::ripemd160::f2;
+using starminer::gpu::ripemd160::f3;
+using starminer::gpu::ripemd160::f4;
 
 // RIPEMD160 constants
 static __constant__ uint32_t KL[5] = {
@@ -250,4 +250,4 @@ cudaError_t ripemd160_batch(
 }  // extern "C"
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

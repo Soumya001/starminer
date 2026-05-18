@@ -15,7 +15,7 @@
 #include <cuda_runtime.h>
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace optimized {
 
@@ -380,4 +380,4 @@ struct ECBatchConfig {
 
 }  // namespace optimized
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

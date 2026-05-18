@@ -23,8 +23,8 @@
  * Usage:
  *
  *   #include "hash_rounds.cuh"
- *   using collider::gpu::sha256::ch;
- *   using collider::gpu::sha256::sigma0;
+ *   using starminer::gpu::sha256::ch;
+ *   using starminer::gpu::sha256::sigma0;
  *   ...
  *
  * or fully qualified inline.
@@ -40,7 +40,7 @@
 
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace sha256 {
 
@@ -90,4 +90,4 @@ __host__ __device__ __forceinline__ uint64_t rotr(uint64_t x, int n) {
 
 }  // namespace sha512
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

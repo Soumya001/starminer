@@ -87,7 +87,7 @@
 #include <thread>
 #include <vector>
 
-using namespace collider::pool;
+using namespace starminer::pool;
 using namespace std::chrono_literals;
 
 namespace {

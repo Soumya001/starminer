@@ -8,7 +8,7 @@
 
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 namespace pool {
 namespace jlp_wire {
 
@@ -131,4 +131,4 @@ static_assert(sizeof(PoolStats) == 36, "PoolStats must be 36 bytes");
 
 } // namespace jlp_wire
 } // namespace pool
-} // namespace collider
+} // namespace starminer

@@ -16,7 +16,7 @@
 #include <cctype>
 #include <algorithm>
 
-namespace collider {
+namespace starminer {
 
 class RuleParseError : public std::runtime_error {
 public:
@@ -547,4 +547,4 @@ inline const std::vector<std::string> CRYPTO_RULES = {
 
 }  // namespace builtin_rules
 
-}  // namespace collider
+}  // namespace starminer

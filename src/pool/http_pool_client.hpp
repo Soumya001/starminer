@@ -12,7 +12,7 @@
 #include <chrono>
 #include <map>
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 /**
@@ -126,4 +126,4 @@ private:
 };
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

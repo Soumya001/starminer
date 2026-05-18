@@ -10,7 +10,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 // Thread-safe singleton using Meyer's pattern (C++11+)
@@ -512,4 +512,4 @@ bool parse_pool_url(const std::string& url, PoolConfig& config) {
 }
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

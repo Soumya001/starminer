@@ -19,7 +19,7 @@
 #include <cstdio>
 #include <cstring>
 
-using namespace collider::pool;
+using namespace starminer::pool;
 
 // ---- compile-time: sizes ---------------------------------------------------
 

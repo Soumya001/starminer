@@ -1,7 +1,7 @@
 /**
  * MultiGPUKangarooManager -- Metal backend for standalone puzzle solving.
  *
- * Pre-1.4.1 the Mac build of `collider --puzzle N --kangaroo` hit the
+ * Pre-1.4.1 the Mac build of `starminer --puzzle N --kangaroo` hit the
  * no-CUDA stub of MultiGPUKangarooManager (kangaroo_solver_gpu.hpp) and
  * silently fell back to the CPU kangaroo, even though the Metal kernel
  * was already shipping for pool mode. This file closes that gap by
@@ -25,7 +25,7 @@
  *     all workers, via dp_store.add_dp); standalone has to do it
  *     locally because there is no server.
  *
- * Compiled only on APPLE && COLLIDER_USE_METAL.
+ * Compiled only on APPLE && STARMINER_USE_METAL.
  */
 
 #import <Foundation/Foundation.h>
@@ -45,7 +45,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 namespace {
@@ -73,9 +73,9 @@ build_jump_table(uint32_t dp_bits)
         cpu::uint256_t jx, jy;
         cpu::ec_to_affine(jx, jy, jp);
 
-        ::collider::limbs_le_to_be32(jx.d, jumps[i].x.data());
-        ::collider::limbs_le_to_be32(jy.d, jumps[i].y.data());
-        ::collider::limbs_le_to_be32(jd.d, jumps[i].d.data());
+        ::starminer::limbs_le_to_be32(jx.d, jumps[i].x.data());
+        ::starminer::limbs_le_to_be32(jy.d, jumps[i].y.data());
+        ::starminer::limbs_le_to_be32(jd.d, jumps[i].d.data());
         jumps[i].type = 0;
     }
     return jumps;
@@ -96,9 +96,9 @@ build_one_seed(bool is_tame,
         cpu::ec_mul(p, scalar);
         cpu::uint256_t px, py;
         cpu::ec_to_affine(px, py, p);
-        ::collider::limbs_le_to_be32(px.d,    s.x.data());
-        ::collider::limbs_le_to_be32(py.d,    s.y.data());
-        ::collider::limbs_le_to_be32(scalar.d, s.d.data());
+        ::starminer::limbs_le_to_be32(px.d,    s.x.data());
+        ::starminer::limbs_le_to_be32(py.d,    s.y.data());
+        ::starminer::limbs_le_to_be32(scalar.d, s.d.data());
         s.type = 0;
     } else {
         cpu::ECPoint op;
@@ -112,9 +112,9 @@ build_one_seed(bool is_tame,
         cpu::ec_add(wp, wp, ox, oy);
         cpu::uint256_t wx, wy;
         cpu::ec_to_affine(wx, wy, wp);
-        ::collider::limbs_le_to_be32(wx.d, s.x.data());
-        ::collider::limbs_le_to_be32(wy.d, s.y.data());
-        ::collider::limbs_le_to_be32(off.d, s.d.data());
+        ::starminer::limbs_le_to_be32(wx.d, s.x.data());
+        ::starminer::limbs_le_to_be32(wy.d, s.y.data());
+        ::starminer::limbs_le_to_be32(off.d, s.d.data());
         s.type = 1;
     }
     return s;
@@ -343,8 +343,8 @@ GPUKangarooResult MultiGPUKangarooManager::solve() {
 
             // Opposite-type collision -- candidate recovery.
             cpu::uint256_t d_new, d_old;
-            ::collider::be32_to_limbs_le(dp.d_be, d_new.d);
-            ::collider::be32_to_limbs_le(it->second.d_be.data(), d_old.d);
+            ::starminer::be32_to_limbs_le(dp.d_be, d_new.d);
+            ::starminer::be32_to_limbs_le(it->second.d_be.data(), d_old.d);
 
             cpu::uint256_t d_tame, d_wild;
             if (dp.type == 0) {  // new is tame, stored is wild
@@ -408,4 +408,4 @@ GPUKangarooResult MultiGPUKangarooManager::solve() {
 }
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

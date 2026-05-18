@@ -53,23 +53,23 @@ namespace {
 // On-curve jumps mean the kernel exercises real point_op with valid
 // inputs, matching the production workload, and any future regression
 // in mod_mul / mod_inv / point_double / point_op shows up here too.
-std::array<collider::gpu::KangarooSeed, collider::gpu::kJumpTableSize>
+std::array<starminer::gpu::KangarooSeed, starminer::gpu::kJumpTableSize>
 make_smoke_jumps()
 {
-    std::array<collider::gpu::KangarooSeed, collider::gpu::kJumpTableSize> jumps{};
-    for (size_t i = 0; i < collider::gpu::kJumpTableSize; ++i) {
-        ::collider::cpu::uint256_t scalar;
+    std::array<starminer::gpu::KangarooSeed, starminer::gpu::kJumpTableSize> jumps{};
+    for (size_t i = 0; i < starminer::gpu::kJumpTableSize; ++i) {
+        ::starminer::cpu::uint256_t scalar;
         scalar.d[0] = static_cast<uint64_t>(i + 1);
         scalar.d[1] = scalar.d[2] = scalar.d[3] = 0;
 
-        ::collider::cpu::ECPoint p;
-        ::collider::cpu::ec_mul(p, scalar);
-        ::collider::cpu::uint256_t px, py;
-        ::collider::cpu::ec_to_affine(px, py, p);
+        ::starminer::cpu::ECPoint p;
+        ::starminer::cpu::ec_mul(p, scalar);
+        ::starminer::cpu::uint256_t px, py;
+        ::starminer::cpu::ec_to_affine(px, py, p);
 
-        ::collider::limbs_le_to_be32(px.d,    jumps[i].x.data());
-        ::collider::limbs_le_to_be32(py.d,    jumps[i].y.data());
-        ::collider::limbs_le_to_be32(scalar.d, jumps[i].d.data());
+        ::starminer::limbs_le_to_be32(px.d,    jumps[i].x.data());
+        ::starminer::limbs_le_to_be32(py.d,    jumps[i].y.data());
+        ::starminer::limbs_le_to_be32(scalar.d, jumps[i].d.data());
         jumps[i].type = 0;
     }
     return jumps;
@@ -87,14 +87,14 @@ int main() {
         }
 
         // 2. Init solver. Tiny, fast, dp_bits low so DPs are likely.
-        collider::gpu::KangarooMetalConfig cfg;
+        starminer::gpu::KangarooMetalConfig cfg;
         cfg.num_kangaroos    = 64;
         cfg.steps_per_round  = 256;
         cfg.dp_bits          = 4;       // ~1/16 chance per step
         cfg.work_id          = 0xdeadbeefULL;
         cfg.dp_max_per_round = 4096;
 
-        collider::gpu::KangarooMetalSolver solver;
+        starminer::gpu::KangarooMetalSolver solver;
         if (!solver.init(cfg)) {
             std::fprintf(stderr, "init failed: %s\n", solver.error().c_str());
             return 1;
@@ -113,21 +113,21 @@ int main() {
         // from the jump-table scalars (1..32), which is purely cosmetic
         // here but mirrors how production code seeds tames/wilds at
         // unrelated scalars.
-        std::vector<collider::gpu::KangarooSeed> seeds;
+        std::vector<starminer::gpu::KangarooSeed> seeds;
         seeds.reserve(cfg.num_kangaroos);
         for (uint32_t i = 0; i < cfg.num_kangaroos; ++i) {
-            ::collider::cpu::uint256_t scalar;
+            ::starminer::cpu::uint256_t scalar;
             scalar.d[0] = static_cast<uint64_t>(1000 + i);
             scalar.d[1] = scalar.d[2] = scalar.d[3] = 0;
-            ::collider::cpu::ECPoint p;
-            ::collider::cpu::ec_mul(p, scalar);
-            ::collider::cpu::uint256_t px, py;
-            ::collider::cpu::ec_to_affine(px, py, p);
+            ::starminer::cpu::ECPoint p;
+            ::starminer::cpu::ec_mul(p, scalar);
+            ::starminer::cpu::uint256_t px, py;
+            ::starminer::cpu::ec_to_affine(px, py, p);
 
-            collider::gpu::KangarooSeed s{};
-            ::collider::limbs_le_to_be32(px.d,    s.x.data());
-            ::collider::limbs_le_to_be32(py.d,    s.y.data());
-            ::collider::limbs_le_to_be32(scalar.d, s.d.data());
+            starminer::gpu::KangarooSeed s{};
+            ::starminer::limbs_le_to_be32(px.d,    s.x.data());
+            ::starminer::limbs_le_to_be32(py.d,    s.y.data());
+            ::starminer::limbs_le_to_be32(scalar.d, s.d.data());
             s.type = static_cast<uint8_t>(i & 1);   // alternate tame/wild
             seeds.push_back(s);
         }
@@ -211,24 +211,24 @@ int main() {
                     // bug statistically. We also accept the special case
                     // x^3 + 7 == 0 (would be a 2-torsion point; not on
                     // secp256k1 since p is odd, so this should never fire).
-                    ::collider::cpu::uint256_t x_le;
-                    ::collider::be32_to_limbs_le(xb, x_le.d);
+                    ::starminer::cpu::uint256_t x_le;
+                    ::starminer::be32_to_limbs_le(xb, x_le.d);
 
-                    ::collider::cpu::uint256_t x2_le, x3_le, rhs_le;
-                    ::collider::cpu::mod_mul(x2_le, x_le, x_le);
-                    ::collider::cpu::mod_mul(x3_le, x2_le, x_le);
-                    ::collider::cpu::mod_add(rhs_le, x3_le,
-                                             ::collider::cpu::uint256_t(7));
+                    ::starminer::cpu::uint256_t x2_le, x3_le, rhs_le;
+                    ::starminer::cpu::mod_mul(x2_le, x_le, x_le);
+                    ::starminer::cpu::mod_mul(x3_le, x2_le, x_le);
+                    ::starminer::cpu::mod_add(rhs_le, x3_le,
+                                             ::starminer::cpu::uint256_t(7));
 
                     // Euler's criterion exponent (p-1)/2 for secp256k1:
                     // 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFE17
-                    const ::collider::cpu::uint256_t euler_exp(
+                    const ::starminer::cpu::uint256_t euler_exp(
                         0xFFFFFFFF7FFFFE17ULL,
                         0xFFFFFFFFFFFFFFFFULL,
                         0xFFFFFFFFFFFFFFFFULL,
                         0x7FFFFFFFFFFFFFFFULL);
-                    ::collider::cpu::uint256_t legendre;
-                    ::collider::cpu::mod_pow(legendre, rhs_le, euler_exp);
+                    ::starminer::cpu::uint256_t legendre;
+                    ::starminer::cpu::mod_pow(legendre, rhs_le, euler_exp);
 
                     // QR iff legendre == 1. (legendre == p-1 means non-residue.)
                     const bool is_qr =

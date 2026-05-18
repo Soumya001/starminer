@@ -114,12 +114,12 @@ echo %GREEN%============================================================%RESET%
 echo %GREEN%  BUILD SUCCESSFUL%RESET%
 echo %GREEN%============================================================%RESET%
 echo.
-echo Executable: %PROJECT_DIR%\build\collider.exe
+echo Executable: %PROJECT_DIR%\build\starminer.exe
 echo.
 echo Usage:
-echo   collider.exe --help
-echo   collider.exe --puzzle 71
-echo   collider.exe --brainwallet --bloom addresses.bloom
+echo   starminer.exe --help
+echo   starminer.exe --puzzle 71
+echo   starminer.exe --brainwallet --bloom addresses.bloom
 echo.
 
 endlocal

@@ -2,7 +2,7 @@
 
 Platform-specific build reference for Windows x64 with the CUDA backend. For a step-by-step first-time install (Visual Studio, CUDA Toolkit, dependency setup), see [INSTALL.md](INSTALL.md). This document is the reference for CMake options, build flags, vcpkg bootstrap, and Windows-specific troubleshooting.
 
-This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `-DCOLLIDER_PRO=ON|OFF` flag selects which.
+This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `|OFF` flag selects which.
 
 ---
 
@@ -28,23 +28,23 @@ From "x64 Native Tools Command Prompt for VS 2022":
 
 ```cmd
 git clone https://github.com/Soumya001/starminer.git
-cd collider
+cd starminer
 
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
-Output: `build\collider.exe`.
+Output: `build\starminer.exe`.
 
 For the **(PRO VERSION ONLY)** edition (private repo, license required):
 
 ```cmd
 git clone git@github.com:Soumya001/starminer.git
-cd collider-pro
+cd starminer-pro
 build_pro.bat
 ```
 
-`build_pro.bat` calls `vcvars64.bat`, configures CMake with Ninja, and builds with 24 parallel jobs. Outputs: `build\collider_pro.exe` and `build\collider.exe`.
+`build_pro.bat` calls `vcvars64.bat`, configures CMake with Ninja, and builds with 24 parallel jobs. Outputs: `build\starminer_pro.exe` and `build\starminer.exe`.
 
 ---
 
@@ -81,13 +81,13 @@ Options recognized by the project (defaults in `CMakeLists.txt`):
 
 | Option                      | Default     | Description                                                             |
 | --------------------------- | ----------- | ----------------------------------------------------------------------- |
-| `COLLIDER_USE_CUDA`         | `ON`        | Enable the CUDA backend. Required for GPU compute on Windows.           |
-| `COLLIDER_USE_METAL`        | `ON`        | Enable the Metal backend (no effect on Windows).                        |
-| `COLLIDER_USE_CPU`          | `ON`        | Enable the CPU fallback backend.                                        |
-| `COLLIDER_BUILD_TESTS`      | `ON`        | Build unit tests (`ctest` runs from `build\`).                          |
-| `COLLIDER_BUILD_BENCHMARKS` | `ON`        | Build the standalone benchmark targets.                                 |
-| `COLLIDER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, ...).               |
-| `COLLIDER_PRO`              | `OFF`       | Enable the Pro brain-wallet pipeline. Requires the private source tree. |
+| `STARMINER_USE_CUDA`         | `ON`        | Enable the CUDA backend. Required for GPU compute on Windows.           |
+| `STARMINER_USE_METAL`        | `ON`        | Enable the Metal backend (no effect on Windows).                        |
+| `STARMINER_USE_CPU`          | `ON`        | Enable the CPU fallback backend.                                        |
+| `STARMINER_BUILD_TESTS`      | `ON`        | Build unit tests (`ctest` runs from `build\`).                          |
+| `STARMINER_BUILD_BENCHMARKS` | `ON`        | Build the standalone benchmark targets.                                 |
+| `STARMINER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, ...).               |
+| `STARMINER_PRO`              | `OFF`       | Enable the Pro brain-wallet pipeline. Requires the private source tree. |
 | `CMAKE_BUILD_TYPE`          | `Release`   | `Release`, `Debug`, or `RelWithDebInfo`.                                |
 | `CMAKE_CUDA_ARCHITECTURES`  | `86;89;100` | Target SM versions. Override for faster local builds.                   |
 
@@ -95,7 +95,7 @@ Override at configure time:
 
 ```cmd
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release ^
-                       -DCOLLIDER_BUILD_TESTS=OFF ^
+                       -DSTARMINER_BUILD_TESTS=OFF ^
                        -DCMAKE_CUDA_ARCHITECTURES="89"
 ```
 
@@ -178,7 +178,7 @@ NVCC flags applied to GPU code:
 
 MSVC host flags: `/O2 /arch:AVX2 /GL` with link-time code generation (`/LTCG`).
 
-The build links against the **shared** CUDA runtime (`cudart.lib`) to avoid duplicate-symbol errors when multiple `.cu` translation units are linked. This means deployed `collider.exe` requires `cudart64_12.dll` on the target machine (shipped in the CUDA Toolkit redistributable).
+The build links against the **shared** CUDA runtime (`cudart.lib`) to avoid duplicate-symbol errors when multiple `.cu` translation units are linked. This means deployed `starminer.exe` requires `cudart64_12.dll` on the target machine (shipped in the CUDA Toolkit redistributable).
 
 ### RelWithDebInfo
 
@@ -226,7 +226,7 @@ CUDA on Windows enumerates devices via `cudaGetDeviceCount`; the order matches `
 By default, StarMiner uses every visible GPU. To restrict:
 
 ```cmd
-.\collider --gpus 0,2
+.\starminer --gpus 0,2
 ```
 
 Or in `config.yml`:
@@ -240,7 +240,7 @@ Or via the environment:
 
 ```cmd
 set CUDA_VISIBLE_DEVICES=0,2
-.\collider
+.\starminer
 ```
 
 Each GPU runs an independent kangaroo walk with its own DP queue. Cross-GPU work distribution is automatic.
@@ -293,13 +293,13 @@ vcpkg's first-run bootstrap downloads dependencies from GitHub and Microsoft CDN
 
 ### `cudart64_12.dll was not found` at runtime
 
-The CUDA runtime DLL is not on `PATH` when launching `collider.exe`. The CUDA Toolkit installer adds it to `PATH` system-wide; verify:
+The CUDA runtime DLL is not on `PATH` when launching `starminer.exe`. The CUDA Toolkit installer adds it to `PATH` system-wide; verify:
 
 ```cmd
 where cudart64_12.dll
 ```
 
-If absent, reinstall the CUDA Toolkit or copy `cudart64_12.dll` next to `collider.exe`.
+If absent, reinstall the CUDA Toolkit or copy `cudart64_12.dll` next to `starminer.exe`.
 
 ### `MSVC error C2039: 'ERROR': is not a member of 'X'`
 
@@ -327,7 +327,7 @@ Windows Free release artifacts are built in CI on tag push (`v*`). The local equ
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release ^
                        -DCMAKE_CUDA_ARCHITECTURES="75;86;89;100"
 cmake --build build --parallel
-certutil -hashfile build\collider.exe SHA256 > build\collider.exe.sha256
+certutil -hashfile build\starminer.exe SHA256 > build\starminer.exe.sha256
 ```
 
 The release artifact bundles every supported CUDA architecture in one binary; CUDA's runtime picks the closest match at launch.

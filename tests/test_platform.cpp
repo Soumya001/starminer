@@ -11,7 +11,7 @@
 #include <cstring>
 #include <vector>
 
-using namespace collider::platform;
+using namespace starminer::platform;
 
 void test_initialization() {
     std::cout << "Testing initialization... ";

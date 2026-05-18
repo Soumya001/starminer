@@ -20,7 +20,7 @@
 #include <functional>
 #include <atomic>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 /**
@@ -184,4 +184,4 @@ std::string private_key_to_hex(const std::array<uint64_t, 4>& key);
 bool hex_to_private_key(const std::string& hex, std::array<uint64_t, 4>& key);
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

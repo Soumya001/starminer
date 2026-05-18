@@ -13,7 +13,7 @@
 #include "cli/cli_parser.hpp"        // Arguments
 #include "runtime/runtime_globals.hpp"  // GPUDetectionResult
 
-namespace collider::runtime {
+namespace starminer::runtime {
 
 /**
  * Run pool mode - connect to a Kangaroo pool for distributed solving.
@@ -22,4 +22,4 @@ namespace collider::runtime {
  */
 int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info);
 
-}  // namespace collider::runtime
+}  // namespace starminer::runtime

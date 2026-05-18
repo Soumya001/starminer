@@ -17,23 +17,23 @@
 #include "kangaroo_backend.hpp"
 #include "cpu_kangaroo_backend.hpp"
 
-#if defined(COLLIDER_USE_RCKANGAROO)
+#if defined(STARMINER_USE_RCKANGAROO)
 #include "../gpu/cuda_rckangaroo_backend.hpp"
 #endif
 
-#if defined(__APPLE__) && defined(COLLIDER_USE_METAL)
+#if defined(__APPLE__) && defined(STARMINER_USE_METAL)
 #include "../gpu/metal_kangaroo_backend.hpp"
 #endif
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 std::unique_ptr<IKangarooBackend> create_kangaroo_backend(
     const std::vector<int>& gpu_ids)
 {
-#if defined(COLLIDER_USE_RCKANGAROO)
+#if defined(STARMINER_USE_RCKANGAROO)
     return std::make_unique<CudaRCKangarooBackend>(gpu_ids);
-#elif defined(__APPLE__) && defined(COLLIDER_USE_METAL)
+#elif defined(__APPLE__) && defined(STARMINER_USE_METAL)
     (void)gpu_ids;  // Metal selects the system default device.
     return std::make_unique<MetalKangarooBackend>();
 #else
@@ -43,4 +43,4 @@ std::unique_ptr<IKangarooBackend> create_kangaroo_backend(
 }
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

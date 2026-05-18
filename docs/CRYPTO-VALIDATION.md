@@ -10,7 +10,7 @@ The validation suite below is the standing defense.
 
 ## The four validation tests
 
-Located under `tests/`. CUDA-only; built when `COLLIDER_USE_CUDA=ON` (which derives the internal `COLLIDER_BACKEND` to `CUDA`). Each test returns the CTest skip code (77) on hosts without a CUDA device, so the CI matrix on Mac and CPU-only Linux runners skips them cleanly.
+Located under `tests/`. CUDA-only; built when `STARMINER_USE_CUDA=ON` (which derives the internal `STARMINER_BACKEND` to `CUDA`). Each test returns the CTest skip code (77) on hosts without a CUDA device, so the CI matrix on Mac and CPU-only Linux runners skips them cleanly.
 
 ### `test_hash_vectors` (CPU only, sanity floor)
 
@@ -75,8 +75,8 @@ When a new GPU kernel is added that touches the hash chain or any secp256k1 oper
 ```bash
 # Linux / Windows (CUDA available)
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCOLLIDER_USE_CUDA=ON \
-  -DCOLLIDER_BUILD_TESTS=ON \
+  -DSTARMINER_USE_CUDA=ON \
+  -DSTARMINER_BUILD_TESTS=ON \
   -DCMAKE_CUDA_ARCHITECTURES="75;80;86;89"
 cmake --build build --config Release
 ctest --test-dir build --output-on-failure

@@ -15,7 +15,7 @@
 #include <cstdint>
 #include <cstdio>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // =============================================================================
@@ -1504,4 +1504,4 @@ cudaError_t secp256k1_test_table_on_curve(
 }  // extern "C" (test infrastructure)
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

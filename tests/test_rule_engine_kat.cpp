@@ -108,7 +108,7 @@ static constexpr size_t NUM_KATS = sizeof(KATS) / sizeof(KATS[0]);
 }  // namespace
 
 int main() {
-    collider::RuleEngine engine;
+    starminer::RuleEngine engine;
 
     int passed = 0;
     int failed = 0;

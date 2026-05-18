@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "../pool/jlp_pool_client.hpp"  // collider::pool::WorkAssignment
+#include "../pool/jlp_pool_client.hpp"  // starminer::pool::WorkAssignment
 
 #include <cstdint>
 #include <functional>
@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 // Callback surface invoked by IKangarooBackend::solve() while the
@@ -75,7 +75,7 @@ public:
     // initialize() calls on the same instance are allowed (and used
     // when the pool reassigns work mid-run, though the v1.4 driver
     // restarts the worker on chunk reassignment).
-    virtual bool initialize(const collider::pool::WorkAssignment& work) = 0;
+    virtual bool initialize(const starminer::pool::WorkAssignment& work) = 0;
 
     // Optionally load a bloom filter for opportunistic address
     // scanning. Pro-only / CUDA-only feature today; non-CUDA and Free
@@ -113,4 +113,4 @@ std::unique_ptr<IKangarooBackend> create_kangaroo_backend(
     const std::vector<int>& gpu_ids);
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

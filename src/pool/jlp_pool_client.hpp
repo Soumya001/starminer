@@ -25,7 +25,7 @@
 #include <map>
 
 // TLS support via OpenSSL
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
     #include <openssl/ssl.h>
     #include <openssl/err.h>
 #endif
@@ -49,7 +49,7 @@
     #define closesocket close
 #endif
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 // JLP Protocol message types - must match collision-protocol server
@@ -275,7 +275,7 @@ private:
     // TLS support
     bool use_tls_ = false;
     bool verify_cert_ = true;  // Wave 4 D-H2: default to verify (was false / fail-open)
-#ifdef COLLIDER_HAS_OPENSSL
+#ifdef STARMINER_HAS_OPENSSL
     SSL_CTX* ssl_ctx_ = nullptr;
     SSL* ssl_ = nullptr;
     bool init_tls();
@@ -387,4 +387,4 @@ private:
 };
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

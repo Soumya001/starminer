@@ -10,7 +10,7 @@
 #include <ostream>
 #include <sstream>
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 CudaRCKangarooBackend::CudaRCKangarooBackend(std::vector<int> gpu_ids)
@@ -18,7 +18,7 @@ CudaRCKangarooBackend::CudaRCKangarooBackend(std::vector<int> gpu_ids)
 {
 }
 
-bool CudaRCKangarooBackend::initialize(const collider::pool::WorkAssignment& work) {
+bool CudaRCKangarooBackend::initialize(const starminer::pool::WorkAssignment& work) {
     error_.clear();
 
     rc_.dp_bits    = work.dp_bits;
@@ -28,7 +28,7 @@ bool CudaRCKangarooBackend::initialize(const collider::pool::WorkAssignment& wor
     // a custom range will yield the correct value. Pre-1.4 builds hard-
     // coded 135, which mis-budgeted DP rate and walk size on every other
     // puzzle. range_bits_from_be returns 0 on inverted/empty ranges.
-    const int rb = ::collider::range_bits_from_be(work.range_start, work.range_end);
+    const int rb = ::starminer::range_bits_from_be(work.range_start, work.range_end);
     if (rb <= 0) {
         error_ = "pool work assignment has empty or inverted range";
         return false;
@@ -52,7 +52,7 @@ bool CudaRCKangarooBackend::initialize(const collider::pool::WorkAssignment& wor
 
     // Encode the 33-byte compressed pubkey for RCKangaroo's hex-string API.
     char hex[67];
-    ::collider::hex_encode_lower(work.public_key, 33, hex);
+    ::starminer::hex_encode_lower(work.public_key, 33, hex);
     if (!rc_.set_target_pubkey(std::string(hex))) {
         error_ = std::string("failed to set target public key: ") + hex;
         return false;
@@ -93,7 +93,7 @@ void CudaRCKangarooBackend::solve(BackendCallbacks cb) {
         // in LE-by-limb order; the pool wire wants 32 bytes BE. Reuse
         // the shared codec rather than open-coding the conversion.
         uint8_t key[32];
-        ::collider::limbs_le_to_be32(result.private_key.data(), key);
+        ::starminer::limbs_le_to_be32(result.private_key.data(), key);
         cb.on_solution(key);
     }
 }
@@ -106,4 +106,4 @@ std::string CudaRCKangarooBackend::device_summary() const {
 }
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

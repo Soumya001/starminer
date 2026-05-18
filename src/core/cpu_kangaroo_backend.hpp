@@ -14,12 +14,12 @@
 #include "kangaroo.hpp"
 #include "crypto_cpu.hpp"
 
-namespace collider {
+namespace starminer {
 namespace kangaroo {
 
 class CpuKangarooBackend final : public IKangarooBackend {
 public:
-    bool initialize(const collider::pool::WorkAssignment& work) override;
+    bool initialize(const starminer::pool::WorkAssignment& work) override;
     void solve(BackendCallbacks cb) override;
 
     std::string name()           const override { return "CPU Kangaroo"; }
@@ -33,4 +33,4 @@ private:
 };
 
 }  // namespace kangaroo
-}  // namespace collider
+}  // namespace starminer

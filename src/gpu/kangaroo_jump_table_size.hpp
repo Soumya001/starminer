@@ -26,7 +26,7 @@
 
 #include <cstdint>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 
 // Number of distinct jumps in the kangaroo walk's jump table. Must be
@@ -40,4 +40,4 @@ static_assert((kKangarooJumpTableSize & (kKangarooJumpTableSize - 1)) == 0,
               "kKangarooJumpTableSize must be a power of two");
 
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

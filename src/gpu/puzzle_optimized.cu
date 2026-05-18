@@ -19,7 +19,7 @@
 
 #include "hash_rounds.cuh"
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace optimized {
 
@@ -51,15 +51,15 @@ static __constant__ uint32_t SHA256_K[64] = {
 // names are kept as TU-local aliases so the compression loops below stay
 // verbatim.
 __device__ __forceinline__ uint32_t sha_ch(uint32_t x, uint32_t y, uint32_t z) {
-    return ::collider::gpu::sha256::ch(x, y, z);
+    return ::starminer::gpu::sha256::ch(x, y, z);
 }
 __device__ __forceinline__ uint32_t sha_maj(uint32_t x, uint32_t y, uint32_t z) {
-    return ::collider::gpu::sha256::maj(x, y, z);
+    return ::starminer::gpu::sha256::maj(x, y, z);
 }
-__device__ __forceinline__ uint32_t sha_sigma0(uint32_t x) { return ::collider::gpu::sha256::sigma0(x); }
-__device__ __forceinline__ uint32_t sha_sigma1(uint32_t x) { return ::collider::gpu::sha256::sigma1(x); }
-__device__ __forceinline__ uint32_t sha_gamma0(uint32_t x) { return ::collider::gpu::sha256::gamma0(x); }
-__device__ __forceinline__ uint32_t sha_gamma1(uint32_t x) { return ::collider::gpu::sha256::gamma1(x); }
+__device__ __forceinline__ uint32_t sha_sigma0(uint32_t x) { return ::starminer::gpu::sha256::sigma0(x); }
+__device__ __forceinline__ uint32_t sha_sigma1(uint32_t x) { return ::starminer::gpu::sha256::sigma1(x); }
+__device__ __forceinline__ uint32_t sha_gamma0(uint32_t x) { return ::starminer::gpu::sha256::gamma0(x); }
+__device__ __forceinline__ uint32_t sha_gamma1(uint32_t x) { return ::starminer::gpu::sha256::gamma1(x); }
 
 /**
  * Inline SHA256 for exactly 33 bytes (compressed public key).
@@ -1979,7 +1979,7 @@ extern "C" cudaError_t puzzle_optimized_test_ec_mul_glv_kernel_launch(
 
 }  // namespace optimized
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer
 
 // =============================================================================
 // HOST-FACING TEST API

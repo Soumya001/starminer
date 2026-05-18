@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace collider {
+namespace starminer {
 
 /**
  * Statistics for a single rule.
@@ -426,4 +426,4 @@ private:
     }
 };
 
-}  // namespace collider
+}  // namespace starminer

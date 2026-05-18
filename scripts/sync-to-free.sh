@@ -6,7 +6,7 @@
 # WHY THIS SCRIPT EXISTS
 # ----------------------
 # This (private) repository at github.com/Soumya001/starminer-pro carries
-# both Free and Pro sources for collider. The Pro source files (brain
+# both Free and Pro sources for starminer. The Pro source files (brain
 # wallet pipeline, license check, mega-fused kernel, etc.) MUST NOT
 # appear in the public Free repo. The path-exclusion list in PRO_PATHS
 # below is the single source of truth for what stays private.
@@ -42,8 +42,8 @@
 
 set -euo pipefail
 
-PUBLIC_URL="${COLLIDER_FREE_REPO_URL:-https://github.com/Soumya001/starminer.git}"
-PRIVATE_DIR="${COLLIDER_PRIVATE_DIR:-$(git rev-parse --show-toplevel)}"
+PUBLIC_URL="${STARMINER_FREE_REPO_URL:-https://github.com/Soumya001/starminer.git}"
+PRIVATE_DIR="${STARMINER_PRIVATE_DIR:-$(git rev-parse --show-toplevel)}"
 
 # -----------------------------------------------------------------------------
 # Pro-only paths -- never appear in the public Free repo.
@@ -161,7 +161,7 @@ echo "[sync] private HEAD: $PRIVATE_HEAD"
 echo "[sync] target tag:   $TAG"
 echo "[sync] public repo:  $PUBLIC_URL"
 
-WORK="$(mktemp -d -t collider-free-sync.XXXXXX)"
+WORK="$(mktemp -d -t starminer-free-sync.XXXXXX)"
 trap 'rm -rf "$WORK"' EXIT
 echo "[sync] workdir: $WORK"
 

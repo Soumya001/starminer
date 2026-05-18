@@ -65,7 +65,7 @@ struct Arguments {
     // Brain Wallet v2 (Phase 9, restructure plan v1.4.0).
     // --puzzle-only-v2 enables the multi-scheme puzzle-mode bloom check that
     // short-circuits before EC_MUL when no puzzle target hits. Requires
-    // COLLIDER_PRO=ON.
+    // STARMINER_PRO=OFF.
     bool puzzle_only_v2 = false;
     std::string puzzle_keys_file;         // Override path to puzzle_history.json
     std::string schemes_csv;              // Phase 3: comma list of derivation schemes
@@ -117,14 +117,14 @@ int validate_mode_mutex(const Arguments& args, std::string& msg);
  * source of truth for argv -> Arguments / CLIFlags.
  */
 int parse_args_core(int argc, char* argv[], Arguments& args,
-                    collider::CLIFlags& cli, std::string& err_msg);
+                    starminer::CLIFlags& cli, std::string& err_msg);
 
 /**
  * Production entry point: parses argv, exits the process with a clear error
  * on mode-mutex violation. Fills `cli_out` (if non-null) with which CLI flags
  * were explicitly set.
  */
-Arguments parse_args(int argc, char* argv[], collider::CLIFlags* cli_out = nullptr);
+Arguments parse_args(int argc, char* argv[], starminer::CLIFlags* cli_out = nullptr);
 
 /**
  * Test-only entry point: returns -1 instead of exiting on mode-mutex
@@ -132,7 +132,7 @@ Arguments parse_args(int argc, char* argv[], collider::CLIFlags* cli_out = nullp
  * tests/test_cli_parser.cpp.
  */
 int parse_args_for_test(int argc, char* argv[], Arguments& args,
-                        collider::CLIFlags& cli, std::string* err_out = nullptr);
+                        starminer::CLIFlags& cli, std::string* err_out = nullptr);
 
 /**
  * Print usage information.

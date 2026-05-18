@@ -29,7 +29,7 @@ do_build_*.bat
 # Executables
 *.exe
 superflayer
-collider
+starminer
 thepuzzler
 starminer
 

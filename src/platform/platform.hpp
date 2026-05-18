@@ -20,40 +20,40 @@
 #include <functional>
 #include <optional>
 
-namespace collider {
+namespace starminer {
 namespace platform {
 
 // Platform detection
 #if defined(__APPLE__)
     #include <TargetConditionals.h>
     #if TARGET_OS_MAC
-        #define COLLIDER_PLATFORM_MACOS 1
-        #define COLLIDER_PLATFORM_NAME "macOS"
+        #define STARMINER_PLATFORM_MACOS 1
+        #define STARMINER_PLATFORM_NAME "macOS"
         #if defined(__arm64__) || defined(__aarch64__)
-            #define COLLIDER_APPLE_SILICON 1
+            #define STARMINER_APPLE_SILICON 1
         #endif
     #endif
 #elif defined(_WIN32) || defined(_WIN64)
-    #define COLLIDER_PLATFORM_WINDOWS 1
-    #define COLLIDER_PLATFORM_NAME "Windows"
+    #define STARMINER_PLATFORM_WINDOWS 1
+    #define STARMINER_PLATFORM_NAME "Windows"
 #elif defined(__linux__)
-    #define COLLIDER_PLATFORM_LINUX 1
-    #define COLLIDER_PLATFORM_NAME "Linux"
+    #define STARMINER_PLATFORM_LINUX 1
+    #define STARMINER_PLATFORM_NAME "Linux"
 #else
-    #define COLLIDER_PLATFORM_UNKNOWN 1
-    #define COLLIDER_PLATFORM_NAME "Unknown"
+    #define STARMINER_PLATFORM_UNKNOWN 1
+    #define STARMINER_PLATFORM_NAME "Unknown"
 #endif
 
 // Backend detection
-#if defined(COLLIDER_USE_CUDA) || (defined(__CUDACC__) || defined(CUDA_VERSION))
-    #define COLLIDER_BACKEND_CUDA 1
-    #define COLLIDER_BACKEND_NAME "CUDA"
-#elif defined(COLLIDER_USE_METAL) || defined(COLLIDER_APPLE_SILICON)
-    #define COLLIDER_BACKEND_METAL 1
-    #define COLLIDER_BACKEND_NAME "Metal"
+#if defined(STARMINER_USE_CUDA) || (defined(__CUDACC__) || defined(CUDA_VERSION))
+    #define STARMINER_BACKEND_CUDA 1
+    #define STARMINER_BACKEND_NAME "CUDA"
+#elif defined(STARMINER_USE_METAL) || defined(STARMINER_APPLE_SILICON)
+    #define STARMINER_BACKEND_METAL 1
+    #define STARMINER_BACKEND_NAME "Metal"
 #else
-    #define COLLIDER_BACKEND_CPU 1
-    #define COLLIDER_BACKEND_NAME "CPU"
+    #define STARMINER_BACKEND_CPU 1
+    #define STARMINER_BACKEND_NAME "CPU"
 #endif
 
 /**
@@ -343,4 +343,4 @@ struct AdaptiveConfig {
 };
 
 }  // namespace platform
-}  // namespace collider
+}  // namespace starminer

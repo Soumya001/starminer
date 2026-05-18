@@ -15,7 +15,7 @@
 #include <optional>
 #include <functional>
 
-namespace collider {
+namespace starminer {
 
 // -----------------------------------------------------------------------------
 // Candidate Types
@@ -249,4 +249,4 @@ struct Config {
     size_t dedup_bloom_size = 1'000'000'000;   // 1B for deduplication
 };
 
-}  // namespace collider
+}  // namespace starminer

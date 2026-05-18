@@ -2,7 +2,7 @@
 
 StarMiner on macOS uses **Apple Metal** for GPU compute. CUDA is unavailable on Mac. Apple Silicon (M1, M2, M3, M4) is required. Intel Macs are not supported.
 
-This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `-DCOLLIDER_PRO=ON|OFF` flag selects which.
+This document covers both the Free and **(PRO VERSION ONLY)** editions. The same source tree builds either; the `|OFF` flag selects which.
 
 ## 1. Prerequisites (one-time)
 
@@ -32,7 +32,7 @@ For the Free edition (public repo):
 
 ```bash
 git clone https://github.com/Soumya001/starminer.git
-cd collider
+cd starminer
 ./build_macos.sh free
 ```
 
@@ -40,7 +40,7 @@ For the **(PRO VERSION ONLY)** edition (private repo, license required):
 
 ```bash
 git clone git@github.com:Soumya001/starminer.git
-cd collider-pro
+cd starminer-pro
 ./build_macos.sh pro
 ```
 
@@ -59,29 +59,29 @@ Other invocations:
 
 | CMake option                | Value      | Why                                                             |
 | --------------------------- | ---------- | --------------------------------------------------------------- |
-| `COLLIDER_PRO`              | `ON`/`OFF` | `ON` for Pro, `OFF` for Free.                                   |
-| `COLLIDER_USE_METAL`        | `ON`       | Apple GPU compute.                                              |
-| `COLLIDER_USE_CUDA`         | `OFF`      | No CUDA on Mac.                                                 |
-| `COLLIDER_BUILD_TESTS`      | `ON`       | Run `ctest` after build to validate.                            |
-| `COLLIDER_BUILD_BENCHMARKS` | `OFF`      | Not needed for the standard Mac build.                          |
-| `COLLIDER_BUILD_TOOLS`      | `OFF`      | License generator and bloom builder are Linux/Windows-targeted. |
-| `COLLIDER_DISABLE_IPO`      | `ON`       | Predictable build output; matches Linux/Windows.                |
+| `STARMINER_PRO`              | `ON`/`OFF` | `ON` for Pro, `OFF` for Free.                                   |
+| `STARMINER_USE_METAL`        | `ON`       | Apple GPU compute.                                              |
+| `STARMINER_USE_CUDA`         | `OFF`      | No CUDA on Mac.                                                 |
+| `STARMINER_BUILD_TESTS`      | `ON`       | Run `ctest` after build to validate.                            |
+| `STARMINER_BUILD_BENCHMARKS` | `OFF`      | Not needed for the standard Mac build.                          |
+| `STARMINER_BUILD_TOOLS`      | `OFF`      | License generator and bloom builder are Linux/Windows-targeted. |
+| `STARMINER_DISABLE_IPO`      | `ON`       | Predictable build output; matches Linux/Windows.                |
 | `CMAKE_BUILD_TYPE`          | `Release`  | Optimized.                                                      |
 
-**Do NOT pass** `-DCOLLIDER_EDITION_PRO=ON`. That option name does not exist (older build scripts had this typo); CMake silently ignores it and builds Free. The correct name is `COLLIDER_PRO`.
+**Do NOT pass** `-DSTARMINER_EDITION_PRO=ON`. That option name does not exist (older build scripts had this typo); CMake silently ignores it and builds Free. The correct name is `STARMINER_PRO`.
 
 ## 4. Artifacts
 
 After a successful build:
 
 ```
-build/collider          # Free or Pro binary (one or the other; not both per build)
-build/collider_pro      # PRO VERSION ONLY: copied alongside `collider` for release packaging
+build/starminer          # Free or Pro binary (one or the other; not both per build)
+build/starminer_pro      # PRO VERSION ONLY: copied alongside `starminer` for release packaging
 ```
 
 Both are native Mach-O for arm64 (Apple Silicon).
 
-For Free builds, `build/collider` is the only artifact. For Pro builds, the script also copies it to `build/collider_pro` so the release pipeline has consistent artifact basenames across Windows, Linux, and Mac.
+For Free builds, `build/starminer` is the only artifact. For Pro builds, the script also copies it to `build/starminer_pro` so the release pipeline has consistent artifact basenames across Windows, Linux, and Mac.
 
 ## 5. Run
 
@@ -89,32 +89,32 @@ For Free builds, `build/collider` is the only artifact. For Pro builds, the scri
 
 ```bash
 # Show banner and ROI-rank to the easiest unsolved puzzle.
-./build/collider
+./build/starminer
 
 # Specific puzzle with kangaroo (works on Metal in v1.4.1).
-./build/collider --puzzle 75 --kangaroo
+./build/starminer --puzzle 75 --kangaroo
 
 # Brute force (works on Metal in v1.4.1 D.3).
-./build/collider --puzzle 71 --random
+./build/starminer --puzzle 71 --random
 ```
 
 ### Pool mode (Free or Pro)
 
 ```bash
-./build/collider --pool jlps://collisionprotocol.com:17403 \
+./build/starminer --pool jlps://collisionprotocol.com:17403 \
                  --worker bc1qYourBitcoinAddress
 ```
 
 ### Brain wallet **(PRO VERSION ONLY)**
 
 ```bash
-./build/collider_pro --brainwallet --bloom funded_addresses.blf
+./build/starminer_pro --brainwallet --bloom funded_addresses.blf
 ```
 
 ### v2 puzzle-mode kernel **(PRO VERSION ONLY)**
 
 ```bash
-./build/collider_pro --puzzle-only-v2 \
+./build/starminer_pro --puzzle-only-v2 \
                      --schemes all \
                      --addr-types puzzle_only \
                      --puzzle-keys ./data/puzzle_history.json
@@ -184,15 +184,15 @@ For benchmarked numbers on each chip (M1, M1 Max, M1 Ultra, M2 family, M3 family
 To measure your specific machine:
 
 ```bash
-./build/collider --benchmark
-./build/collider --benchmark --benchmark-time 60
+./build/starminer --benchmark
+./build/starminer --benchmark --benchmark-time 60
 ```
 
 ## 10. Releasing
 
 Pro releases on Mac follow the same flow as Windows and Linux:
 
-1. Tag `v1.4.1-pro` on `collider-pro/main` after merging.
+1. Tag `v1.5.2` on `starminer/main` after merging.
 2. CI builds the artifact for distribution.
 3. Free release follows via `scripts/sync-to-free.sh v1.4.1-free`.
 4. Website auto-pulls from `github.com/Soumya001/starminer/releases/latest`.

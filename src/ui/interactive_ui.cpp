@@ -42,7 +42,7 @@
 #include "ui/banner.hpp"
 #include "ui/interactive.hpp"
 
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
 #include "core/brainwallet_state.hpp"
 #include "ui/brainwallet_setup.hpp"
 #endif
@@ -55,10 +55,10 @@ std::string format_number(uint64_t n);
 std::string format_number_human(uint64_t n);
 std::string normalize_path(const std::string& path);
 
-namespace collider::ui {
+namespace starminer::ui {
 
 Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
-    using namespace ::collider::ui;
+    using namespace ::starminer::ui;
     Arguments args = base_args;
     args.puzzle_mode = true;
 
@@ -90,7 +90,7 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
         // prompt). Only writes when the file doesn't already exist; never
         // overwrites an existing operator-managed config.
         const std::string saved =
-            collider::AppConfig::save_pool_worker(worker, pool_url);
+            starminer::AppConfig::save_pool_worker(worker, pool_url);
         if (!saved.empty()) {
             Interactive::info_message("Saved pool worker to " + saved
                 + " (will default on next launch)");
@@ -115,7 +115,7 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
         int best = ::get_best_puzzle(gpu_speed_mkeys);
         if (best > 0) {
             args.puzzle_number = best;
-            const ::collider::PuzzleInfo* puzzle = ::collider::PuzzleDatabase::get_puzzle(best);
+            const ::starminer::PuzzleInfo* puzzle = ::starminer::PuzzleDatabase::get_puzzle(best);
 
             std::cout << "\n";
             Interactive::info_message("Analyzing puzzles...");
@@ -157,7 +157,7 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
     } else {
         // Specific puzzle selected
         args.puzzle_number = puzzle_choice;
-        const ::collider::PuzzleInfo* puzzle = ::collider::PuzzleDatabase::get_puzzle(puzzle_choice);
+        const ::starminer::PuzzleInfo* puzzle = ::starminer::PuzzleDatabase::get_puzzle(puzzle_choice);
 
         if (puzzle) {
             bool has_pubkey = !puzzle->public_key_hex.empty();
@@ -213,9 +213,9 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
     return args;
 }
 
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
 Arguments run_brainwallet_interactive(Arguments base_args) {
-    using namespace ::collider::ui;
+    using namespace ::starminer::ui;
     Arguments args = base_args;
     args.brainwallet_mode = true;
     args.pool_mode = false;  // Disable pool mode - brainwallet is mutually exclusive
@@ -239,7 +239,7 @@ Arguments run_brainwallet_interactive(Arguments base_args) {
                 return args;
             }
         } else {
-            Interactive::info_message("You can run setup later with: ./collider --brainwallet-setup");
+            Interactive::info_message("You can run setup later with: ./starminer --brainwallet-setup");
             args.go_back = true;
             return args;
         }
@@ -429,12 +429,12 @@ Arguments run_brainwallet_interactive(Arguments base_args) {
             auto start_time = std::chrono::steady_clock::now();
 
             // Configure builder
-            ::collider::utxo::UTXOBloomBuilder::Config bloom_config;
+            ::starminer::utxo::UTXOBloomBuilder::Config bloom_config;
             bloom_config.target_fp_rate = 0.00001;  // 0.001%
             bloom_config.expected_elements = 50000000;
             bloom_config.min_satoshis = 100000;  // 0.001 BTC
 
-            ::collider::utxo::UTXOBloomBuilder builder(bloom_config);
+            ::starminer::utxo::UTXOBloomBuilder builder(bloom_config);
 
             std::cout << "  Filter size:  " << (builder.num_bits() / 8 / 1024 / 1024) << " MB\n";
             std::cout << "  Hash funcs:   " << builder.num_hashes() << "\n\n";
@@ -499,12 +499,12 @@ Arguments run_brainwallet_interactive(Arguments base_args) {
             Interactive::info_message("Building bloom filter...");
 
             try {
-                ::collider::utxo::UTXOBloomBuilder::Config bloom_config;
+                ::starminer::utxo::UTXOBloomBuilder::Config bloom_config;
                 bloom_config.target_fp_rate = 0.00001;
                 bloom_config.expected_elements = 50000000;
                 bloom_config.min_satoshis = 100000;
 
-                ::collider::utxo::UTXOBloomBuilder builder(bloom_config);
+                ::starminer::utxo::UTXOBloomBuilder builder(bloom_config);
                 builder.process_csv(utxo_path);
                 builder.save(default_bloom);
 
@@ -617,10 +617,10 @@ Arguments run_brainwallet_interactive(Arguments base_args) {
 
     return args;
 }
-#endif  // COLLIDER_PRO
+#endif  // STARMINER_PRO
 
 Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys) {
-    using namespace ::collider::ui;
+    using namespace ::starminer::ui;
     Arguments args = base_args;
 
     while (true) {
@@ -640,7 +640,7 @@ Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys) {
             }
 
             case MainMenuChoice::BRAINWALLET_MODE: {
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
                 args = run_brainwallet_interactive(args);
                 if (args.go_back) {
                     continue;  // Return to main menu
@@ -699,4 +699,4 @@ void enable_windows_ansi() {
 #endif
 }
 
-}  // namespace collider::ui
+}  // namespace starminer::ui

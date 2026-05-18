@@ -11,7 +11,7 @@
  * the production parser. The two parsers MUST stay in sync; if you add a flag
  * to main.cpp::parse_args_core, mirror it here.
  *
- * The override-matrix half of these tests calls collider::apply_config_to_args
+ * The override-matrix half of these tests calls starminer::apply_config_to_args
  * directly (template, header-only) -- no main.cpp link required.
  */
 
@@ -115,16 +115,16 @@ int validate_mode_mutex(const Arguments& args, std::string& msg) {
 // ---------------------------------------------------------------------------
 int parse_args_mirror(const std::vector<std::string>& argv,
                       Arguments& args,
-                      collider::CLIFlags& cli,
+                      starminer::CLIFlags& cli,
                       std::string& err_msg) {
     args = Arguments{};
-    cli = collider::CLIFlags{};
+    cli = starminer::CLIFlags{};
     int argc = static_cast<int>(argv.size());
 
     // Build argv[] with a fake program name at slot 0 (parse_args skips i=0).
     std::vector<std::string> storage;
     storage.reserve(argc + 1);
-    storage.emplace_back("test_collider");
+    storage.emplace_back("test_starminer");
     for (auto& s : argv) storage.push_back(s);
 
     auto get = [&](int i) -> const char* { return storage[i].c_str(); };
@@ -261,9 +261,9 @@ TestStats g_stats;
 // ---------------------------------------------------------------------------
 
 void run_all() {
-    using collider::AppConfig;
-    using collider::CLIFlags;
-    using collider::apply_config_to_args;
+    using starminer::AppConfig;
+    using starminer::CLIFlags;
+    using starminer::apply_config_to_args;
 
     // -----------------------------------------------------------------------
     // Group A: parse_args alone -- per-flag CLIFlags bit accuracy

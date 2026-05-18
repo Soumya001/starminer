@@ -4,16 +4,16 @@
 #include <sstream>
 #include <string>
 
-#ifdef COLLIDER_HAVE_CURL
+#ifdef STARMINER_HAVE_CURL
 #include <curl/curl.h>
 #endif
 
-namespace collider {
+namespace starminer {
 namespace ui {
 
 namespace {
 
-#ifdef COLLIDER_HAVE_CURL
+#ifdef STARMINER_HAVE_CURL
 
 // libcurl write callback. Appends received bytes to a std::string.
 std::size_t curl_write_string(void* ptr, std::size_t size,
@@ -49,12 +49,12 @@ long long extract_int_field(std::string_view body, std::string_view key) {
     return negative ? -value : value;
 }
 
-#endif  // COLLIDER_HAVE_CURL
+#endif  // STARMINER_HAVE_CURL
 
 }  // namespace
 
 std::optional<double> fetch_balance_btc(std::string_view address) {
-#ifndef COLLIDER_HAVE_CURL
+#ifndef STARMINER_HAVE_CURL
     (void)address;
     return std::nullopt;
 #else
@@ -88,7 +88,7 @@ std::optional<double> fetch_balance_btc(std::string_view address) {
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
     curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 3L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "collider/1.4.x");
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "starminer/1.4.x");
     // mempool.space serves valid LE certs; default verify is correct.
 
     const CURLcode rc = curl_easy_perform(curl);
@@ -135,4 +135,4 @@ std::string format_balance(std::optional<double> balance) {
 }
 
 }  // namespace ui
-}  // namespace collider
+}  // namespace starminer

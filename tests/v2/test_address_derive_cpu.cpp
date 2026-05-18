@@ -14,7 +14,7 @@
  *   * P2WPKH         : BIP-84 test vectors
  *   * P2TR-BIP86 tweak : BIP-86 test vectors
  *
- * Run from collider-pro/build:
+ * Run from starminer-pro/build:
  *     ctest -R AddressDeriveCPU
  *
  * Plain-assert style (matches other tests/ files).
@@ -27,8 +27,8 @@
 #include <cstring>
 #include <string>
 
-using namespace collider::gpu::v2;
-using namespace collider::gpu::v2::internal;
+using namespace starminer::gpu::v2;
+using namespace starminer::gpu::v2::internal;
 
 static int failures = 0;
 #define CHECK(cond, msg) do {                                       \

@@ -49,10 +49,10 @@ jobs:
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCOLLIDER_USE_CUDA=ON \
-            -DCOLLIDER_PRO=OFF \
-            -DCOLLIDER_BUILD_TESTS=OFF \
-            -DCOLLIDER_BUILD_BENCHMARKS=OFF \
+            -DSTARMINER_USE_CUDA=ON \
+             \
+            -DSTARMINER_BUILD_TESTS=OFF \
+            -DSTARMINER_BUILD_BENCHMARKS=OFF \
             -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89;100;120"
           cmake --build build --target starminer -j4
           strip build/starminer
@@ -78,10 +78,10 @@ jobs:
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCOLLIDER_USE_CUDA=OFF \
-            -DCOLLIDER_PRO=OFF \
-            -DCOLLIDER_BUILD_TESTS=OFF \
-            -DCOLLIDER_BUILD_BENCHMARKS=OFF
+            -DSTARMINER_USE_CUDA=OFF \
+             \
+            -DSTARMINER_BUILD_TESTS=OFF \
+            -DSTARMINER_BUILD_BENCHMARKS=OFF
           cmake --build build --target starminer -j4
           strip build/starminer
 
@@ -115,13 +115,15 @@ jobs:
       - name: Build
         env:
           VCPKG_ROOT: 'C:\vcpkg'
+          VCPKG_TARGET_TRIPLET: x64-windows-static
         run: |
           cmake -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-            -DCOLLIDER_USE_CUDA=ON `
-            -DCOLLIDER_PRO=OFF `
-            -DCOLLIDER_BUILD_TESTS=OFF `
-            -DCOLLIDER_BUILD_BENCHMARKS=OFF `
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DSTARMINER_USE_CUDA=ON `
+             `
+            -DSTARMINER_BUILD_TESTS=OFF `
+            -DSTARMINER_BUILD_BENCHMARKS=OFF `
             -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89;100;120"
           cmake --build build --target starminer -j4
 
@@ -148,13 +150,15 @@ jobs:
       - name: Build
         env:
           VCPKG_ROOT: 'C:\vcpkg'
+          VCPKG_TARGET_TRIPLET: x64-windows-static
         run: |
           cmake -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-            -DCOLLIDER_USE_CUDA=OFF `
-            -DCOLLIDER_PRO=OFF `
-            -DCOLLIDER_BUILD_TESTS=OFF `
-            -DCOLLIDER_BUILD_BENCHMARKS=OFF
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+            -DSTARMINER_USE_CUDA=OFF `
+             `
+            -DSTARMINER_BUILD_TESTS=OFF `
+            -DSTARMINER_BUILD_BENCHMARKS=OFF
           cmake --build build --target starminer -j4
 
       - uses: actions/upload-artifact@v4
@@ -176,11 +180,11 @@ jobs:
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCOLLIDER_USE_CUDA=OFF \
-            -DCOLLIDER_USE_METAL=ON \
-            -DCOLLIDER_PRO=OFF \
-            -DCOLLIDER_BUILD_TESTS=OFF \
-            -DCOLLIDER_BUILD_BENCHMARKS=OFF
+            -DSTARMINER_USE_CUDA=OFF \
+            -DSTARMINER_USE_METAL=ON \
+             \
+            -DSTARMINER_BUILD_TESTS=OFF \
+            -DSTARMINER_BUILD_BENCHMARKS=OFF
           cmake --build build --target starminer -j4
 
       - uses: actions/upload-artifact@v4
@@ -206,11 +210,11 @@ jobs:
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
-            -DCOLLIDER_USE_CUDA=OFF \
-            -DCOLLIDER_USE_ROCM=ON \
-            -DCOLLIDER_PRO=OFF \
-            -DCOLLIDER_BUILD_TESTS=OFF \
-            -DCOLLIDER_BUILD_BENCHMARKS=OFF \
+            -DSTARMINER_USE_CUDA=OFF \
+            -DSTARMINER_USE_ROCM=ON \
+             \
+            -DSTARMINER_BUILD_TESTS=OFF \
+            -DSTARMINER_BUILD_BENCHMARKS=OFF \
             -DCMAKE_HIP_ARCHITECTURES="gfx906;gfx908;gfx1030;gfx1100;gfx1101;gfx1102"
           cmake --build build --target starminer -j4
           strip build/starminer

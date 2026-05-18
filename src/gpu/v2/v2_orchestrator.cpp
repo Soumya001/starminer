@@ -5,7 +5,7 @@
  *
  * Stays free of cuda_runtime.h on the parser / loader paths so that
  * tests can exercise them on any host. The single CUDA-touching helper
- * (`dispatch_to_kernel`) is gated under COLLIDER_USE_CUDA and stubs out
+ * (`dispatch_to_kernel`) is gated under STARMINER_USE_CUDA and stubs out
  * to a runtime-error otherwise.
  */
 
@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace collider {
+namespace starminer {
 namespace gpu {
 namespace v2 {
 
@@ -583,7 +583,7 @@ bool load_puzzle_targets(const std::string& path,
 // existing extern "C" definitions.
 // ---------------------------------------------------------------------------
 
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
 extern "C" cudaError_t secp256k1_batch_mul(
     const void* d_private_keys,
     void* d_public_keys,
@@ -597,7 +597,7 @@ extern "C" cudaError_t secp256k1_init_table(cudaStream_t stream);
 // buffers across batches. See header for rationale (bloom upload was the
 // dominant cost on small batches; Gemini PR #15 HIGH finding).
 // ---------------------------------------------------------------------------
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
 struct MultiAddressSession::Impl {
     cudaStream_t   stream         = nullptr;
     uint8_t*       d_priv         = nullptr;
@@ -640,7 +640,7 @@ int MultiAddressSession::init(const uint8_t* bloom,
                               size_t max_batch_count)
 {
     if (max_batch_count == 0) return 64;
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
     if (cudaStreamCreate(&impl_->stream) != cudaSuccess) return 70;
 
     cudaError_t rc = secp256k1_init_table(impl_->stream);
@@ -682,7 +682,7 @@ int MultiAddressSession::init(const uint8_t* bloom,
 
 int MultiAddressSession::process_batch(const MultiAddressBatch& b) {
     if (b.count == 0 || b.addr_mask == 0) return 64;
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
     if (!impl_->stream) return 64;  // init() not called
     if (b.count > impl_->max_batch_count) return 64;  // batch too large
 
@@ -750,7 +750,7 @@ int MultiAddressSession::process_batch(const MultiAddressBatch& b) {
 }
 
 uint64_t MultiAddressSession::total_dropped_matches() const {
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
     return impl_ ? impl_->dropped_matches : 0;
 #else
     return 0;
@@ -758,7 +758,7 @@ uint64_t MultiAddressSession::total_dropped_matches() const {
 }
 
 uint64_t MultiAddressSession::total_overflow_batches() const {
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
     return impl_ ? impl_->overflow_batches : 0;
 #else
     return 0;
@@ -770,7 +770,7 @@ uint64_t MultiAddressSession::total_overflow_batches() const {
 // callers don't change.
 int run_multi_address_batch(const MultiAddressBatch& b) {
     if (b.count == 0 || b.addr_mask == 0) return 64;
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
     MultiAddressSession session;
     int rc = session.init(b.bloom, b.bloom_bits, b.bloom_hashes,
                           b.bloom_seed, b.count);
@@ -779,7 +779,7 @@ int run_multi_address_batch(const MultiAddressBatch& b) {
 #else
     (void)b;
     std::fprintf(stderr,
-        "[v2:multi-addr] requires Pro CUDA build (COLLIDER_PRO + COLLIDER_USE_CUDA)\n");
+        "[v2:multi-addr] requires Pro CUDA build (STARMINER_PRO + STARMINER_USE_CUDA)\n");
     return 64;
 #endif
 }
@@ -816,7 +816,7 @@ int run_v2_orchestrator(const OrchestratorOptions& opts) {
         return 0;
     }
 
-#if defined(COLLIDER_USE_CUDA) && defined(COLLIDER_PRO)
+#if defined(STARMINER_USE_CUDA) && defined(STARMINER_PRO)
     // Multi-address mode requires the Phase 4 priv-derivation pipeline
     // (passphrase -> scheme(...) -> priv -> MultiAddressSession). That
     // bridge isn't built yet; v2_brain_wallet_batch returns
@@ -1086,7 +1086,7 @@ int run_v2_orchestrator(const OrchestratorOptions& opts) {
     }
     cleanup_scan();
     return total_hits > 0 ? 0 : 0;
-#elif defined(__APPLE__) && defined(COLLIDER_USE_METAL) && defined(COLLIDER_PRO)
+#elif defined(__APPLE__) && defined(STARMINER_USE_METAL) && defined(STARMINER_PRO)
     // Metal dispatch path. v1.4.0 ships the CUDA scan loop only;
     // --puzzle-only-v2 on Mac is not wired through this orchestrator
     // yet (the Metal kernels exist, but the per-batch dispatch loop
@@ -1103,8 +1103,8 @@ int run_v2_orchestrator(const OrchestratorOptions& opts) {
 #else
     std::fprintf(stderr,
         "[v2] --puzzle-only-v2 requires a Pro build with CUDA "
-        "(COLLIDER_PRO=ON + COLLIDER_USE_CUDA=ON) on Linux/Windows or Metal "
-        "(COLLIDER_PRO=ON + COLLIDER_USE_METAL=ON) on macOS. "
+        "(STARMINER_PRO=OFF + STARMINER_USE_CUDA=ON) on Linux/Windows or Metal "
+        "(STARMINER_PRO=OFF + STARMINER_USE_METAL=ON) on macOS. "
         "Re-run with --dry-run to validate config without a GPU.\n");
     return 64;  // EX_USAGE
 #endif
@@ -1112,4 +1112,4 @@ int run_v2_orchestrator(const OrchestratorOptions& opts) {
 
 }  // namespace v2
 }  // namespace gpu
-}  // namespace collider
+}  // namespace starminer

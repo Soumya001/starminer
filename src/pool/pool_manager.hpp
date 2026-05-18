@@ -16,7 +16,7 @@
 #include <condition_variable>
 #include <map>
 
-namespace collider {
+namespace starminer {
 namespace pool {
 
 // Pool connection configuration
@@ -153,4 +153,4 @@ PoolManager& get_pool_manager();
 bool parse_pool_url(const std::string& url, PoolConfig& config);
 
 } // namespace pool
-} // namespace collider
+} // namespace starminer

@@ -73,8 +73,8 @@ int g_checked  = 0;
 }  // namespace
 
 int main() {
-    using ::collider::cpu::compute_hash160;
-    const auto& puzzles = ::collider::PuzzleDatabase::get_all();
+    using ::starminer::cpu::compute_hash160;
+    const auto& puzzles = ::starminer::PuzzleDatabase::get_all();
     for (const auto& p : puzzles) {
         if (!p.solved || p.solution_hex.empty()) continue;
         if (p.target_h160_hex == "unknown" || p.target_h160_hex.size() != 40) {

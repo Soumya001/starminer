@@ -39,7 +39,7 @@
 #define POPCOUNT(x) __builtin_popcount(x)
 #endif
 
-namespace collider {
+namespace starminer {
 namespace utxo {
 
 // MurmurHash3 finalization mix
@@ -168,7 +168,7 @@ struct H160 {
     // Convert to hex string
     std::string to_hex() const {
         char hex[41];
-        ::collider::hex_encode_lower(data, 20, hex);
+        ::starminer::hex_encode_lower(data, 20, hex);
         return std::string(hex, 40);
     }
 };
@@ -761,4 +761,4 @@ private:
 };
 
 }  // namespace utxo
-}  // namespace collider
+}  // namespace starminer

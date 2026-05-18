@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif
 
-namespace collider {
+namespace starminer {
 namespace ui {
 
 /**
@@ -266,7 +266,7 @@ public:
 
         std::cout << "  " << colors::BRIGHT_GREEN << "[1]" << colors::RESET
                   << " Solve Bitcoin Puzzle Challenge\n";
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
         std::cout << "  " << colors::BRIGHT_GREEN << "[2]" << colors::RESET
                   << " Brain Wallet Scanner\n";
         std::cout << "  " << colors::BRIGHT_GREEN << "[3]" << colors::RESET
@@ -430,4 +430,4 @@ public:
 };
 
 } // namespace ui
-} // namespace collider
+} // namespace starminer

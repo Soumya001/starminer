@@ -26,7 +26,7 @@
 #include <iostream>
 #include <algorithm>
 
-namespace collider {
+namespace starminer {
 
 /**
  * Application configuration loaded from config.yml
@@ -544,7 +544,7 @@ void apply_config_to_args(Arguments& args, const AppConfig& config, const CLIFla
     // bloom file from config.yml and emits a one-time hint if one was
     // supplied, instead of loading 142 MB of address data into the GPU.
     if (!cli.bloom_file_set && !config.bloom_file.empty()) {
-#ifdef COLLIDER_PRO
+#ifdef STARMINER_PRO
         args.bloom_file = config.bloom_file;
 #else
         std::cerr << "[Pro] Ignoring bloom filter '" << config.bloom_file
@@ -578,4 +578,4 @@ void apply_config_to_args(Arguments& args, const AppConfig& config, const CLIFla
     }
 }
 
-}  // namespace collider
+}  // namespace starminer

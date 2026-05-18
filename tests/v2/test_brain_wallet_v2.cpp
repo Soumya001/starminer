@@ -27,11 +27,11 @@
 #include <vector>
 #include <string>
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 #include <cuda_runtime.h>
 #endif
 
-using namespace collider::gpu::v2;
+using namespace starminer::gpu::v2;
 
 // ---------------------------------------------------------------------------
 // CPU SHA-256 reference (self-contained -- avoid forcing the test to depend
@@ -241,7 +241,7 @@ static int test_addr_bit_constants() {
 // GPU end-to-end test (skip when no CUDA device)
 // ---------------------------------------------------------------------------
 
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
 static bool has_cuda_device() {
     int n = 0;
     return cudaGetDeviceCount(&n) == cudaSuccess && n > 0;
@@ -271,7 +271,7 @@ static int test_gpu_puzzle_kernel_end_to_end() {
     // The kernel called below dispatches DerivationScheme::SHA256_PW
     // (stock), which derives priv = SHA256(passphrase). Build the
     // synthetic target against that exact derivation.
-    const char* PHRASE = "collider-v2-self-test-phrase-do-not-use";
+    const char* PHRASE = "starminer-v2-self-test-phrase-do-not-use";
     const uint16_t N = 42;
     const uint64_t low_mask = (1ULL << (N - 1)) - 1ULL;
 
@@ -372,7 +372,7 @@ static int test_gpu_puzzle_kernel_end_to_end() {
     }
     return report_status("GPU puzzle kernel end-to-end with synthetic target", ok);
 }
-#endif  // COLLIDER_USE_CUDA
+#endif  // STARMINER_USE_CUDA
 
 // ---------------------------------------------------------------------------
 // main
@@ -387,7 +387,7 @@ int main() {
     fails += test_make_puzzle_target_n160();
     fails += test_scheme_bit_constants();
     fails += test_addr_bit_constants();
-#ifdef COLLIDER_USE_CUDA
+#ifdef STARMINER_USE_CUDA
     fails += test_gpu_puzzle_kernel_end_to_end();
 #else
     std::cout << "  SKIP  GPU end-to-end (CUDA disabled at compile time)" << std::endl;
