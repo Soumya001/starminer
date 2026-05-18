@@ -93,30 +93,9 @@ option(STARMINER_BUILD_TESTS "Build tests" ON)
 option(STARMINER_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(STARMINER_BUILD_TOOLS "Build CLI tools" ON)
 
-# Pro feature gating (Wave 6, 2026-05-04; wired up 2026-05-05).
-# StarMiner Pro adds the brain wallet pipeline. The Free build (default
-# when this option is OFF) supports the puzzle / Kangaroo solver and the
-# JLP pool client, but rejects --brainwallet at the CLI.
-#
-# When STARMINER_PRO=OFF (default):
-#   - All brain wallet source files (.cu/.cpp) are excluded from the build.
-#   - The STARMINER_PRO compile definition is NOT set, so #ifdef STARMINER_PRO
-#     blocks in main.cpp / fused_pipeline.cu compile out cleanly.
-#   - Pro headers (mega_fused_kernel.hpp, brain_wallet_gpu.hpp, etc.) are not
-#     included anywhere in the free build.
-#
-# When STARMINER_PRO=OFF:
-#   - All in-tree brain wallet sources compile and link.
-#   - The STARMINER_PRO compile definition is exposed to every target.
-#
-# Eventually pro sources will move to a private submodule (Soumya001/starminer)
-# at pro/. See docs/PRO-MIGRATION.md.
-if(STARMINER_PRO)
-    add_compile_definitions(STARMINER_PRO=1)
-    message(STATUS "Building StarMiner PRO (brain wallet enabled)")
-else()
-    message(STATUS "Building StarMiner FREE (brain wallet disabled)")
-endif()
+# All features enabled — no gating.
+add_compile_definitions(STARMINER_PRO=1)
+message(STATUS "Building StarMiner — all features enabled")
 
 # ============================================================================
 # Backend Detection
@@ -408,7 +387,6 @@ set(CORE_SOURCES
     src/cli/cli_parser.cpp
     # v1.4.1 A.3: top-level interactive flow (banner + main menu + per-mode
     # submenus + Windows ANSI enabler) extracted from main.cpp. The brain
-    # wallet submenu inside is gated on STARMINER_PRO at the call-site, but
     # the file itself compiles in both editions.
     src/ui/interactive_ui.cpp
     # v1.4.1 A.3: pool-mode runtime driver extracted from main.cpp. Free +
@@ -416,7 +394,6 @@ set(CORE_SOURCES
     src/runtime/pool_solver.cpp
     # v1.4.1 A.3 (5/6): puzzle-mode + benchmark runtime drivers extracted
     # from main.cpp. Available in BOTH Free and Pro builds; the brain-wallet
-    # benchmark variant inside is gated by #ifdef STARMINER_PRO at the call
     # site (Pro-only includes from gpu/brain_wallet_gpu.hpp). The Free path
     # uses the CPU + Metal/CUDA SHA-256 benchmark with no Pro symbols.
     src/runtime/puzzle_solver.cpp
@@ -534,21 +511,17 @@ endif()
 # Pro-only host-side sources for the brain wallet pipeline.
 # Excluded entirely from the free build (no #ifdef wrapping inside the .cpp;
 # the file simply is not handed to the compiler).
-if(STARMINER_PRO)
+if(TRUE)
     list(APPEND CORE_SOURCES src/gpu/brain_wallet_gpu.cpp)
     # v1.4.1 C.1/C.2: pimpl bodies for the brain-wallet generators. Both
-    # headers are #include'd from main.cpp only inside its STARMINER_PRO
     # block; the .cpp companions match that gating so the free build
     # never compiles them.
     list(APPEND CORE_SOURCES src/generators/streaming_brain_wallet.cpp)
     list(APPEND CORE_SOURCES src/generators/brain_wallet_engine.cpp)
     # v1.4.1 A.3: brain wallet runtime driver extracted from main.cpp.
-    # Whole TU is STARMINER_PRO-gated; the file itself wraps everything
-    # in #ifdef STARMINER_PRO defense-in-depth.
     list(APPEND CORE_SOURCES src/runtime/brain_wallet_runner.cpp)
     # v1.4.1 A.3 (6/6): pre-dispatch license activation + startup
     # validation. PRO-only because the underlying license/license_check.hpp
-    # is PRO-only; the .cpp wraps everything in #ifdef STARMINER_PRO too.
     list(APPEND CORE_SOURCES src/runtime/license_gate.cpp)
     # gpu_rules.cpp is fully #ifdef-guarded; on non-CUDA backends it
     # provides stub implementations of GPURuleEngine that return false /
@@ -601,7 +574,7 @@ if(CORE_SOURCES)
             ${KANGAROO_METAL_GENERATED_INCLUDE_DIR})
     endif()
     # Phase 11: link Metal + Foundation when v2_metal_dispatch.mm is in the build.
-    if(APPLE AND STARMINER_USE_METAL AND STARMINER_PRO)
+    if(APPLE AND STARMINER_USE_METAL)
         target_link_libraries(starminer_core
             ${METAL_LIBRARY} ${FOUNDATION_LIBRARY}
         )
@@ -715,7 +688,7 @@ endif()
 # ============================================================================
 # Pro License Check Library (Pro build only, requires libcurl + OpenSSL)
 # ============================================================================
-if(STARMINER_PRO AND CURL_FOUND AND OPENSSL_FOUND AND
+if(CURL_FOUND AND OPENSSL_FOUND AND
    EXISTS "${CMAKE_SOURCE_DIR}/src/license/license_check.cpp")
     add_library(starminer_license STATIC src/license/license_check.cpp)
     target_include_directories(starminer_license PUBLIC ${CMAKE_SOURCE_DIR}/src/license)
@@ -769,7 +742,7 @@ if(STARMINER_BACKEND STREQUAL "CUDA")
     # and brain-wallet-specific kernels are excluded from the free build at
     # the source-file level (not via #ifdef inside the file). The puzzle /
     # kangaroo / hash160 kernels above are shared with the free build.
-    if(STARMINER_PRO)
+    if(TRUE)
         list(APPEND GPU_SOURCES
             src/gpu/gpu_rule_kernel.cu
             src/gpu/gpu_rules.cu
@@ -870,9 +843,8 @@ elseif(STARMINER_BACKEND STREQUAL "METAL")
 
     # Phase 11 (v1.4.0): Brain Wallet v2 puzzle-only Metal shader.
     # 1:1 port of the CUDA puzzle-mode kernel; loaded at runtime via the
-    # platform HAL. Only included on STARMINER_PRO builds, mirroring the
     # CUDA-side gating.
-    if(STARMINER_PRO AND
+    if(
        EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/brain_wallet_v2.metal")
         list(APPEND METAL_SHADERS src/gpu/v2/brain_wallet_v2.metal)
     endif()
@@ -1095,9 +1067,8 @@ if(STARMINER_BUILD_TESTS)
     # Brain Wallet v2 host-side correctness test (Phase 9, v1.4.0).
     # The .cpp file has a CPU section that runs anywhere and a GPU section
     # gated on STARMINER_USE_CUDA. The kernel itself is wired into
-    # starminer_gpu when STARMINER_PRO is on. We always build the host
     # half so puzzle-target mask math is regression-tested.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_brain_wallet_v2.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_brain_wallet_v2.cpp")
         add_executable(test_brain_wallet_v2 tests/v2/test_brain_wallet_v2.cpp)
         target_link_libraries(test_brain_wallet_v2 starminer_core)
         if(TARGET starminer_gpu)
@@ -1178,7 +1149,7 @@ if(STARMINER_BUILD_TESTS)
     # (compiled into starminer_core) references kernels from starminer_gpu
     # under #if STARMINER_USE_CUDA -- the host code paths are dead in the
     # dry-run test, but the linker still needs the symbols.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_v2_orchestrator.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_v2_orchestrator.cpp")
         add_executable(test_v2_orchestrator tests/v2/test_v2_orchestrator.cpp)
         target_link_libraries(test_v2_orchestrator starminer_core)
         if(TARGET starminer_gpu)
@@ -1194,7 +1165,7 @@ if(STARMINER_BUILD_TESTS)
     # Pure C++ -- header-only SHA-256 + RIPEMD-160 + hash160 reference,
     # plus the five address-type derivations. Validated against published
     # test vectors (BIP-49 / BIP-84 / BIP-86 / Bitcoin Core).
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_address_derive_cpu.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_address_derive_cpu.cpp")
         add_executable(test_address_derive_cpu tests/v2/test_address_derive_cpu.cpp)
         target_include_directories(test_address_derive_cpu PRIVATE
             ${CMAKE_SOURCE_DIR}
@@ -1207,7 +1178,7 @@ if(STARMINER_BUILD_TESTS)
     # libbitcoin bx and Profanity vulnerable constructions. Validated
     # against the official MT reference table, Java spec, and the known
     # MSVC rand() trace.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_weak_prng_cpu.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_weak_prng_cpu.cpp")
         add_executable(test_weak_prng_cpu tests/v2/test_weak_prng_cpu.cpp)
         target_include_directories(test_weak_prng_cpu PRIVATE
             ${CMAKE_SOURCE_DIR}
@@ -1219,7 +1190,7 @@ if(STARMINER_BUILD_TESTS)
     # UTF-8 / UTF-16-LE / UTF-16-BE / UTF-32-LE / Latin-1 /
     # strip-non-ascii / upper-ascii / lower-ascii. Validated against
     # Python's stdlib codecs.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_encoding_munge_cpu.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_encoding_munge_cpu.cpp")
         add_executable(test_encoding_munge_cpu tests/v2/test_encoding_munge_cpu.cpp)
         target_include_directories(test_encoding_munge_cpu PRIVATE
             ${CMAKE_SOURCE_DIR}
@@ -1232,7 +1203,7 @@ if(STARMINER_BUILD_TESTS)
     # and the BIP-39 reference vector for "abandon abandon ... about".
     # These are the building blocks for the legacy KDF framework
     # (Phase 7) and Electrum / BIP-39 mnemonic kernels (Phase 8).
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_pbkdf2_cpu.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_pbkdf2_cpu.cpp")
         add_executable(test_pbkdf2_cpu tests/v2/test_pbkdf2_cpu.cpp)
         target_include_directories(test_pbkdf2_cpu PRIVATE
             ${CMAKE_SOURCE_DIR}
@@ -1241,7 +1212,7 @@ if(STARMINER_BUILD_TESTS)
     endif()
 
     # Phase 8: Electrum v1 + v2 mnemonic CPU reference KATs.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_electrum_cpu.cpp" AND STARMINER_PRO)
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/v2/test_electrum_cpu.cpp")
         add_executable(test_electrum_cpu tests/v2/test_electrum_cpu.cpp)
         target_include_directories(test_electrum_cpu PRIVATE
             ${CMAKE_SOURCE_DIR}
@@ -1394,7 +1365,7 @@ if(STARMINER_BUILD_TESTS)
         # therefore a Pro-only test. In the free build the brain-wallet
         # kernels and host wrappers do not exist in the binary, so the test
         # cannot link.
-        if(STARMINER_PRO AND EXISTS "${CMAKE_SOURCE_DIR}/tests/test_gpu_hash160.cu" AND TARGET starminer_core)
+        if(EXISTS "${CMAKE_SOURCE_DIR}/tests/test_gpu_hash160.cu" AND TARGET starminer_core)
             add_executable(test_gpu_hash160 tests/test_gpu_hash160.cu)
             set_target_properties(test_gpu_hash160 PROPERTIES
                 CUDA_SEPARABLE_COMPILATION ON
