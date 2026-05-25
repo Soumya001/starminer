@@ -7,6 +7,7 @@
 #include <vector>
 #include <stdexcept>
 
+namespace starminer {
 namespace gpu {
 
 class MultiGPUBrainWallet {
@@ -38,4 +39,5 @@ public:
     }
 };
 
-} // namespace gpu
+}  // namespace gpu
+}  // namespace starminer
