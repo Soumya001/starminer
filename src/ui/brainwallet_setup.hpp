@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <cctype>
+#include <functional>
 #include <sstream>
 #include <iomanip>
 #include <chrono>

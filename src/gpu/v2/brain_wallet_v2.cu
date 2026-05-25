@@ -19,11 +19,27 @@
 
 #include "brain_wallet_v2.hpp"
 #include "device_hashes.cuh"   // device::sha512 + hmac_sha512 + pbkdf2 + bip32
-#include "../secp256k1_device_api.cuh"   // uint256, ECPointAffine, ec_mul_simple
+#include "../secp256k1_device_api.cuh"   // starminer::gpu::uint256/ECPointAffine/ec_mul_simple
 #include <cuda_runtime.h>
 #include <cstring>
 #include <cstdio>
 #include <type_traits>
+
+// Forward-declare bloom probe from h160_bloom_filter.cu.
+// Must be declared here (before namespace v2 opens) so that v2_addr_kernel's
+// ::starminer::gpu::bloom_check_h160 call is visible at compile time.
+// In the unity build, multi_address_kernel.cu also declares this, but it
+// is #included AFTER this file, so we need our own copy here.
+namespace starminer {
+namespace gpu {
+extern __device__ bool bloom_check_h160(
+    const uint8_t* bloom_data,
+    uint64_t num_bits,
+    uint32_t num_hashes,
+    uint32_t seed,
+    const uint8_t* h160);
+}  // namespace gpu
+}  // namespace starminer
 
 namespace starminer {
 namespace gpu {
@@ -378,17 +394,6 @@ __global__ __launch_bounds__(128, 2) void v2_addr_kernel(
         check_and_emit((uint8_t)AddressType::P2SH_P2WPKH, h);
     }
 }
-
-// Forward-declare the bloom_check_h160 from h160_bloom_filter.cu (same
-// namespace; accessible via separable compilation).
-namespace starminer { namespace gpu {
-extern __device__ bool bloom_check_h160(
-    const uint8_t* bloom_data,
-    uint64_t num_bits,
-    uint32_t num_hashes,
-    uint32_t seed,
-    const uint8_t* h160);
-}}
 
 static cudaError_t v2_brain_wallet_addr_batch(
     const uint8_t*  d_passphrases,

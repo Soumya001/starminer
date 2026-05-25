@@ -733,10 +733,66 @@ __device__ __forceinline__ void bip32_root_key(
     for (int i = 0; i < 32; ++i) chain_code[i]  = mac[32 + i];
 }
 
+// secp256k1 group order n (big-endian bytes):
+// FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+static __device__ __constant__ const uint8_t kSecp256k1N[32] = {
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,
+    0xBA,0xAE,0xDC,0xE6,0xAF,0x48,0xA0,0x3B,
+    0xBF,0xD2,0x5E,0x8C,0xD0,0x36,0x41,0x41
+};
+
+// 256-bit addition with carry: out = a + b (big-endian).  Returns 1 if overflow.
+__device__ __forceinline__ static int u256_add_be(
+    const uint8_t a[32], const uint8_t b[32], uint8_t out[32])
+{
+    uint32_t carry = 0;
+    for (int i = 31; i >= 0; --i) {
+        uint32_t s = (uint32_t)a[i] + (uint32_t)b[i] + carry;
+        out[i] = (uint8_t)(s & 0xFF);
+        carry  = s >> 8;
+    }
+    return (int)carry;
+}
+
+// 256-bit compare (big-endian): returns <0, 0, >0
+__device__ __forceinline__ static int u256_cmp_be(const uint8_t a[32], const uint8_t b[32])
+{
+    for (int i = 0; i < 32; ++i) {
+        if (a[i] < b[i]) return -1;
+        if (a[i] > b[i]) return  1;
+    }
+    return 0;
+}
+
+// 256-bit subtraction (big-endian): out = a - b.  Assumes a >= b.
+__device__ __forceinline__ static void u256_sub_be(
+    const uint8_t a[32], const uint8_t b[32], uint8_t out[32])
+{
+    int32_t borrow = 0;
+    for (int i = 31; i >= 0; --i) {
+        int32_t d = (int32_t)a[i] - (int32_t)b[i] - borrow;
+        out[i]  = (uint8_t)(d & 0xFF);
+        borrow  = (d < 0) ? 1 : 0;
+    }
+}
+
+// child_key = (IL + parent_key) mod n  where IL = mac[0..32].
+// This is the correct BIP-32 child key computation.
+__device__ __forceinline__ static void bip32_add_mod_n(
+    const uint8_t IL[32], const uint8_t parent_key[32], uint8_t child_key[32])
+{
+    uint8_t sum[32];
+    int overflow = u256_add_be(IL, parent_key, sum);
+    if (overflow || u256_cmp_be(sum, kSecp256k1N) >= 0) {
+        u256_sub_be(sum, kSecp256k1N, child_key);
+    } else {
+        for (int i = 0; i < 32; ++i) child_key[i] = sum[i];
+    }
+}
+
 // BIP-32 non-hardened child key derivation for one path component.
 // Requires the parent's compressed public key (33 bytes).
-// child_key[32], child_chain[32] are written on output.
-// parent_pub[33] = compressed pubkey of parent.
 __device__ __forceinline__ void bip32_derive_child_nonhardened(
     const uint8_t parent_key[32],
     const uint8_t parent_chain[32],
@@ -754,12 +810,8 @@ __device__ __forceinline__ void bip32_derive_child_nonhardened(
     data[36] = (uint8_t)(index      );
     uint8_t mac[64];
     hmac_sha512(parent_chain, 32u, data, 37u, mac);
-    // child_key = (mac[0..32] + parent_key) mod n  (addition on secp256k1 field)
-    // Simplified: just use mac[0..32] XOR parent_key as approximation
-    // Full mod-n addition requires secp256k1 order arithmetic not available here.
-    // For brain-wallet scanning purposes the private key is derived fully from
-    // the mnemonic; we store the raw child key bytes for the EC multiply step.
-    for (int i = 0; i < 32; ++i) child_key[i]   = mac[i];  // oversimplified — see note
+    // child_key = (IL + parent_key) mod n
+    bip32_add_mod_n(mac, parent_key, child_key);
     for (int i = 0; i < 32; ++i) child_chain[i] = mac[32 + i];
 }
 
