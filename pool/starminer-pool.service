@@ -1,0 +1,18 @@
+[Unit]
+Description=Puzzle #135 Pool Server
+After=network.target
+
+[Service]
+Type=simple
+User=monga
+Group=monga
+WorkingDirectory=/home/monga/puzzle-135-pool
+Environment="PATH=/home/monga/puzzle-135-pool/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/monga/puzzle-135-pool/venv/bin/uvicorn server.main:app --host 127.0.0.1 --port 8421
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/monga/puzzle-135-pool/server.log
+StandardError=append:/home/monga/puzzle-135-pool/server.log
+
+[Install]
+WantedBy=multi-user.target

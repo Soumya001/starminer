@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puzzle #135 Pool — starnetlive.space</title>
+<style>
+:root {
+  --bg: #060a10;
+  --bg2: #0c1220;
+  --card: rgba(17,24,39,0.65);
+  --card-solid: #111827;
+  --card2: #1a2332;
+  --border: rgba(30,41,59,0.6);
+  --border2: rgba(45,61,82,0.8);
+  --glass: rgba(255,255,255,0.03);
+  --text: #e2e8f0;
+  --dim: #64748b;
+  --dim2: #94a3b8;
+  --accent: #f7931a;
+  --accent2: #fbbf24;
+  --green: #22c55e;
+  --green2: #4ade80;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --blue2: #60a5fa;
+  --purple: #a855f7;
+  --cyan: #06b6d4;
+  --glow-orange: rgba(247,147,26,0.15);
+  --glow-green: rgba(34,197,94,0.15);
+  --glow-blue: rgba(59,130,246,0.15);
+  --glow-purple: rgba(168,85,247,0.15);
+}
+*,*::before,*::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+code, .mono {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+}
+
+/* ===== ANIMATED BACKGROUND ===== */
+.bg-mesh {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(247,147,26,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 50% 50%, rgba(6,182,212,0.04) 0%, transparent 60%);
+  animation: meshShift 20s ease-in-out infinite alternate;
+}
+@keyframes meshShift {
+  0% { background-position: 0% 0%, 100% 100%, 50% 50%; }
+  100% { background-position: 30% 20%, 70% 60%, 40% 80%; }
+}
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  padding: 48px 20px 36px;
+  text-align: center;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(12,18,32,0.9) 0%, rgba(26,16,64,0.7) 50%, rgba(12,18,32,0.9) 100%);
+  z-index: 0;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.hero-inner { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+.logo {
+  font-size: 2.6rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2), #f59e0b);
+  background-size: 200% 200%;
+  animation: logoShift 4s ease-in-out infinite alternate;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 4px;
+  text-shadow: 0 0 40px rgba(247,147,26,0.3);
+}
+@keyframes logoShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+.hero-sub {
+  color: var(--dim2);
+  margin-top: 8px;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+.hero-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 7px 18px;
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.25);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  color: var(--green);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.hero-status.offline {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.25);
+  color: var(--red);
+}
+.live-dot {
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(34,197,94,0.6);
+}
+.hero-status.offline .live-dot { background: var(--red); animation: none; box-shadow: none; }
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ===== NAV ===== */
+.nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(12,18,32,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+.nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 20px;
+}
+.hamburger-toggle { display: none; }
+.hamburger-label {
+  display: none;
+  width: 44px; height: 44px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  position: relative;
+  z-index: 201;
+}
+.hamburger-label span,
+.hamburger-label span::before,
+.hamburger-label span::after {
+  display: block;
+  width: 22px; height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.hamburger-label span { position: relative; }
+.hamburger-label span::before,
+.hamburger-label span::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+.hamburger-label span::before { top: -7px; }
+.hamburger-label span::after { top: 7px; }
+.hamburger-toggle:checked + .hamburger-label span { background: transparent; }
+.hamburger-toggle:checked + .hamburger-label span::before { top: 0; transform: rotate(45deg); }
+.hamburger-toggle:checked + .hamburger-label span::after { top: 0; transform: rotate(-45deg); }
+
+.nav-btn {
+  padding: 9px 22px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.25s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.nav-btn.active {
+  color: var(--accent);
+  background: rgba(247,147,26,0.08);
+  box-shadow: 0 0 12px rgba(247,147,26,0.1);
+}
+.nav-btns { display: flex; gap: 4px; }
+
+@media (max-width: 640px) {
+  .hamburger-label { display: flex; }
+  .nav { justify-content: space-between; }
+  .nav-btns {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(6,10,16,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 200;
+  }
+  .hamburger-toggle:checked ~ .nav-btns {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .nav-btns .nav-btn {
+    font-size: 1.2rem;
+    padding: 16px 40px;
+    width: 80%;
+    justify-content: center;
+  }
+  .mobile-logo { display: block; color: var(--accent); font-weight: 800; font-size: 0.9rem; letter-spacing: 2px; }
+}
+@media (min-width: 641px) {
+  .mobile-logo { display: none; }
+}
+
+/* ===== MAIN CONTENT ===== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.4s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== GLASS CARDS ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+@media (max-width: 900px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .grid-4, .grid-2 { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 22px;
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px var(--glow-orange);
+}
+.card-wide { grid-column: 1 / -1; }
+.card-title {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--dim);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .icon { font-size: 1rem; }
+.big-num {
+  font-size: 2.2rem;
+  font-weight: 800;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  transition: color 0.3s;
+}
+.big-num.orange { color: var(--accent); }
+.big-num.green { color: var(--green); }
+.big-num.blue { color: var(--blue); }
+.big-num.purple { color: var(--purple); }
+.big-num.cyan { color: var(--cyan); }
+.big-sub {
+  font-size: 0.8rem;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+/* ===== STAT ROWS ===== */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(30,41,59,0.4);
+  font-size: 0.85rem;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--dim); }
+.stat-value {
+  color: var(--text);
+  font-weight: 600;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  text-align: right;
+  word-break: break-all;
+}
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-value.orange { color: var(--accent); }
+.stat-value.blue { color: var(--blue); }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar-bg {
+  width: 100%;
+  height: 28px;
+  background: rgba(6,10,16,0.8);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #f59e0b, var(--accent2));
+  border-radius: 14px;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 2px;
+  position: relative;
+  box-shadow: 0 0 16px rgba(247,147,26,0.4);
+}
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+  animation: shimmer 2.5s infinite;
+}
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+/* ===== PUBKEY BOX ===== */
+.pubkey-box {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+  background: rgba(6,10,16,0.6);
+  padding: 14px 56px 14px 16px;
+  border-radius: 10px;
+  color: var(--purple);
+  border: 1px solid var(--border);
+  margin-top: 8px;
+  position: relative;
+}
+.copy-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.72rem;
+  transition: all 0.2s;
+  font-family: -apple-system, sans-serif;
+}
+.copy-btn:hover { color: var(--text); border-color: var(--border2); }
+
+/* ===== KEYSPACE BAR ===== */
+.keyspace-bar {
+  display: flex;
+  height: 36px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 16px 0 8px;
+  border: 1px solid var(--border);
+}
+.ks-scanned {
+  background: linear-gradient(135deg, var(--green), #16a34a);
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(34,197,94,0.3);
+}
+.ks-assigned {
+  background: linear-gradient(135deg, var(--blue), #2563eb);
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px rgba(59,130,246,0.3);
+}
+.ks-remaining { background: rgba(6,10,16,0.6); flex: 1; }
+.ks-legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--dim);
+}
+.ks-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.ks-legend .l-scanned::before { background: var(--green); }
+.ks-legend .l-assigned::before { background: var(--blue); }
+.ks-legend .l-remaining::before { background: var(--bg); border: 1px solid var(--border2); }
+
+/* ===== LEADERBOARD ===== */
+.lb-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.lb-table th {
+  text-align: left;
+  padding: 10px 8px;
+  color: var(--dim);
+  font-weight: 500;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+}
+.lb-table td { padding: 12px 8px; border-bottom: 1px solid rgba(30,41,59,0.3); }
+.lb-table tbody tr { transition: background 0.2s; }
+.lb-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.lb-rank { color: var(--accent); font-weight: 700; font-size: 1rem; }
+.lb-rank.top1 { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.4); }
+.lb-rank.top2 { color: #94a3b8; }
+.lb-rank.top3 { color: #cd7f32; }
+.lb-name { color: var(--blue2); font-weight: 600; }
+.lb-bar-bg { width: 100%; height: 6px; background: rgba(6,10,16,0.6); border-radius: 3px; margin-top: 4px; }
+.lb-bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--cyan)); border-radius: 3px; transition: width 1s; }
+.lb-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ===== FOUND ALERT ===== */
+.found-alert {
+  display: none;
+  background: linear-gradient(135deg, rgba(5,46,22,0.8), rgba(20,83,45,0.8));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid var(--green);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  margin-bottom: 20px;
+  animation: foundGlow 2s infinite;
+}
+.found-alert.show { display: block; }
+@keyframes foundGlow {
+  0%,100% { box-shadow: 0 0 20px rgba(34,197,94,0.2); }
+  50% { box-shadow: 0 0 50px rgba(34,197,94,0.5), 0 0 80px rgba(34,197,94,0.2); }
+}
+.found-alert h2 { color: var(--green); font-size: 1.6rem; margin-bottom: 8px; }
+
+/* ===== JOIN PAGE ===== */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--text), var(--dim2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-sub {
+  color: var(--dim);
+  margin-bottom: 24px;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border2), transparent);
+  margin: 32px 0;
+}
+
+/* Steps */
+.step-list { counter-reset: steps; list-style: none; }
+.step-item {
+  counter-increment: steps;
+  padding: 22px 22px 22px 72px;
+  margin-bottom: 16px;
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  position: relative;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.step-item:hover { border-color: var(--border2); box-shadow: 0 4px 24px rgba(0,0,0,0.2); }
+.step-item::before {
+  content: counter(steps);
+  position: absolute;
+  left: 20px;
+  top: 22px;
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #000;
+  font-weight: 800;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(247,147,26,0.3);
+}
+.step-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+.step-desc { color: var(--dim2); font-size: 0.9rem; line-height: 1.7; }
+
+/* Code blocks */
+.code-block {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 50px 14px 16px;
+  margin: 12px 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.82rem;
+  color: var(--green2);
+  overflow-x: auto;
+  position: relative;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.code-block .cmd-copy {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-family: -apple-system, sans-serif;
+  transition: all 0.2s;
+}
+.code-block .cmd-copy:hover { color: var(--text); }
+.code-comment { color: var(--dim); }
+
+/* Requirement badges */
+.req-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.req-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.3s;
+}
+.req-badge:hover { border-color: var(--border2); }
+.req-icon { font-size: 1.5rem; }
+.req-text { font-size: 0.85rem; }
+.req-text strong { display: block; color: var(--text); }
+.req-text span { color: var(--dim); font-size: 0.78rem; }
+
+/* Download buttons */
+.dl-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, var(--accent), #d97706);
+  color: #000;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 20px rgba(247,147,26,0.2);
+  min-height: 44px;
+}
+.dl-btn:hover { transform: translateY(-1px) scale(1.02); box-shadow: 0 4px 24px rgba(247,147,26,0.4); }
+.dl-btn.secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dl-btn.secondary:hover { border-color: var(--border2); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+
+/* ===== FAQ ACCORDION ===== */
+.faq-item {
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.faq-item:hover { border-color: var(--border2); }
+.faq-q {
+  font-weight: 700;
+  color: var(--accent2);
+  padding: 18px 48px 18px 20px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+.faq-q:hover { color: var(--accent); }
+.faq-q::after {
+  content: '+';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--dim);
+  transition: transform 0.3s;
+}
+.faq-item.open .faq-q::after {
+  content: '\2212';
+  transform: translateY(-50%);
+}
+.faq-a {
+  color: var(--dim2);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s;
+  padding: 0 20px;
+}
+.faq-item.open .faq-a {
+  max-height: 600px;
+  padding: 0 20px 18px;
+}
+
+/* ===== TOAST ===== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: rgba(17,24,39,0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  animation: toastIn 0.35s ease, toastOut 0.35s ease 2.2s forwards;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast.success { border-left: 3px solid var(--green); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(40px); }
+}
+@media (max-width: 640px) {
+  .toast-container { bottom: 16px; left: 16px; right: 16px; }
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 32px 20px;
+  color: var(--dim);
+  font-size: 0.75rem;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+.footer a { color: var(--blue); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+.update-info {
+  text-align: center;
+  color: var(--dim);
+  font-size: 0.72rem;
+  margin-top: 16px;
+  padding: 8px;
+}
+
+/* ===== RESPONSIVE HELPERS ===== */
+@media (max-width: 640px) {
+  .hero { padding: 32px 16px 28px; }
+  .logo { font-size: 1.8rem; letter-spacing: 2px; }
+  .container { padding: 16px 12px; }
+  .card { padding: 18px 16px; }
+  .big-num { font-size: 1.7rem; }
+  .step-item { padding-left: 62px; }
+  .step-item::before { width: 32px; height: 32px; font-size: 0.95rem; left: 16px; top: 20px; }
+  .lb-table th, .lb-table td { padding: 10px 6px; font-size: 0.75rem; }
+  .stat-row { font-size: 0.82rem; }
+  .stat-value { font-size: 0.78rem; }
+}
+
+/* Hide cols on very small screens */
+@media (max-width: 500px) {
+  .lb-hide-sm { display: none; }
+}
+
+/* ===== CALLOUT BOX ===== */
+.callout {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin: 16px 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.callout-warn {
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.25);
+  color: var(--accent2);
+}
+.callout-info {
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.25);
+  color: var(--blue2);
+}
+.callout strong { color: var(--text); }
+
+/* ===== HARDWARE CALC ===== */
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.calc-input {
+  background: rgba(6,10,16,0.6);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.calc-input::placeholder { color: var(--dim); }
+.calc-input:focus { border-color: var(--accent); }
+.calc-result {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.calc-result .calc-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: 'SF Mono', monospace;
+  color: var(--accent);
+}
+.calc-result .calc-label {
+  font-size: 0.72rem;
+  color: var(--dim);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"></div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="logo">&#x20bf; PUZZLE #135</div>
+    <div class="hero-sub">Pollard's Kangaroo Pool &mdash; 13.5 BTC Prize &mdash; starnetlive.space</div>
+    <div class="hero-status" id="heroStatus">
+      <div class="live-dot" id="liveDot"></div>
+      <span id="statusText">Connecting...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav-wrap">
+  <nav class="nav">
+    <input type="checkbox" id="hamburger-toggle" class="hamburger-toggle">
+    <label for="hamburger-toggle" class="hamburger-label"><span></span></label>
+    <span class="mobile-logo">PUZZLE #135</span>
+    <div class="nav-btns">
+      <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard',this)">Dashboard</button>
+      <button class="nav-btn" data-page="join" onclick="showPage('join',this)">Join Pool</button>
+      <button class="nav-btn" data-page="calc" onclick="showPage('calc',this)">Estimator</button>
+      <button class="nav-btn" data-page="faq" onclick="showPage('faq',this)">FAQ</button>
+    </div>
+  </nav>
+</div>
+
+<!-- ===================== DASHBOARD PAGE ===================== -->
+<div class="container">
+<div class="page active" id="page-dashboard">
+
+  <div class="found-alert" id="foundAlert">
+    <h2>KEY FOUND!</h2>
+    <p id="foundMsg" style="color:var(--green2);font-size:1.1rem;margin-top:8px"></p>
+  </div>
+
+  <!-- Hero stats -->
+  <div class="grid grid-4">
+    <div class="card">
+      <div class="card-title"><span class="icon">&#x1f9e9;</span> Puzzle</div>
+      <div class="big-num orange" id="puzzleNum">#135</div>
+      <div class="big-sub">Exposed Pubkey Challenge</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">&#x26a1;</span> Pool Workers</div>
+      <div class="big-num green" id="totalWorkers">0</div>
+      <div class="big-sub">registered total</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">&#x1f680;</span> DPs Submitted</div>
+      <div class="big-num cyan" id="totalDps">0</div>
+      <div class="big-sub">distinguished points</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="icon">&#x23f3;</span> Pool Uptime</div>
+      <div class="big-num purple" id="uptime">--</div>
+      <div class="big-sub">since launch</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="icon">&#x1f4ca;</span> Kangaroo Search Progress</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+      <div class="big-num orange" id="progressPct" style="font-size:1.8rem">0.00000000%</div>
+      <div style="color:var(--dim);font-size:0.82rem">Expected ops: <span class="mono">2^67.5</span> (~1.47 &times; 10^20)</div>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="keyspace-bar">
+      <div class="ks-scanned" id="ksScanned" style="width:0%"></div>
+      <div class="ks-assigned" id="ksAssigned" style="width:0%"></div>
+      <div class="ks-remaining"></div>
+    </div>
+    <div class="ks-legend">
+      <span class="l-scanned">DPs found</span>
+      <span class="l-assigned">Active search</span>
+      <span class="l-remaining">Keyspace remaining</span>
+    </div>
+  </div>
+
+  <!-- Details grid -->
+  <div class="grid grid-2">
+    <!-- Puzzle Details -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#x1f50d;</span> Puzzle Details</div>
+      <div class="stat-row">
+        <span class="stat-label">Target Address</span>
+      </div>
+      <div class="addr-box">
+        <span id="targetAddr">1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH</span>
+        <button class="copy-btn" onclick="copyText('targetAddr')">Copy</button>
+      </div>
+      <div class="stat-row" style="margin-top:12px">
+        <span class="stat-label">Public Key</span>
+      </div>
+      <div class="pubkey-box">
+        <span id="pubKey">02145d2611c823a396ef6712ce0f712f09b9b4f3135e3e0aa3230fb9b6d08d1e16</span>
+        <button class="copy-btn" onclick="copyText('pubKey')">Copy</button>
+      </div>
+      <div class="stat-row" style="margin-top:12px">
+        <span class="stat-label">Key Range</span>
+        <span class="stat-value mono" style="font-size:0.78rem">[2^134, 2^135 - 1]</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Prize</span>
+        <span class="stat-value orange">~13.5 BTC</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Algorithm</span>
+        <span class="stat-value purple">Pollard's Kangaroo</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">DP Bits</span>
+        <span class="stat-value" id="dpBits">--</span>
+      </div>
+    </div>
+
+    <!-- Pool Status -->
+    <div class="card">
+      <div class="card-title"><span class="icon">&#x2699;&#xfe0f;</span> StarNet Pool Status</div>
+      <div class="stat-row">
+        <span class="stat-label">Total Workers</span>
+        <span class="stat-value" id="poolTotalWorkers">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Active Workers</span>
+        <span class="stat-value green" id="poolActiveWorkers">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Total DPs</span>
+        <span class="stat-value cyan" id="poolTotalDps">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">DPS Rate</span>
+        <span class="stat-value blue" id="poolDpsRate">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Pool Uptime</span>
+        <span class="stat-value" id="poolUptime">--</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Solution Found</span>
+        <span class="stat-value" id="poolSolution">No</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Backend</span>
+        <span class="stat-value mono" style="font-size:0.78rem">starnetlive.space</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Worker List -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="icon">&#x1f465;</span> Registered Workers</div>
+    <div class="lb-responsive">
+      <table class="lb-table" id="workerTable">
+        <thead>
+          <tr><th>#</th><th>Worker</th><th>Wallet</th><th class="lb-hide-sm">Chunks</th></tr>
+        </thead>
+        <tbody id="workerTbody">
+          <tr><td colspan="4" style="color:var(--dim)">No workers registered yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="update-info">Auto-refreshes every 10 seconds &middot; Last update: <span id="lastUpdate">--</span></div>
+</div>
+
+<!-- ===================== JOIN PAGE ===================== -->
+<div class="page" id="page-join">
+
+  <div class="section-title">Join the Puzzle #135 Hunt</div>
+  <div class="section-sub">Puzzle #135 is the smallest unsolved puzzle with an exposed public key. That means <strong>Pollard's Kangaroo</strong> applies &mdash; a mathematical shortcut that searches in <code>O(&#x221a;N)</code> instead of brute force. Run StarMiner and join the distributed pool.</div>
+
+  <div class="callout callout-warn">
+    <strong>Use your Bitcoin address as your worker name.</strong><br>
+    When the puzzle is solved, the pool distributes rewards based on DP contribution. Set your worker to your BTC address so you can be identified and paid.
+  </div>
+
+  <!-- One-Liner Install -->
+  <div class="card" style="margin-bottom:24px;border-color:rgba(34,197,94,0.4)">
+    <div class="card-title"><span class="icon">&#x26a1;</span> Quick Start — One Command</div>
+    <div style="color:var(--dim2);font-size:0.92rem;line-height:1.6;margin-bottom:16px">
+      Copy-paste one command. The installer asks for your wallet, downloads everything automatically, and starts mining.
+    </div>
+
+    <div class="step-title" style="margin-top:8px;color:var(--green)">Linux / macOS</div>
+    <div class="code-block"><span class="code-comment"># Terminal</span>
+curl -fsSL https://starnetlive.space/install-135.sh | bash<button class="cmd-copy" onclick="copyCode(this)">Copy</button></div>
+
+    <div class="step-title" style="margin-top:16px;color:var(--green)">Windows (PowerShell)</div>
+    <div class="code-block"><span class="code-comment"># PowerShell (Admin)</span>
+irm https://starnetlive.space/install-135.ps1 | iex<button class="cmd-copy" onclick="copyCode(this)">Copy</button></div>
+
+    <div style="color:var(--dim);font-size:0.82rem;margin-top:12px;line-height:1.6">
+      No Python? No problem — the installer checks, downloads, and configures everything.
+    </div>
+  </div>
+
+  <!-- Step 1: Download -->
+  <div class="card" style="margin-bottom:24px;border-color:rgba(247,147,26,0.3)">
+    <div class="card-title"><span class="icon">&#x1f4e5;</span> Step 1 &mdash; Download StarMiner</div>
+    <div style="color:var(--dim2);font-size:0.92rem;line-height:1.6;margin-bottom:16px">
+      StarMiner is a GPU-accelerated Kangaroo solver. It auto-detects your GPUs, calibrates batch size, and connects to the pool automatically. No build steps needed.
+    </div>
+    <div class="dl-grid">
+      <a href="https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-cuda" class="dl-btn" target="_blank" rel="noopener">Linux (CUDA)</a>
+      <a href="https://github.com/Soumya001/starminer/releases/latest/download/starminer-windows-x64-cuda.exe" class="dl-btn secondary" target="_blank" rel="noopener">Windows (CUDA)</a>
+      <a href="https://github.com/Soumya001/starminer/releases/latest/download/starminer-macos-arm64" class="dl-btn secondary" target="_blank" rel="noopener">macOS (Metal)</a>
+    </div>
+    <div style="color:var(--dim);font-size:0.82rem;margin-top:12px;line-height:1.6">
+      The free edition is MIT-licensed and includes solo + pool mode.
+    </div>
+  </div>
+
+  <!-- Step 2: Configure -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title"><span class="icon">&#x2699;&#xfe0f;</span> Step 2 &mdash; Run Solo or Join Pool</div>
+
+    <div class="step-title" style="margin-top:8px;color:var(--accent)">Solo Mode (100% reward to you)</div>
+    <div class="code-block"><span class="code-comment"># Download, make executable, run</span>
+wget https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-cuda
+chmod +x starminer
+./starminer --puzzle 135 --kangaroo --gpus 0,1<button class="cmd-copy" onclick="copyCode(this)">Copy</button></div>
+
+    <div class="step-title" style="margin-top:16px;color:var(--accent)">Pool Mode (shared reward, higher odds)</div>
+    <div class="code-block"><span class="code-comment"># Replace with your BTC address as worker name + wallet</span>
+./starminer --puzzle 135 --kangaroo --gpus 0,1 \
+  --pool https://starnetlive.space \
+  --worker 1YOUR_BITCOIN_ADDRESS \
+  --wallet-address 1YOUR_BITCOIN_ADDRESS<button class="cmd-copy" onclick="copyCode(this)">Copy</button></div>
+
+    <div class="callout callout-info" style="margin-bottom:0">
+      <strong>Multi-GPU:</strong> Use <code>--gpus 0,1,2</code> to use all detected cards. Run <code>./starminer --calibrate</code> first to auto-tune batch sizes.
+    </div>
+  </div>
+
+  <!-- Step 3: Verify -->
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-title"><span class="icon">&#x2705;</span> Step 3 &mdash; Verify It's Working</div>
+    <div style="color:var(--dim2);font-size:0.9rem;line-height:1.7">
+      You'll know everything is working when you see:
+      <ul style="margin:10px 0 0 20px;line-height:2">
+        <li><strong style="color:var(--text)">Hops/sec</strong> in the terminal (e.g., <code>30M hops/sec</code>)</li>
+        <li><strong style="color:var(--text)">DP batches</strong> submitting every few seconds</li>
+        <li><strong style="color:var(--text)">Pool ACK</strong> messages confirming DP receipt</li>
+        <li><strong style="color:var(--text)">GPU utilization</strong> near 100% in <code>nvidia-smi</code></li>
+      </ul>
+    </div>
+    <div class="code-block">watch -n 1 nvidia-smi<button class="cmd-copy" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Requirements -->
+  <h3 style="font-size:1rem;margin-bottom:12px;color:var(--accent2)">System Requirements</h3>
+  <div class="req-grid" style="margin-bottom:28px">
+    <div class="req-badge">
+      <div class="req-icon">&#x1f5a5;</div>
+      <div class="req-text">
+        <strong>Operating System</strong>
+        <span>Linux (CUDA), Windows 10/11 (CUDA), macOS Apple Silicon (Metal)</span>
+      </div>
+    </div>
+    <div class="req-badge">
+      <div class="req-icon">&#x1f3ae;</div>
+      <div class="req-text">
+        <strong>GPU (Optional) or CPU</strong>
+        <span>NVIDIA CUDA ideal &middot; AMD/Intel/Apple CPU fallback works too &middot; ~30M hops/sec GPU / ~50K/sec CPU</span>
+      </div>
+    </div>
+    <div class="req-badge">
+      <div class="req-icon">&#x2699;&#xfe0f;</div>
+      <div class="req-text">
+        <strong>StarMiner Binary</strong>
+        <span>Auto-detects your hardware. Downloads CUDA or CPU build automatically.</span>
+      </div>
+    </div>
+    <div class="req-badge">
+      <div class="req-icon">&#x1f310;</div>
+      <div class="req-text">
+        <strong>Internet Connection</strong>
+        <span>For pool DP submission (minimal bandwidth)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Advanced: Build from source -->
+  <h3 style="font-size:1rem;margin-bottom:16px;color:var(--accent2)">Advanced: Build from Source</h3>
+  <div class="section-sub" style="margin-bottom:16px">For developers who want to audit or modify the solver.</div>
+
+  <div class="code-block"><span class="code-comment"># Clone and build (Linux)</span>
+git clone https://github.com/Soumya001/starminer.git
+cd starminer
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+
+<span class="code-comment"># Run your build</span>
+./build/starminer --puzzle 135 --kangaroo --gpus 0,1<button class="cmd-copy" onclick="copyCode(this)">Copy</button></div>
+
+  <div style="color:var(--dim);font-size:0.82rem;margin-top:12px">
+    See <a href="https://github.com/Soumya001/starminer/blob/main/docs/INSTALL.md" target="_blank" rel="noopener" style="color:var(--blue)">docs/INSTALL.md</a> for per-platform prerequisites.
+  </div>
+</div>
+
+<!-- ===================== ESTIMATOR PAGE ===================== -->
+<div class="page" id="page-calc">
+  <div class="section-title">Hardware Estimator</div>
+  <div class="section-sub">Puzzle #135 requires approximately <code>2^67.5</code> (~1.47 &times; 10^20) kangaroo hops. Estimate how your hardware performs and what your expected timeline looks like.</div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title"><span class="icon">&#x1f3ae;</span> Your Setup</div>
+    <div class="calc-grid">
+      <div>
+        <label style="display:block;color:var(--dim);font-size:0.8rem;margin-bottom:6px">GPU Model</label>
+        <select class="calc-input" id="gpuModel" onchange="updateCalc()">
+          <option value="30000000">RTX 3060 Ti (~15M hops/s)</option>
+          <option value="22000000">RTX 3070 Ti (~22M hops/s)</option>
+          <option value="40000000">RTX 4070 (~40M hops/s)</option>
+          <option value="80000000" selected>RTX 4090 (~80M hops/s)</option>
+          <option value="10000000">RTX 2080 Ti (~10M hops/s)</option>
+          <option value="5000000">GTX 1080 Ti (~5M hops/s)</option>
+          <option value="10000">CPU only (~10K hops/s)</option>
+          <option value="custom">Custom speed...</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;color:var(--dim);font-size:0.8rem;margin-bottom:6px">GPU Count</label>
+        <input type="number" class="calc-input" id="gpuCount" value="2" min="1" max="128" oninput="updateCalc()">
+      </div>
+      <div id="customSpeedWrap" style="display:none">
+        <label style="display:block;color:var(--dim);font-size:0.8rem;margin-bottom:6px">Custom Hops/sec</label>
+        <input type="number" class="calc-input" id="customSpeed" value="30000000" oninput="updateCalc()">
+      </div>
+      <div>
+        <label style="display:block;color:var(--dim);font-size:0.8rem;margin-bottom:6px">Pool Workers (estimate)</label>
+        <input type="number" class="calc-input" id="poolWorkers" value="50" min="1" max="10000" oninput="updateCalc()">
+      </div>
+    </div>
+
+    <div class="divider" style="margin:20px 0"></div>
+
+    <div class="calc-grid">
+      <div class="calc-result">
+        <div class="calc-val" id="calcSolo">--</div>
+        <div class="calc-label">Solo Expected Time</div>
+      </div>
+      <div class="calc-result">
+        <div class="calc-val" id="calcPool">--</div>
+        <div class="calc-label">Pool Expected Time</div>
+      </div>
+      <div class="calc-result">
+        <div class="calc-val" id="calcShare">--</div>
+        <div class="calc-label">Your Pool Share</div>
+      </div>
+      <div class="calc-result">
+        <div class="calc-val" id="calcDaily">--</div>
+        <div class="calc-label">Daily Electricity (est)</div>
+      </div>
+    </div>
+
+    <div class="callout callout-info" style="margin-top:16px;margin-bottom:0">
+      <strong>Geometric distribution:</strong> These are <em>expected</em> values. You could find the key in Hour 1, or it could take 10x longer. The pool improves odds by combining hash power and sharing distinguished points.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon">&#x1f4ca;</span> Reference Speeds</div>
+    <div class="lb-responsive">
+      <table class="lb-table">
+        <thead>
+          <tr><th>GPU</th><th>Hops/sec</th><th>Power (est)</th><th>1 Chunk Time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="lb-name">RTX 4090</td><td class="mono">~80M</td><td>~220W</td><td class="mono">~58,000 yrs solo</td></tr>
+          <tr><td class="lb-name">RTX 4070</td><td class="mono">~40M</td><td>~130W</td><td class="mono">~116,000 yrs solo</td></tr>
+          <tr><td class="lb-name">RTX 3070 Ti</td><td class="mono">~22M</td><td>~140W</td><td class="mono">~211,000 yrs solo</td></tr>
+          <tr><td class="lb-name">RTX 3060 Ti</td><td class="mono">~15M</td><td>~120W</td><td class="mono">~310,000 yrs solo</td></tr>
+          <tr><td class="lb-name">GTX 1080 Ti</td><td class="mono">~5M</td><td>~180W</td><td class="mono">~930,000 yrs solo</td></tr>
+          <tr><td class="lb-name">CPU (8 threads)</td><td class="mono">~10K</td><td>~65W</td><td class="mono">~465M yrs solo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FAQ PAGE ===================== -->
+<div class="page" id="page-faq">
+  <div class="section-title">Frequently Asked Questions</div>
+  <div class="section-sub">Click a question to expand the answer.</div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">What is Puzzle #135?</div>
+    <div class="faq-a">Puzzle #135 is part of the 1000 BTC Bitcoin Puzzle Challenge. It holds <strong>~13.5 BTC</strong> at address <code>1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH</code>. Unlike Puzzle #71, the <strong>public key was exposed</strong> in a partial-spend transaction, making it vulnerable to Pollard's Kangaroo algorithm.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How is this different from Puzzle #71?</div>
+    <div class="faq-a">
+      <ul style="margin:8px 0 0 20px;line-height:1.8">
+        <li><strong>#71 (your other pool):</strong> Address only. No pubkey known. Must brute force. No shortcuts.</li>
+        <li><strong>#135:</strong> Pubkey exposed. Kangaroo applies. Search space drops from <code>2^135</code> to <code>2^67.5</code> — still massive, but tractable with enough GPUs.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">What is Pollard's Kangaroo?</div>
+    <div class="faq-a">It's a mathematical algorithm for solving the Elliptic Curve Discrete Logarithm Problem (ECDLP) when the public key is known. Instead of checking every private key, it uses two "kangaroos" (random walks) that hop around the curve. When their paths collide, the private key is revealed. Complexity is <code>O(&#x221a;N)</code> instead of <code>O(N)</code>.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How does the pool work?</div>
+    <div class="faq-a">The StarNet Pool shards the Kangaroo search across many workers. Each GPU runs random walks and submits <strong>Distinguished Points</strong> (special coordinates with leading zero bits) to the server. When a tame DP collides with a wild DP, the server reconstructs the private key. Workers earn shares proportional to their DP contribution.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">How long does it take?</div>
+    <div class="faq-a">One RTX 4090 takes roughly <strong>155,000 years</strong> expected time solo. The pool with ~50 workers is closer to <strong>20-30 years</strong> expected. However, it's a geometric distribution — you could hit the collision in Hour 1, or never. It's a lottery with better odds than brute force.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">Do I need a powerful GPU?</div>
+    <div class="faq-a">Any NVIDIA GPU with CUDA works, but speed scales with compute power. RTX 3060 Ti+ is recommended. Apple Silicon (M1/M2/M3/M4) works via the Metal backend. CPU is ~10,000 hops/sec — technically possible but impractical.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">Is this safe for my GPU?</div>
+    <div class="faq-a">Yes. StarMiner uses standard GPU compute workloads similar to mining or AI inference. Your GPU will run at full utilization. Monitor temperatures and set power limits if running 24/7. A 35% power limit on Ampere cards is popular for quiet operation.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">Can I run multiple GPUs?</div>
+    <div class="faq-a">Absolutely. Use <code>--gpus 0,1,2</code> to use all detected cards. StarMiner auto-calibrates batch sizes per GPU. Each GPU adds linear speedup.</div>
+  </div>
+
+  <div class="faq-item">
+    <div class="faq-q" onclick="toggleFaq(this)">What happens if the key is found?</div>
+    <div class="faq-a">If running <strong>solo</strong>, you keep 100% of the prize. If running <strong>pool</strong>, rewards are distributed based on your DP share. The pool operator handles payout verification. If you find the key, import it immediately and sweep the funds to a secure wallet.</div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  Puzzle #135 Dashboard &middot; <a href="https://starnetlive.space">starnetlive.space</a> &middot; <a href="https://github.com/Soumya001/starminer" target="_blank" rel="noopener">StarMiner</a>
+</div>
+
+</div><!-- /container -->
+
+<script>
+/* ===== Formatting helpers ===== */
+function fmt(n) {
+  if (n === undefined || n === null) return '0';
+  if (n >= 1e18) return (n / 1e18).toFixed(2) + ' Exa';
+  if (n >= 1e15) return (n / 1e15).toFixed(2) + ' Peta';
+  if (n >= 1e12) return (n / 1e12).toFixed(2) + ' T';
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + ' B';
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + ' M';
+  if (n >= 1e3) return n.toLocaleString();
+  return String(Math.round(n));
+}
+
+function fmtSpeed(kps) {
+  if (kps >= 1e12) return (kps / 1e12).toFixed(2);
+  if (kps >= 1e9) return (kps / 1e9).toFixed(2);
+  if (kps >= 1e6) return (kps / 1e6).toFixed(2);
+  if (kps >= 1e3) return (kps / 1e3).toFixed(2);
+  return String(Math.round(kps));
+}
+function fmtSpeedUnit(kps) {
+  if (kps >= 1e12) return 'THops/s';
+  if (kps >= 1e9) return 'GHops/s';
+  if (kps >= 1e6) return 'MHops/s';
+  if (kps >= 1e3) return 'KHops/s';
+  return 'hops/s';
+}
+
+function fmtDuration(sec) {
+  if (!sec || sec <= 0 || !isFinite(sec)) return '--';
+  const y = Math.floor(sec / (365.25 * 86400));
+  const d = Math.floor((sec % (365.25 * 86400)) / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (y > 0) return y + 'y ' + d + 'd';
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
+function fmtUptime(sec) {
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h ' + m + 'm';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm ' + (sec % 60) + 's';
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ===== Page navigation ===== */
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const toggle = document.getElementById('hamburger-toggle');
+  if (toggle) toggle.checked = false;
+}
+
+/* ===== FAQ Accordion ===== */
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(f => f.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+/* ===== Toast notifications ===== */
+function showToast(msg, type) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'success');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { if (toast.parentNode) toast.remove(); }, 2600);
+}
+
+/* ===== Copy helpers ===== */
+function copyText(id) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied to clipboard!', 'success');
+  });
+}
+
+function copyCode(btn) {
+  const block = btn.parentElement;
+  const text = block.textContent.replace('Copy', '').replace('Copied!', '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    showToast('Code copied!', 'success');
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+/* ===== Data fetching ===== */
+async function fetchPoolStats() {
+  try {
+    const resp = await fetch('/api/v1/pool/stats');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const d = await resp.json();
+
+    document.getElementById('heroStatus').className = 'hero-status';
+    document.getElementById('liveDot').style.background = 'var(--green)';
+    document.getElementById('statusText').textContent = 'Pool Online';
+
+    const pool = d.pool || {};
+    const puzzle = d.puzzle || {};
+    const progress = d.progress || {};
+
+    document.getElementById('puzzleNum').textContent = '#' + (puzzle.number || 135);
+    document.getElementById('totalWorkers').textContent = fmt(pool.active_workers || 0);
+    document.getElementById('totalDps').textContent = fmt(pool.total_dps || 0);
+    document.getElementById('uptime').textContent = fmtUptime(pool.uptime_seconds || 0);
+
+    document.getElementById('poolTotalWorkers').textContent = fmt(pool.total_workers || 0);
+    document.getElementById('poolActiveWorkers').textContent = fmt(pool.active_workers || 0);
+    document.getElementById('poolTotalDps').textContent = fmt(pool.total_dps || 0);
+    document.getElementById('poolDpsRate').textContent = fmt(pool.dps_per_second || 0) + ' DPs/s';
+    document.getElementById('poolUptime').textContent = fmtUptime(pool.uptime_seconds || 0);
+    const solFound = pool.solution_found || false;
+    document.getElementById('poolSolution').textContent = solFound ? 'YES — SOLVED!' : 'No';
+    document.getElementById('poolSolution').className = 'stat-value' + (solFound ? ' found' : '');
+
+    document.getElementById('dpBits').textContent = (puzzle.dp_bits || 28) + ' bits';
+
+    // Progress bar: DPs are probabilistic — show log-scale approximation
+    // Expected DPs to solve ≈ 2^(135/2 - dp_bits + 1) ≈ 2^(67.5 - 28 + 1) = 2^40.5 ≈ 1.5 trillion
+    const EXPECTED_DPS = Math.pow(2, 40.5);
+    const totalDps = pool.total_dps || 0;
+    const pct = Math.min((totalDps / EXPECTED_DPS) * 100, 100);
+    document.getElementById('progressPct').textContent = pct.toExponential(4) + '%';
+    document.getElementById('progressBar').style.width = Math.max(Math.min(pct, 100), 0.01) + '%';
+
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+
+    // Populate worker leaderboard
+    const tbody = document.getElementById('workerTbody');
+    const workerList = pool.workers || [];
+    if (workerList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--dim)">No workers registered yet</td></tr>';
+    } else {
+      tbody.innerHTML = workerList.map((w, i) => {
+        const wallet = w.wallet || '';
+        const walletShort = wallet ? wallet.substring(0, 6) + '...' + wallet.substring(wallet.length - 4) : '<span style="color:var(--red)">No wallet</span>';
+        return `<tr>
+          <td class="lb-rank ${i<3?'top'+(i+1):''}">${i+1}</td>
+          <td class="lb-name">${esc(w.name)}</td>
+          <td class="mono" style="font-size:0.78rem" title="${esc(wallet)}">${walletShort}</td>
+          <td class="lb-hide-sm">${fmt(w.total_dps||0)}</td>
+        </tr>`;
+      }).join('');
+    }
+  } catch (e) {
+    document.getElementById('heroStatus').className = 'hero-status offline';
+    document.getElementById('statusText').textContent = 'Pool Offline';
+  }
+}
+
+fetchPoolStats();
+setInterval(fetchPoolStats, 10000);
+
+/* ===== Hardware Calculator ===== */
+const EXPECTED_OPS = Math.pow(2, 67.5); // ~1.47e20
+const KWH_COST = 0.12;
+const WATTS_PER_GPU = 150; // average under load
+
+function updateCalc() {
+  const gpuSelect = document.getElementById('gpuModel');
+  const customWrap = document.getElementById('customSpeedWrap');
+  let speedPerGpu = parseInt(gpuSelect.value) || 0;
+
+  if (gpuSelect.value === 'custom') {
+    customWrap.style.display = 'block';
+    speedPerGpu = parseInt(document.getElementById('customSpeed').value) || 0;
+  } else {
+    customWrap.style.display = 'none';
+  }
+
+  const count = parseInt(document.getElementById('gpuCount').value) || 1;
+  const poolWorkers = parseInt(document.getElementById('poolWorkers').value) || 1;
+  const totalSpeed = speedPerGpu * count;
+
+  // Solo time
+  const soloSec = EXPECTED_OPS / totalSpeed;
+  document.getElementById('calcSolo').textContent = fmtDuration(soloSec);
+
+  // Assume pool total speed scales with worker count (rough heuristic)
+  // Using RTX 4090 avg as baseline per worker ~50M hops/s
+  const avgWorkerSpeed = 50000000;
+  const poolTotalSpeed = avgWorkerSpeed * poolWorkers;
+  const poolSec = EXPECTED_OPS / poolTotalSpeed;
+  document.getElementById('calcPool').textContent = fmtDuration(poolSec);
+
+  // Share
+  const share = totalSpeed / poolTotalSpeed;
+  const sharePct = (share * 100).toFixed(4);
+  document.getElementById('calcShare').textContent = sharePct + '%';
+
+  // Electricity
+  const dailyKwh = (WATTS_PER_GPU * count * 24) / 1000;
+  const dailyCost = dailyKwh * KWH_COST;
+  document.getElementById('calcDaily').textContent = '$' + dailyCost.toFixed(2);
+}
+
+updateCalc();
+</script>
+</body>
+</html>
