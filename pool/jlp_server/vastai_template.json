@@ -1,0 +1,19 @@
+{
+  "_comment": "Vast.ai template for StarMiner Puzzle #135 GPU worker",
+  "_usage": "Replace POOL_HOST with your server's public IP or hostname, WORKER_NAME with your BTC address",
+  "image": "nvidia/cuda:12.2.0-base-ubuntu22.04",
+  "disk": 8,
+  "env": {
+    "POOL_URL": "jlp://POOL_HOST:17403",
+    "WORKER_NAME": "YOUR_BTC_ADDRESS",
+    "GPU_IDS": "0"
+  },
+  "onstart": "#!/bin/bash\nset -e\napt-get update -qq && apt-get install -y -qq python3 python3-pip curl wget\nwget -q https://starnetlive.space/download/starminer-linux-x86_64 -O /usr/local/bin/starminer\nchmod +x /usr/local/bin/starminer\nwget -q https://starnetlive.space/download/starminer-worker.py -O /root/starminer-worker.py\npython3 /root/starminer-worker.py --pool \"${POOL_URL}\" --worker \"${WORKER_NAME}\" --gpu-ids \"${GPU_IDS}\"",
+  "ports": [],
+  "notes": [
+    "Port 17403 must be open on the pool host (TCP ingress).",
+    "Use jlps:// and provide --cert/--key to the server for encrypted connections.",
+    "Worker name should be a Bitcoin address for payout tracking.",
+    "Vast.ai runs this as a docker container — GPU is passed through automatically."
+  ]
+}

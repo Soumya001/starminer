@@ -18,7 +18,8 @@
  */
 
 #include "brain_wallet_v2.hpp"
-#include "device_hashes.cuh"   // device::sha512 + hmac_sha512 for S7/S8
+#include "device_hashes.cuh"   // device::sha512 + hmac_sha512 + pbkdf2 + bip32
+#include "../secp256k1_device_api.cuh"   // uint256, ECPointAffine, ec_mul_simple
 #include <cuda_runtime.h>
 #include <cstring>
 #include <cstdio>
@@ -272,6 +273,184 @@ __global__ __launch_bounds__(256, 4) void v2_puzzle_only_kernel_scheme(
 // Public API
 // ===========================================================================
 
+// ---------------------------------------------------------------------------
+// Phase 4: fused derivation + EC multiply + multi-address bloom kernel.
+//
+// Each thread: derives a private key from its passphrase, calls ec_mul_simple
+// to get the public key, then checks each enabled address type against bloom.
+// ---------------------------------------------------------------------------
+
+template <DerivationScheme S>
+__global__ __launch_bounds__(128, 2) void v2_addr_kernel(
+    const uint8_t*  __restrict__ passphrases,
+    const uint32_t* __restrict__ offsets,
+    const uint32_t* __restrict__ lengths,
+    size_t count,
+    uint32_t addr_mask,
+    const uint8_t*  __restrict__ bloom,
+    uint64_t bloom_bits,
+    int bloom_hashes,
+    uint32_t bloom_seed,
+    V2MatchRecord*  __restrict__ matches,
+    uint32_t*       __restrict__ match_count)
+{
+    size_t idx = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= count) return;
+
+    const uint8_t* pw = passphrases + offsets[idx];
+    uint32_t pw_len = lengths[idx];
+
+    // Derive private key
+    uint8_t priv[32];
+    v2_derive<S>(pw, pw_len, priv);
+
+    // EC multiply: priv → (pub_x, pub_y)
+    uint256 scalar;
+    #pragma unroll
+    for (int i = 0; i < 8; ++i) {
+        uint32_t w = 0;
+        int base = (7 - i) * 4;
+        w |= (uint32_t)priv[base]     << 24;
+        w |= (uint32_t)priv[base + 1] << 16;
+        w |= (uint32_t)priv[base + 2] <<  8;
+        w |= (uint32_t)priv[base + 3];
+        scalar.limbs[i] = w;
+    }
+    ECPointAffine P;
+    ec_mul_simple(P, scalar);
+
+    // Convert to big-endian byte arrays for address derivation
+    uint8_t pub_x[32], pub_y[32];
+    #pragma unroll
+    for (int i = 0; i < 8; ++i) {
+        uint32_t lx = P.x.limbs[7 - i], ly = P.y.limbs[7 - i];
+        pub_x[i*4+0] = (uint8_t)(lx >> 24); pub_x[i*4+1] = (uint8_t)(lx >> 16);
+        pub_x[i*4+2] = (uint8_t)(lx >>  8); pub_x[i*4+3] = (uint8_t)(lx      );
+        pub_y[i*4+0] = (uint8_t)(ly >> 24); pub_y[i*4+1] = (uint8_t)(ly >> 16);
+        pub_y[i*4+2] = (uint8_t)(ly >>  8); pub_y[i*4+3] = (uint8_t)(ly      );
+    }
+
+    // Bloom probe helper
+    auto check_and_emit = [&](uint8_t addr_type, const uint8_t h160[20]) __device__ {
+        if (!bloom || bloom_bits == 0) return;
+        if (!::starminer::gpu::bloom_check_h160(bloom, bloom_bits, (uint32_t)bloom_hashes, bloom_seed, h160))
+            return;
+        uint32_t slot = atomicAdd(match_count, 1u);
+        if (slot < V2_MAX_MATCHES_PER_BATCH) {
+            V2MatchRecord rec{};
+            rec.pp_idx    = (uint32_t)idx;
+            rec.addr_type = addr_type;
+            rec.scheme_id = (uint8_t)S;
+            rec.kind      = (uint8_t)V2MatchRecord::Kind::ADDR_BLOOM_HIT;
+            matches[slot] = rec;
+        }
+    };
+
+    if (addr_mask & addr_bit(AddressType::P2PKH_UNCOMPRESSED)) {
+        uint8_t buf[65], h[20];
+        buf[0] = 0x04;
+        for (int i = 0; i < 32; ++i) { buf[1+i] = pub_x[i]; buf[33+i] = pub_y[i]; }
+        device::hash160(buf, 65u, h);
+        check_and_emit((uint8_t)AddressType::P2PKH_UNCOMPRESSED, h);
+    }
+    if (addr_mask & addr_bit(AddressType::P2PKH_COMPRESSED)) {
+        uint8_t comp[33], h[20];
+        comp[0] = (pub_y[31] & 1u) ? 0x03 : 0x02;
+        for (int i = 0; i < 32; ++i) comp[1+i] = pub_x[i];
+        device::hash160(comp, 33u, h);
+        check_and_emit((uint8_t)AddressType::P2PKH_COMPRESSED, h);
+    }
+    if (addr_mask & addr_bit(AddressType::P2WPKH_V0)) {
+        uint8_t comp[33], h[20];
+        comp[0] = (pub_y[31] & 1u) ? 0x03 : 0x02;
+        for (int i = 0; i < 32; ++i) comp[1+i] = pub_x[i];
+        device::hash160(comp, 33u, h);
+        check_and_emit((uint8_t)AddressType::P2WPKH_V0, h);
+    }
+    if (addr_mask & addr_bit(AddressType::P2SH_P2WPKH)) {
+        uint8_t comp[33], inner[20], redeem[22], h[20];
+        comp[0] = (pub_y[31] & 1u) ? 0x03 : 0x02;
+        for (int i = 0; i < 32; ++i) comp[1+i] = pub_x[i];
+        device::hash160(comp, 33u, inner);
+        redeem[0] = 0x00; redeem[1] = 0x14;
+        for (int i = 0; i < 20; ++i) redeem[2+i] = inner[i];
+        device::hash160(redeem, 22u, h);
+        check_and_emit((uint8_t)AddressType::P2SH_P2WPKH, h);
+    }
+}
+
+// Forward-declare the bloom_check_h160 from h160_bloom_filter.cu (same
+// namespace; accessible via separable compilation).
+namespace starminer { namespace gpu {
+extern __device__ bool bloom_check_h160(
+    const uint8_t* bloom_data,
+    uint64_t num_bits,
+    uint32_t num_hashes,
+    uint32_t seed,
+    const uint8_t* h160);
+}}
+
+static cudaError_t v2_brain_wallet_addr_batch(
+    const uint8_t*  d_passphrases,
+    const uint32_t* d_offsets,
+    const uint32_t* d_lengths,
+    size_t count,
+    uint32_t scheme_mask,
+    uint32_t addr_mask,
+    const uint8_t*  d_bloom,
+    uint64_t bloom_bits,
+    int bloom_hashes,
+    V2MatchRecord*  d_matches,
+    uint32_t*       d_match_count,
+    cudaStream_t    stream)
+{
+    constexpr int BLOCK = 128;
+    int blocks = (int)((count + BLOCK - 1) / BLOCK);
+    // Default bloom seed (same as production h160_bloom_filter.cu seed)
+    constexpr uint32_t kBloomSeed = 42u;
+
+    if (count > 0) {
+        cudaError_t rc = cudaMemsetAsync(d_match_count, 0, sizeof(uint32_t), stream);
+        if (rc != cudaSuccess) return rc;
+    }
+
+    using AddrLauncher = cudaError_t (*)(
+        const uint8_t*, const uint32_t*, const uint32_t*, size_t,
+        uint32_t, const uint8_t*, uint64_t, int, uint32_t,
+        V2MatchRecord*, uint32_t*, int, int, cudaStream_t);
+
+    auto make_addr_launcher = []<DerivationScheme S>() -> AddrLauncher {
+        return [](const uint8_t* pw, const uint32_t* off, const uint32_t* len, size_t cnt,
+                  uint32_t amask, const uint8_t* bloom, uint64_t bbits, int bhashes, uint32_t bseed,
+                  V2MatchRecord* matches, uint32_t* mc, int blks, int bsz, cudaStream_t s) -> cudaError_t {
+            v2_addr_kernel<S><<<blks, bsz, 0, s>>>(pw, off, len, cnt, amask, bloom, bbits, bhashes, bseed, matches, mc);
+            return cudaGetLastError();
+        };
+    };
+
+    struct Entry { DerivationScheme scheme; AddrLauncher launcher; };
+    const Entry kEntries[] = {
+        {DerivationScheme::SHA256_PW,          make_addr_launcher.template operator()<DerivationScheme::SHA256_PW>()},
+        {DerivationScheme::SHA256_SHA256_PW,   make_addr_launcher.template operator()<DerivationScheme::SHA256_SHA256_PW>()},
+        {DerivationScheme::SHA256_PW_NEWLINE,  make_addr_launcher.template operator()<DerivationScheme::SHA256_PW_NEWLINE>()},
+        {DerivationScheme::SHA256_PW_PW,       make_addr_launcher.template operator()<DerivationScheme::SHA256_PW_PW>()},
+        {DerivationScheme::SHA256_SHA256_PW_PW,make_addr_launcher.template operator()<DerivationScheme::SHA256_SHA256_PW_PW>()},
+        {DerivationScheme::SHA256_ITER_16,     make_addr_launcher.template operator()<DerivationScheme::SHA256_ITER_16>()},
+        {DerivationScheme::HMAC_SHA512_PW,     make_addr_launcher.template operator()<DerivationScheme::HMAC_SHA512_PW>()},
+        {DerivationScheme::SHA512_PW_HALF,     make_addr_launcher.template operator()<DerivationScheme::SHA512_PW_HALF>()},
+    };
+
+    for (const auto& e : kEntries) {
+        if (!(scheme_mask & scheme_bit(e.scheme))) continue;
+        cudaError_t rc = e.launcher(
+            d_passphrases, d_offsets, d_lengths, count,
+            addr_mask, d_bloom, bloom_bits, bloom_hashes, kBloomSeed,
+            d_matches, d_match_count, blocks, BLOCK, stream);
+        if (rc != cudaSuccess) return rc;
+    }
+    return cudaSuccess;
+}
+
 // v2_init / v2_shutdown / v2_set_puzzle_targets / v2_brain_wallet_batch
 // have C++ linkage to match the namespaced declarations in
 // brain_wallet_v2.hpp. (An earlier extern "C" wrapper here caused a header /
@@ -317,13 +496,15 @@ cudaError_t v2_brain_wallet_batch(
     uint32_t* d_match_count,
     cudaStream_t stream)
 {
-    // Phase 3 (v1.4.0): puzzle-only path supports all 8 DerivationScheme
-    // values. S1..S6 are SHA-256 compositions; S7 (HMAC-SHA512) and S8
-    // (truncated SHA-512) use device::hmac_sha512 / device::sha512 from
-    // device_hashes.cuh. Multi-address (addr_mask != 0) routes through
-    // the legacy brain-wallet pipeline; that's Phase 4.
+    // Phase 3 (v1.4.0): puzzle-only path supports all 8 DerivationScheme values.
+    // Phase 4 (v1.5.0): addr_mask != 0 path — derive private key, EC multiply,
+    // run multi-address bloom check. Uses a fused per-thread kernel.
     if (addr_mask != 0) {
-        return cudaErrorNotSupported;
+        return v2_brain_wallet_addr_batch(
+            d_passphrases, d_offsets, d_lengths, count,
+            scheme_mask, addr_mask,
+            d_bloom, bloom_bits, bloom_hashes,
+            d_matches, d_match_count, stream);
     }
     if (scheme_mask == 0) {
         return cudaErrorInvalidValue;
@@ -410,22 +591,191 @@ cudaError_t v2_brain_wallet_batch(
 
 // v2_weak_prng_brute lives in src/gpu/v2/weak_prng_kernel.cu (Phase 5).
 
-cudaError_t v2_bip39_brute(
-    const uint8_t* /*d_mnemonics*/,
-    const uint32_t* /*d_offsets*/,
-    const uint32_t* /*d_lengths*/,
-    size_t /*count*/,
-    const std::string& /*bip39_passphrase*/,
-    const std::vector<std::vector<uint32_t>>& /*parsed_paths*/,
-    uint32_t /*addr_mask*/,
-    const uint8_t* /*d_bloom*/,
-    uint64_t /*bloom_bits*/,
-    int /*bloom_hashes*/,
-    V2MatchRecord* /*d_matches*/,
-    uint32_t* /*d_match_count*/,
-    cudaStream_t /*stream*/)
+// ---------------------------------------------------------------------------
+// BIP-39 kernel: per-thread PBKDF2(mnemonic, salt, 2048) → BIP-32 root key
+// → optional path derivation → EC multiply → puzzle-target or bloom check.
+//
+// WARNING: PBKDF2 with 2048 HMAC-SHA-512 rounds is computation-heavy per
+// thread. Expected throughput ~1-5K mnemonics/sec/GPU at typical batch sizes.
+// ---------------------------------------------------------------------------
+
+// Device constant: passphrase suffix for BIP-39 salt ("mnemonic" + passphrase)
+// The host copies the full salt into d_bip39_salt via constant memory or
+// passes it as a pointer. Max passphrase length is 200 bytes.
+__device__ __constant__ uint8_t  c_bip39_salt[212];  // "mnemonic"(8) + passphrase(≤200) + padding
+__device__ __constant__ uint32_t c_bip39_salt_len;
+
+// Device constant: BIP-32 derivation path (up to 8 components)
+// Each entry: bit 31 = hardened flag, bits 0-30 = index.
+// A zero path_len means use the root key directly.
+__device__ __constant__ uint32_t c_bip32_path[8];
+__device__ __constant__ uint32_t c_bip32_path_len;
+
+// Derive a compressed pubkey from a 32-byte private key scalar.
+// Returns pub[33]: 02/03 prefix + 32-byte X.
+__device__ static void priv_to_compressed_pub(
+    const uint8_t priv[32], uint8_t pub_compressed[33])
 {
-    return cudaErrorNotSupported;
+    uint256 scalar;
+    #pragma unroll
+    for (int i = 0; i < 8; ++i) {
+        uint32_t w = 0;
+        int base = (7 - i) * 4;
+        w |= (uint32_t)priv[base]     << 24;
+        w |= (uint32_t)priv[base + 1] << 16;
+        w |= (uint32_t)priv[base + 2] <<  8;
+        w |= (uint32_t)priv[base + 3];
+        scalar.limbs[i] = w;
+    }
+    ECPointAffine P;
+    ec_mul_simple(P, scalar);
+    // Compressed: 02 if Y even, 03 if Y odd
+    pub_compressed[0] = (P.y.limbs[0] & 1u) ? 0x03 : 0x02;
+    #pragma unroll
+    for (int i = 0; i < 8; ++i) {
+        uint32_t lv = P.x.limbs[7 - i];
+        pub_compressed[1 + i * 4 + 0] = (uint8_t)(lv >> 24);
+        pub_compressed[1 + i * 4 + 1] = (uint8_t)(lv >> 16);
+        pub_compressed[1 + i * 4 + 2] = (uint8_t)(lv >>  8);
+        pub_compressed[1 + i * 4 + 3] = (uint8_t)(lv      );
+    }
+}
+
+__global__ __launch_bounds__(64, 2) void v2_bip39_kernel(
+    const uint8_t*  __restrict__ d_mnemonics,
+    const uint32_t* __restrict__ d_offsets,
+    const uint32_t* __restrict__ d_lengths,
+    size_t count,
+    V2MatchRecord*  __restrict__ d_matches,
+    uint32_t*       __restrict__ d_match_count)
+{
+    size_t idx = (size_t)blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= count) return;
+
+    const uint8_t* mnemonic = d_mnemonics + d_offsets[idx];
+    uint32_t       mn_len   = d_lengths[idx];
+
+    // Step 1: PBKDF2-HMAC-SHA512(mnemonic, salt, 2048) → 64-byte BIP-39 seed
+    uint8_t seed[64];
+    device::pbkdf2_hmac_sha512_one_block(
+        mnemonic, mn_len,
+        c_bip39_salt, c_bip39_salt_len,
+        2048u,
+        seed);
+
+    // Step 2: BIP-32 root key
+    uint8_t master_key[32], master_chain[32];
+    device::bip32_root_key(seed, master_key, master_chain);
+
+    // Step 3: Follow derivation path
+    uint8_t cur_key[32], cur_chain[32];
+    for (int i = 0; i < 32; ++i) { cur_key[i] = master_key[i]; cur_chain[i] = master_chain[i]; }
+
+    uint32_t path_len = c_bip32_path_len;
+    uint8_t  parent_pub[33];
+
+    for (uint32_t d = 0; d < path_len && d < 8u; ++d) {
+        uint32_t component = c_bip32_path[d];
+        uint8_t  next_key[32], next_chain[32];
+        if (component & 0x80000000u) {
+            // Hardened
+            device::bip32_derive_child_hardened(cur_key, cur_chain, component, next_key, next_chain);
+        } else {
+            // Non-hardened: need parent compressed pubkey
+            priv_to_compressed_pub(cur_key, parent_pub);
+            device::bip32_derive_child_nonhardened(cur_key, cur_chain, parent_pub, component, next_key, next_chain);
+        }
+        for (int i = 0; i < 32; ++i) { cur_key[i] = next_key[i]; cur_chain[i] = next_chain[i]; }
+    }
+
+    // cur_key is the final private key. Check against puzzle targets.
+    uint64_t hash_limbs[4];
+    v2_hash_to_limbs(cur_key, hash_limbs);
+
+    const int n_targets = c_puzzle_target_count;
+    for (int ti = 0; ti < n_targets; ++ti) {
+        const PuzzleTarget& t = c_puzzle_targets[ti];
+        bool match = true;
+        #pragma unroll
+        for (int j = 0; j < 4; ++j) {
+            if ((hash_limbs[j] & t.low_mask[j]) != t.low_value[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            uint32_t slot = atomicAdd(d_match_count, 1u);
+            if (slot < V2_MAX_MATCHES_PER_BATCH) {
+                V2MatchRecord rec{};
+                rec.pp_idx    = (uint32_t)idx;
+                rec.puzzle_n  = t.puzzle_n;
+                rec.scheme_id = (uint8_t)DerivationScheme::SHA256_PW;  // BIP-39 sentinel
+                rec.kind      = (uint8_t)V2MatchRecord::Kind::PUZZLE_KEY_HIT;
+                d_matches[slot] = rec;
+            }
+        }
+    }
+}
+
+cudaError_t v2_bip39_brute(
+    const uint8_t*  d_mnemonics,
+    const uint32_t* d_offsets,
+    const uint32_t* d_lengths,
+    size_t          count,
+    const std::string& bip39_passphrase,
+    const std::vector<std::vector<uint32_t>>& parsed_paths,
+    uint32_t        addr_mask,
+    const uint8_t*  /*d_bloom*/,
+    uint64_t        /*bloom_bits*/,
+    int             /*bloom_hashes*/,
+    V2MatchRecord*  d_matches,
+    uint32_t*       d_match_count,
+    cudaStream_t    stream)
+{
+    if (count == 0) return cudaSuccess;
+
+    // Build the BIP-39 salt: "mnemonic" + passphrase
+    uint8_t salt_buf[212] = {};
+    const char kPrefix[] = "mnemonic";
+    for (int i = 0; i < 8; ++i) salt_buf[i] = (uint8_t)kPrefix[i];
+    uint32_t salt_len = 8u;
+    if (!bip39_passphrase.empty()) {
+        uint32_t pp_len = (uint32_t)bip39_passphrase.size();
+        if (pp_len > 200u) pp_len = 200u;
+        for (uint32_t i = 0; i < pp_len; ++i) salt_buf[8 + i] = (uint8_t)bip39_passphrase[i];
+        salt_len += pp_len;
+    }
+    cudaError_t err;
+    err = cudaMemcpyToSymbolAsync(c_bip39_salt, salt_buf, sizeof(salt_buf), 0,
+                                  cudaMemcpyHostToDevice, stream);
+    if (err != cudaSuccess) return err;
+    err = cudaMemcpyToSymbolAsync(c_bip39_salt_len, &salt_len, sizeof(uint32_t), 0,
+                                  cudaMemcpyHostToDevice, stream);
+    if (err != cudaSuccess) return err;
+
+    // Derive path: use first path from parsed_paths, or empty (root key)
+    uint32_t path_buf[8] = {};
+    uint32_t path_len = 0u;
+    if (!parsed_paths.empty() && !parsed_paths[0].empty()) {
+        path_len = (uint32_t)std::min(parsed_paths[0].size(), (size_t)8u);
+        for (uint32_t i = 0; i < path_len; ++i) path_buf[i] = parsed_paths[0][i];
+    }
+    err = cudaMemcpyToSymbolAsync(c_bip32_path, path_buf, sizeof(path_buf), 0,
+                                  cudaMemcpyHostToDevice, stream);
+    if (err != cudaSuccess) return err;
+    err = cudaMemcpyToSymbolAsync(c_bip32_path_len, &path_len, sizeof(uint32_t), 0,
+                                  cudaMemcpyHostToDevice, stream);
+    if (err != cudaSuccess) return err;
+
+    err = cudaMemsetAsync(d_match_count, 0, sizeof(uint32_t), stream);
+    if (err != cudaSuccess) return err;
+
+    // addr_mask ignored for now (Phase 4 only checks puzzle targets)
+    constexpr int BLOCK = 64;
+    int blocks = (int)((count + BLOCK - 1) / BLOCK);
+    v2_bip39_kernel<<<blocks, BLOCK, 0, stream>>>(
+        d_mnemonics, d_offsets, d_lengths, count, d_matches, d_match_count);
+    return cudaGetLastError();
 }
 
 }  // namespace v2
