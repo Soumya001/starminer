@@ -91,6 +91,10 @@ struct Arguments {
     // Config file
     std::string config_file;              // Custom config file path (default: ./config.yml)
 
+    // Update checker
+    bool check_update = false;            // --update: check for new release and exit
+    bool no_update_check = false;         // --no-update-check: skip background version poll
+
     // Menu navigation
     bool go_back = false;                 // Signal to return to main menu (not exit)
     bool exit_program = false;            // Signal to exit program cleanly

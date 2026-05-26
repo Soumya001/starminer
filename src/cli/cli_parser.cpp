@@ -199,6 +199,10 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             cli.pool_password_set = true;
         } else if ((arg == "--config" || arg == "-c") && i + 1 < argc) {
             args.config_file = argv[++i];
+        } else if (arg == "--update") {
+            args.check_update = true;
+        } else if (arg == "--no-update-check") {
+            args.no_update_check = true;
         }
     }
 
@@ -324,6 +328,8 @@ Other:
   --help, -h              Show this help message
   --debug                 Show debug output for troubleshooting
   --config, -c <file>     Use custom config file (default: ./config.yml)
+  --update                Check for a new release and print upgrade instructions
+  --no-update-check       Skip the background version check at startup
 
 Configuration:
   Settings can be stored in config.yml (current directory or ~/.starminer/)

@@ -406,6 +406,9 @@ set(CORE_SOURCES
     # configure time, the function returns nullopt and the banner shows
     # "balance unavailable (offline)".
     src/ui/btc_balance.cpp
+    # Background GitHub Releases version check. libcurl-gated: when curl
+    # is absent, fetch_latest_version() returns "" and the check is skipped.
+    src/core/update_checker.cpp
 )
 
 # Free-licensed Metal SHA-256 benchmark (Mac only). Available in BOTH

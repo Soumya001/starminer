@@ -45,9 +45,11 @@
 
 #include "cli/cli_parser.hpp"
 #include "core/config.hpp"
+#include "core/edition.hpp"
 #include "core/logger.hpp"
 #include "core/puzzle_analysis.hpp"
 #include "core/puzzle_config.hpp"          // PuzzleDatabase (auto-enable smart pick)
+#include "core/update_checker.hpp"
 #include "core/yaml_config.hpp"
 #include "runtime/gpu_detection.hpp"        // detect_gpus
 #include "runtime/pool_solver.hpp"
@@ -186,6 +188,19 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // --update: synchronous check + upgrade instructions, then exit.
+    if (args.check_update) {
+        return starminer::run_update_command();
+    }
+
+    // Background version check (fire-and-forget detached thread).
+    // We poll update_handle just before mode dispatch; if the check hasn't
+    // finished by then we silently skip the notification.
+    starminer::UpdateCheckHandle update_handle;
+    if (!args.no_update_check) {
+        update_handle = starminer::check_for_updates_async();
+    }
+
 #ifndef STARMINER_PRO
     // Free build: brain-wallet code is not compiled in. Reject early
     // with a pointer to the Pro upgrade. Both --brainwallet (CLI) and
@@ -239,7 +254,7 @@ int main(int argc, char* argv[]) {
     auto& logger = Logger::instance();
     try {
         if (logger.init()) {
-            LOG_INFO("Starting StarMiner v1.0.0");
+            LOG_INFO(std::string("Starting StarMiner v") + STARMINER_VERSION);
         }
     } catch (const std::exception& e) {
         if (args.debug) std::cerr << "[DEBUG] Logger exception: " << e.what() << "\n" << std::flush;
@@ -262,6 +277,13 @@ int main(int argc, char* argv[]) {
 
         if (args.exit_program) return 0;
         if (args.help) { print_usage(); return 0; }
+    }
+
+    // ---- Update notification --------------------------------------------------
+    // Non-blocking poll: print notice only if the background check already
+    // completed. No wait, no stall — the detached thread is on its own.
+    if (update_handle.is_ready()) {
+        starminer::print_update_notification(update_handle.get());
     }
 
     // ---- Mode dispatch -----------------------------------------------------
