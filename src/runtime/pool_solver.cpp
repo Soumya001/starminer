@@ -335,13 +335,11 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                 auto telemetry = nvml.get_telemetry(args.gpu_ids);
                 std::map<int, std::string> gpu_names;
                 std::map<int, double> gpu_mhs;
+                const double mhs_per_gpu = telemetry.empty() ? 0.0
+                    : (ops_per_sec / 1e6) / static_cast<double>(telemetry.size());
                 for (const auto& gt : telemetry) {
                     gpu_names[gt.index] = gt.name;
-                    if (gt.index == args.gpu_ids.empty() ? 0 : args.gpu_ids[0]) {
-                        gpu_mhs[gt.index] = ops_per_sec / 1e6;
-                    } else {
-                        gpu_mhs[gt.index] = 0.0;
-                    }
+                    gpu_mhs[gt.index] = mhs_per_gpu;
                 }
                 pool_manager.set_gpu_telemetry(gpu_names, gpu_mhs);
             }

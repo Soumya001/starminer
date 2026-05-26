@@ -613,7 +613,9 @@ private:
      * Check if point has distinguished property (trailing zeros in X)
      */
     bool is_distinguished(const cpu::uint256_t& x) const {
-        uint64_t mask = (1ULL << dp_bits) - 1;
+        if (dp_bits == 0) return true;
+        if (dp_bits >= 64) return x.d[0] == 0;
+        const uint64_t mask = (1ULL << dp_bits) - 1;
         return (x.d[0] & mask) == 0;
     }
 
