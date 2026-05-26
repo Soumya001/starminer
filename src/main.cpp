@@ -55,6 +55,7 @@
 #include "runtime/pool_solver.hpp"
 #include "runtime/puzzle_solver.hpp"
 #include "runtime/runtime_globals.hpp"
+#include "ui/interactive.hpp"
 #include "ui/interactive_ui.hpp"
 #ifdef STARMINER_PRO
 #include "runtime/brain_wallet_runner.hpp"
@@ -268,17 +269,6 @@ int main(int argc, char* argv[]) {
     auto gpu_info = detect_gpus(args.gpu_ids);
     if (args.debug) std::cout << "[DEBUG] GPUs detected: " << gpu_info.device_count << "\n" << std::flush;
 
-    // INTERACTIVE MODE: when no command-line arguments provided.
-    if (argc == 1) {
-        double gpu_speed_mkeys = gpu_info.estimated_speed > 0
-            ? gpu_info.estimated_speed / 1e6
-            : 400.0;
-        args = ui::run_interactive_mode(args, gpu_speed_mkeys);
-
-        if (args.exit_program) return 0;
-        if (args.help) { print_usage(); return 0; }
-    }
-
     // ---- Update notification --------------------------------------------------
     // Non-blocking poll: print notice only if the background check already
     // completed. No wait, no stall — the detached thread is on its own.
@@ -286,7 +276,56 @@ int main(int argc, char* argv[]) {
         starminer::print_update_notification(update_handle.get());
     }
 
-    // ---- Mode dispatch -----------------------------------------------------
+    // INTERACTIVE MODE: when no command-line arguments provided.
+    // Outer loop lets the user return to the menu after a solver session ends.
+    if (argc == 1) {
+        const Arguments base_args = args;  // Saved for menu re-entry after solve
+        const double gpu_speed_mkeys = gpu_info.estimated_speed > 0
+            ? gpu_info.estimated_speed / 1e6 : 400.0;
+
+        while (true) {
+            args = ui::run_interactive_mode(args, gpu_speed_mkeys);
+
+            if (args.exit_program) return 0;
+            if (args.help) {
+                print_usage();
+                ui::Interactive::press_enter_to_continue();
+                args = base_args;
+                continue;
+            }
+
+            // Reset shutdown flag so Ctrl+C during a session doesn't
+            // prevent the menu from showing again after the mode exits.
+            g_shutdown.store(false, std::memory_order_release);
+            g_shutdown_signal.store(0, std::memory_order_release);
+            g_shutdown_logged.store(false, std::memory_order_release);
+
+            // Run the selected mode (ignoring exit code — we're looping back).
+            if (args.pool_mode) {
+                starminer::runtime::run_pool_mode(args, gpu_info);
+            }
+#ifdef STARMINER_PRO
+            else if (args.puzzle_only_v2 || args.brainwallet_mode) {
+                starminer::runtime::run_brain_wallet_mode(args);
+            }
+#endif
+            else if (args.benchmark) {
+                starminer::runtime::run_benchmark(args, gpu_info);
+            } else {
+                auto_enable_puzzle_mode_if_needed(args);
+                starminer::runtime::run_puzzle_mode(args, gpu_info);
+            }
+
+            // Session ended (solved, Ctrl+C, or error). Reset args and loop
+            // back so the user sees the main menu again.
+            std::cout << "\n";
+            ui::Interactive::info_message("Session ended. Returning to main menu...");
+            ui::Interactive::press_enter_to_continue();
+            args = base_args;
+        }
+    }
+
+    // ---- Mode dispatch (CLI / non-interactive) --------------------------------
     // POOL MODE first (its banner/header comes from the runtime driver).
     if (args.pool_mode) {
         return starminer::runtime::run_pool_mode(args, gpu_info);

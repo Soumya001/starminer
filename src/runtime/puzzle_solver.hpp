@@ -22,8 +22,6 @@
  *
  *   - normalize_path                      -- ditto.
  *
- *   - check_balance_async                 -- ditto.
- *
  * The function bodies for analyze_puzzle / print_puzzle_analysis /
  * get_best_puzzle (declared in core/puzzle_analysis.hpp) also live in
  * puzzle_solver.cpp now (the puzzle_analysis.hpp comment that says "still

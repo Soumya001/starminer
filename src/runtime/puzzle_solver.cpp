@@ -333,7 +333,7 @@ inline int calculate_optimal_dp_bits(int puzzle_bits, int num_kangaroos) {
 // SHARED FREE-FUNCTION HELPERS (extern linkage)
 // =============================================================================
 //
-// format_number / format_number_human / normalize_path / check_balance_async
+// format_number / format_number_human / normalize_path
 // were file-scope helpers in main.cpp. The previous A.3 commits forward-
 // declared them at the top of src/ui/interactive_ui.cpp and
 // src/runtime/brain_wallet_runner.cpp on the understanding that the
@@ -404,98 +404,6 @@ std::string normalize_path(const std::string& path) {
     std::replace(result.begin(), result.end(), '\\', '/');
 #endif
     return result;
-}
-
-/**
- * Check Bitcoin address balance via mempool.space API (async).
- * Runs in background thread to not block scanning.
- */
-void check_balance_async(const std::string& address, const std::string& passphrase) {
-    std::thread([address, passphrase]() {
-        using namespace starminer::ui::ansi;
-        try {
-            // Build curl command to check balance
-            std::string cmd;
-#ifdef _WIN32
-            cmd = "curl -s \"https://mempool.space/api/address/" + address + "\" 2>nul";
-#else
-            cmd = "curl -s \"https://mempool.space/api/address/" + address + "\" 2>/dev/null";
-#endif
-            // Execute and capture output
-            std::array<char, 4096> buffer;
-            std::string result;
-
-#ifdef _WIN32
-            FILE* pipe = _popen(cmd.c_str(), "r");
-#else
-            FILE* pipe = popen(cmd.c_str(), "r");
-#endif
-            if (!pipe) return;
-
-            while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
-                result += buffer.data();
-            }
-
-#ifdef _WIN32
-            _pclose(pipe);
-#else
-            pclose(pipe);
-#endif
-
-            // Parse JSON response (simple parsing for balance fields)
-            // Response contains: chain_stats.funded_txo_sum, chain_stats.spent_txo_sum
-            int64_t funded = 0, spent = 0;
-
-            // Find funded_txo_sum
-            size_t pos = result.find("\"funded_txo_sum\":");
-            if (pos != std::string::npos) {
-                pos += 17;
-                funded = std::stoll(result.substr(pos));
-            }
-
-            // Find spent_txo_sum
-            pos = result.find("\"spent_txo_sum\":");
-            if (pos != std::string::npos) {
-                pos += 16;
-                spent = std::stoll(result.substr(pos));
-            }
-
-            int64_t balance_sats = funded - spent;
-            double balance_btc = balance_sats / 100000000.0;
-
-            // Print result with colors
-            std::cout << "\n";
-            if (balance_sats > 0) {
-                // TRUE HIT - Green celebration!
-                namespace boxui = ::starminer::ui::box;
-                boxui::top(std::cout);
-                boxui::centered(std::cout, "*** VERIFIED HIT - ADDRESS HAS BALANCE! ***",
-                                boxui::ansi::BRIGHT_GREEN);
-                boxui::top(std::cout);
-                boxui::kv(std::cout, "Address",    address,    {}, boxui::ansi::BRIGHT_CYAN);
-                boxui::kv(std::cout, "Passphrase", passphrase, {}, boxui::ansi::BRIGHT_WHITE);
-                {
-                    std::ostringstream bal;
-                    bal << std::fixed << std::setprecision(8) << balance_btc << " BTC";
-                    boxui::kv(std::cout, "Balance", bal.str(), {}, boxui::ansi::BRIGHT_GREEN);
-                }
-                {
-                    std::ostringstream sat;
-                    sat << balance_sats;
-                    boxui::kv(std::cout, "Satoshis", sat.str(), {}, boxui::ansi::BRIGHT_WHITE);
-                }
-                boxui::bottom(std::cout);
-            } else {
-                // False positive - dim red
-                std::cout << CYAN << "[*] " << RESET << "Balance check: " << DIM << address << RESET << " = "
-                          << BRIGHT_RED << std::fixed << std::setprecision(8) << balance_btc
-                          << " BTC" << RESET << DIM << " (false positive)" << RESET << "\n";
-            }
-
-        } catch (const std::exception& e) {
-            std::cout << BRIGHT_RED << "[!] " << RESET << "Balance check failed for " << address << ": " << DIM << e.what() << RESET << "\n";
-        }
-    }).detach();
 }
 
 // =============================================================================

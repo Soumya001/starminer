@@ -263,38 +263,36 @@ jobs:
           body: |
             ## StarMiner ${{ github.ref_name }}
 
-            GPU-accelerated Puzzle #135 solver — connects to **https://starnetlive.space**
+            GPU-accelerated Puzzle #135 solver — connects to **starnetlive.space**
 
-            ### One-liner install (recommended)
+            ### Quick start
 
-            **Linux / macOS:**
+            **1. Download the binary for your platform** (see table below)
+
+            **2. Run it:**
             ```bash
-            curl -fsSL https://starnetlive.space/install-135.sh | bash
+            # Linux / macOS
+            chmod +x starminer-linux-x64-cuda
+            ./starminer-linux-x64-cuda --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
+
+            # Windows
+            .\starminer-windows-x64-cuda.exe --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
             ```
 
-            **Windows (PowerShell — no Python needed):**
-            ```powershell
-            irm https://starnetlive.space/install-135.ps1 | iex
+            Or launch without arguments for the interactive menu:
+            ```bash
+            ./starminer-linux-x64-cuda
             ```
 
-            ### Manual download
+            ### Platform binaries
 
             | Platform | Binary | GPU |
             |----------|--------|-----|
             | Linux x64 | `starminer-linux-x64-cuda` | NVIDIA CUDA |
+            | Linux x64 | `starminer-linux-x64-rocm` | AMD ROCm |
             | Linux x64 | `starminer-linux-x64-cpu` | Any CPU (no GPU) |
             | Windows x64 | `starminer-windows-x64-cuda.exe` | NVIDIA CUDA |
             | Windows x64 | `starminer-windows-x64-cpu.exe` | Any CPU (no GPU) |
             | macOS ARM64 | `starminer-macos-arm64` | Apple Metal |
-
-            ### Usage
-            ```bash
-            # Linux / macOS
-            chmod +x starminer-linux-x64-cuda
-            ./starminer-linux-x64-cuda --pool https://starnetlive.space --worker YOUR_BTC_ADDRESS
-
-            # Windows
-            .\starminer-windows-x64-cuda.exe --pool https://starnetlive.space --worker YOUR_BTC_ADDRESS
-            ```
 
             Pool dashboard: **https://starnetlive.space/puzzle135**
