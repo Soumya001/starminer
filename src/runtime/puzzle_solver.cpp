@@ -961,11 +961,8 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
 #endif
 
         std::cout << "\nFor sustained-rate Kangaroo throughput on this hardware,\n";
-        std::cout << "connect to the live pool:\n";
-        std::cout << "  ./starminer --pool jlps://collisionprotocol.com:17403 --worker bc1q...\n";
-        std::cout << "\nFor the full brain-wallet pipeline benchmark, StarMiner Pro\n";
-        std::cout << "exercises SHA256 -> EC -> hash160 -> bloom across all GPUs.\n";
-        std::cout << "https://collisionprotocol.com/pro\n";
+        std::cout << "connect to a pool:\n";
+        std::cout << "  ./starminer --pool jlps://your-pool-host:17403 --worker bc1q...\n";
         return 0;
 #else
         {

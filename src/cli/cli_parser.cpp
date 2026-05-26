@@ -197,9 +197,6 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
         } else if (arg == "--pool-password" && i + 1 < argc) {
             args.pool_password = argv[++i];
             cli.pool_password_set = true;
-        } else if (arg == "--pool-api-key" && i + 1 < argc) {
-            args.pool_api_key = argv[++i];
-            cli.pool_api_key_set = true;
         } else if ((arg == "--config" || arg == "-c") && i + 1 < argc) {
             args.config_file = argv[++i];
         }
@@ -319,12 +316,9 @@ Brainwallet Mode (PRO):
     std::cout << R"(Pool Mode (Distributed Solving):
   --pool, -p <url>        Connect to pool for distributed Kangaroo solving
                           URL format: jlps://host:port (TLS, recommended)
-                                      jlp://host:port (plaintext)
-                                      http://host:port
-                          Example: https://starnetlive.space
+                                      jlp://host:port  (no TLS, LAN only)
   --worker, -w <address>  Worker name (your Bitcoin address for rewards)
   --pool-password <pass>  Pool password (if required)
-  --pool-api-key <key>    API key for HTTP pools (if required)
 
 Other:
   --help, -h              Show this help message
@@ -374,11 +368,8 @@ Examples:
            --puzzle-start 0x20000000000000000 \
            --puzzle-end   0x3ffffffffffffffff
 
-  # Join Collision Protocol for distributed solving
-  starminer --pool jlps://collisionprotocol.com:17403 --worker 1YourBitcoinAddress...
-
-  # Pool mode with HTTP API
-  starminer --pool http://api.collisionprotocol.com --worker 1YourBitcoinAddress...
+  # Connect to pool for distributed solving
+  starminer --pool jlps://your-pool-host:17403 --worker 1YourBitcoinAddress...
 
 Performance: see the GitHub release notes for benchmarked numbers per
 GPU architecture. The figures depend strongly on driver version, batch

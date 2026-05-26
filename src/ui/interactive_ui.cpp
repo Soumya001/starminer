@@ -647,8 +647,7 @@ Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys) {
                 }
                 return args;
 #else
-                std::cout << "\n[PRO] Brain wallet scanning requires StarMiner Pro.\n"
-                          << "      Purchase at: https://collisionprotocol.com/pro\n\n";
+                std::cout << "\n[PRO] Brain wallet scanning requires StarMiner Pro.\n\n";
                 continue;  // Return to main menu
 #endif
             }

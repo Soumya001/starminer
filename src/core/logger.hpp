@@ -1,5 +1,5 @@
 /**
- * Collider Logger
+ * StarMiner Logger
  *
  * File-based logging for crash diagnosis and overnight run monitoring.
  * Logs to ~/.starminer/starminer.log with timestamps and rotation.
@@ -107,7 +107,7 @@ public:
         std::stringstream ss;
         ss << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S")
            << "." << std::setfill('0') << std::setw(3) << ms.count()
-           << " [INFO ] === Collider Logger Started ===\n";
+           << " [INFO ] === StarMiner Logger Started ===\n";
 
         (*log_file_) << ss.str();
         log_file_->flush();
@@ -247,7 +247,7 @@ public:
             std::stringstream ss;
             ss << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S")
                << "." << std::setfill('0') << std::setw(3) << ms.count()
-               << " [INFO ] === Collider Logger Stopped ===\n";
+               << " [INFO ] === StarMiner Logger Stopped ===\n";
 
             std::shared_ptr<std::ofstream> file;
             {

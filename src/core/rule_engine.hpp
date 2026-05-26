@@ -1,5 +1,5 @@
 /**
- * Collider Rule Engine
+ * StarMiner Rule Engine
  *
  * Hashcat-compatible rule engine for passphrase mutation.
  * Implements the full hashcat rule language for maximum compatibility.

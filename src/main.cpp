@@ -191,8 +191,7 @@ int main(int argc, char* argv[]) {
     // with a pointer to the Pro upgrade. Both --brainwallet (CLI) and
     // brainwallet_enabled (config.yml) end up setting brainwallet_mode.
     if (args.brainwallet_mode) {
-        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n"
-                  << "      Purchase at: https://collisionprotocol.com/pro\n";
+        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n";
         return 1;
     }
 #endif
@@ -223,8 +222,7 @@ int main(int argc, char* argv[]) {
         ui::BrainwalletSetup::run_wizard();
         return 0;
 #else
-        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n"
-                  << "      Purchase at: https://collisionprotocol.com/pro\n";
+        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n";
         return 1;
 #endif
     }

@@ -17,7 +17,7 @@ struct ValidationResult {
 };
 
 inline ValidationResult validate(const std::string& /*key*/) {
-    return ValidationResult{true, "open@starnetlive.space", ""};
+    return ValidationResult{true, "open-source", ""};
 }
 
 inline std::string cache_path() {

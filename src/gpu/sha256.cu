@@ -1,5 +1,5 @@
 /**
- * Collider GPU SHA256 Implementation
+ * StarMiner GPU SHA256 Implementation
  *
  * Optimized for RTX 5090 (Blackwell) architecture.
  * Processes batches of passphrases to generate private keys.

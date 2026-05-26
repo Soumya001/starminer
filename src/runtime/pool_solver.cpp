@@ -162,7 +162,6 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
 
     pool_config.worker_name = args.pool_worker;
     pool_config.password = args.pool_password;
-    pool_config.api_key = args.pool_api_key;
     pool_config.debug_mode = args.debug;
 
     std::cout << "[*] Pool Configuration:\n";

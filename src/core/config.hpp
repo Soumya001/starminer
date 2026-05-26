@@ -1,5 +1,5 @@
 /**
- * Collider Configuration
+ * StarMiner Configuration
  *
  * Handles persistent configuration for puzzle solving.
  * Config file: ~/.starminer/config
@@ -122,7 +122,7 @@ struct UserConfig {
             return false;
         }
 
-        file << "# Collider Configuration\n";
+        file << "# StarMiner Configuration\n";
         file << "# Bitcoin Puzzle Solver\n";
         file << "\n";
         file << "# Default puzzle number to solve (66-160)\n";

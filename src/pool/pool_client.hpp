@@ -106,9 +106,7 @@ public:
 std::unique_ptr<PoolClient> create_pool_client(const std::string& type);
 
 // Pool client types
-constexpr const char* POOL_TYPE_JLP = "jlp";              // JeanLucPons compatible
-constexpr const char* POOL_TYPE_HTTP = "http";            // HTTP/JSON pool (custom fork)
-constexpr const char* POOL_TYPE_WS = "websocket";         // Not implemented
+constexpr const char* POOL_TYPE_JLP = "jlp";              // JLP binary protocol (TLS via jlps://)
 
 } // namespace pool
 } // namespace starminer

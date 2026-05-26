@@ -36,7 +36,7 @@ struct AppConfig {
     std::string pool_url;
     std::string pool_worker;
     std::string pool_password;
-    std::string pool_api_key;
+
 
     // Puzzle configuration
     int puzzle_number = 0;
@@ -231,7 +231,6 @@ private:
             if (key == "url") pool_url = value;
             else if (key == "worker") pool_worker = value;
             else if (key == "password") pool_password = value;
-            else if (key == "api_key") pool_api_key = value;
         }
         else if (section == "puzzle") {
             if (key == "number") puzzle_number = std::stoi(value);
@@ -403,7 +402,6 @@ struct CLIFlags {
     bool pool_url_set = false;          // --pool / -p
     bool pool_worker_set = false;       // --worker / -w
     bool pool_password_set = false;     // --pool-password
-    bool pool_api_key_set = false;      // --pool-api-key
     bool brainwallet_set = false;       // --brainwallet
 
     // Puzzle
@@ -464,10 +462,6 @@ void apply_config_to_args(Arguments& args, const AppConfig& config, const CLIFla
     if (!cli.pool_password_set && !config.pool_password.empty()) {
         args.pool_password = config.pool_password;
     }
-    if (!cli.pool_api_key_set && !config.pool_api_key.empty()) {
-        args.pool_api_key = config.pool_api_key;
-    }
-
     // ------------------------------------------------------------------------
     // Puzzle
     // ------------------------------------------------------------------------
@@ -539,17 +533,15 @@ void apply_config_to_args(Arguments& args, const AppConfig& config, const CLIFla
     // ------------------------------------------------------------------------
     // Bloom filter / GPU
     // ------------------------------------------------------------------------
-    // Bloom-filter opportunistic address checking is a Pro feature
-    // (collisionprotocol.com/pro). The free build silently ignores any
-    // bloom file from config.yml and emits a one-time hint if one was
-    // supplied, instead of loading 142 MB of address data into the GPU.
+    // Bloom-filter opportunistic address checking is a Pro feature.
+    // The free build silently ignores bloom file from config.yml and emits
+    // a one-time hint, instead of loading address data into the GPU.
     if (!cli.bloom_file_set && !config.bloom_file.empty()) {
 #ifdef STARMINER_PRO
         args.bloom_file = config.bloom_file;
 #else
         std::cerr << "[Pro] Ignoring bloom filter '" << config.bloom_file
-                  << "' from config -- opportunistic address scanning is a "
-                     "Pro feature. https://collisionprotocol.com/pro"
+                  << "' from config — opportunistic address scanning requires StarMiner Pro."
                   << std::endl;
 #endif
     }

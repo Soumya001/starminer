@@ -266,7 +266,7 @@ public:
                 return false;
             }
 
-            file << "# Collider Brain Wallet Search State v2\n";
+            file << "# StarMiner Brain Wallet Search State v2\n";
             file << "# Do not modify manually - checksum protected\n\n";
 
             // Position tracking

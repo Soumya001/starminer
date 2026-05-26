@@ -1,5 +1,5 @@
 /**
- * Collider GPU secp256k1 Implementation - OPTIMIZED
+ * StarMiner GPU secp256k1 Implementation - OPTIMIZED
  *
  * High-performance elliptic curve operations for brain wallet research.
  * Implements all critical optimizations:

@@ -1,7 +1,6 @@
 // pool_manager.cpp - Pool manager implementation
 
 #include "pool_manager.hpp"
-#include "http_pool_client.hpp"
 #include <chrono>
 #include <cstdio>
 #include <iostream>
@@ -51,15 +50,9 @@ bool PoolManager::connect() {
         jlp_client->set_use_tls(config_.use_tls);
         jlp_client->set_verify_cert(config_.verify_cert);
         client_ = std::move(jlp_client);
-    } else if (config_.type == POOL_TYPE_HTTP) {
-        auto http_client = std::make_unique<HttpPoolClient>();
-        http_client->set_timeout(config_.timeout_ms);
-        http_client->set_use_tls(config_.use_tls);
-        http_client->set_verify_cert(config_.verify_cert);
-        client_ = std::move(http_client);
     } else {
         std::cerr << "[PoolManager] Unknown pool type: '" << config_.type
-                  << "'. Supported: jlp://, jlps://, http://, https://"
+                  << "'. Supported: jlp://, jlps://"
                   << std::endl;
         return false;
     }
@@ -384,12 +377,6 @@ void PoolManager::supervisor_loop() {
             fresh->set_use_tls(config_.use_tls);
             fresh->set_verify_cert(config_.verify_cert);
             client_ = std::move(fresh);
-        } else if (config_.type == POOL_TYPE_HTTP) {
-            auto fresh = std::make_unique<HttpPoolClient>();
-            fresh->set_timeout(config_.timeout_ms);
-            fresh->set_use_tls(config_.use_tls);
-            fresh->set_verify_cert(config_.verify_cert);
-            client_ = std::move(fresh);
         } else {
             std::cerr << "[PoolManager] Supervisor refusing to reconnect unknown "
                       << "pool type: " << config_.type << std::endl;
@@ -466,21 +453,15 @@ bool parse_pool_url(const std::string& url, PoolConfig& config) {
     } else if (scheme == "jlps" || scheme == "kangaroos") {
         config.type = POOL_TYPE_JLP;
         config.use_tls = true;
-    } else if (scheme == "http") {
-        config.type = POOL_TYPE_HTTP;
-        config.use_tls = false;
-    } else if (scheme == "https") {
-        config.type = POOL_TYPE_HTTP;
-        config.use_tls = true;
+    } else if (scheme == "http" || scheme == "https") {
+        std::cerr << "[PoolManager] HTTP/HTTPS pool transport is not supported.\n"
+                  << "  Reason: plaintext HTTP sends credentials and DPs unencrypted.\n"
+                  << "  Use jlps://" << config.host << ":17403 instead (JLP+TLS).\n";
+        return false;
     } else {
         std::cerr << "[PoolManager] Unknown URL scheme: '" << scheme
-                  << "' (supported: jlp://, jlps://, http://, https://)" << std::endl;
+                  << "' (supported: jlp://, jlps://)" << std::endl;
         return false;
-    }
-
-    // HTTP without explicit port defaults to 80 (not 443)
-    if (config.type == POOL_TYPE_HTTP && port_str.empty() && !config.use_tls) {
-        config.port = 80;
     }
 
     // Set port with validation. std::stoi may throw on overflow (D-L1); guard it.

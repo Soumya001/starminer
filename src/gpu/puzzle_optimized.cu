@@ -1,5 +1,5 @@
 /**
- * Collider Optimized Puzzle Search Kernel
+ * StarMiner Optimized Puzzle Search Kernel
  *
  * High-performance GPU kernel for Bitcoin puzzle key search using:
  *

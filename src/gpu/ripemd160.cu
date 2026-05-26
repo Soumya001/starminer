@@ -1,5 +1,5 @@
 /**
- * Collider GPU RIPEMD160 Implementation
+ * StarMiner GPU RIPEMD160 Implementation
  *
  * Used for Bitcoin address generation: RIPEMD160(SHA256(pubkey))
  */

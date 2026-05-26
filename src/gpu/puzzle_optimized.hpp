@@ -1,5 +1,5 @@
 /**
- * Collider Optimized Puzzle Search Kernel - Public API
+ * StarMiner Optimized Puzzle Search Kernel - Public API
  *
  * High-performance GPU kernel for Bitcoin puzzle key search.
  * Targets 400-800M keys/sec on RTX 3090 class hardware.

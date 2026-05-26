@@ -182,7 +182,7 @@ public:
                 return false;
             }
 
-            file << "# Collider Puzzle Search State v2\n";
+            file << "# StarMiner Puzzle Search State v2\n";
             file << "# Do not modify manually - checksum protected\n\n";
             file << "puzzle_number=" << state.puzzle_number << "\n";
             file << "zone_idx=" << state.zone_idx << "\n";

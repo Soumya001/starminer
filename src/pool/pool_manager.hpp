@@ -5,9 +5,8 @@
 
 #include "pool_client.hpp"
 #include "jlp_pool_client.hpp"
-// http_pool_client.hpp removed: HTTP pool path was deleted in Wave 4 due to D-C1
-// (silent https:// to plaintext downgrade leaking credentials). JLP+TLS (jlps://) is
-// the only supported pool transport going forward.
+// JLP+TLS (jlps://) is the only supported pool transport.
+// HTTP/HTTPS transport was removed (plaintext credential exposure).
 #include <memory>
 #include <atomic>
 #include <thread>
@@ -19,16 +18,12 @@
 namespace starminer {
 namespace pool {
 
-// Pool connection configuration
-// NOTE: HTTP pool support was REMOVED in Wave 4 (Track D security audit).
-// `type` must be "jlp" only. http:// / https:// URLs are rejected at parse time.
 struct PoolConfig {
-    std::string type;        // "jlp" (only supported value; "http"/"websocket" deprecated and rejected)
+    std::string type;        // "jlp" — only supported value
     std::string host;
     uint16_t port;
     std::string worker_name; // Bitcoin address
-    std::string password;    // Optional (currently unused by JLP protocol; reserved)
-    std::string api_key;     // (DEPRECATED) was for HTTP pools; no longer used
+    std::string password;    // Optional (unused by JLP protocol; reserved)
     bool auto_reconnect;
     uint32_t timeout_ms;
     bool debug_mode = false; // Show debug output
@@ -36,9 +31,7 @@ struct PoolConfig {
     bool verify_cert = true; // Verify TLS certificate (default true; opt-out only via explicit flag)
 
     // Default port by type
-    static uint16_t default_port(const std::string& type) {
-        if (type == POOL_TYPE_JLP) return 17403;
-        if (type == POOL_TYPE_HTTP) return 443;
+    static uint16_t default_port(const std::string& /*type*/) {
         return 17403;
     }
 };
@@ -149,7 +142,7 @@ private:
 PoolManager& get_pool_manager();
 
 // Helper to parse pool URL
-// Format: jlp://host:port or http://host:port/path
+// Format: jlp://host:port or jlps://host:port
 bool parse_pool_url(const std::string& url, PoolConfig& config);
 
 } // namespace pool

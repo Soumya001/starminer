@@ -22,7 +22,7 @@ namespace starminer::runtime {
 
 bool process_activate_flag(int argc, char* argv[], int& out_exit_code) {
     // --activate KEY: save and validate a new license key.
-    // Usage: ./starminer --activate CLLDR-XXXX-XXXX-XXXX-XXXX
+    // Usage: ./starminer --activate STRMN-XXXX-XXXX-XXXX-XXXX
     if (argc < 3 || std::string(argv[1]) != "--activate") {
         return false;  // not handled here, caller continues.
     }
@@ -33,7 +33,7 @@ bool process_activate_flag(int argc, char* argv[], int& out_exit_code) {
     if (!result.valid) {
         std::cerr << "[LICENSE] Invalid key: "
                   << (result.error.empty() ? "key not found" : result.error) << "\n"
-                  << "          Purchase at: https://collisionprotocol.com/pro\n";
+                  << "          Purchase at: https://github.com/Soumya001/starminer\n";
         out_exit_code = 1;
         return true;
     }
@@ -63,7 +63,7 @@ bool validate_startup_license(int& out_exit_code) {
     if (stored_key.empty()) {
         std::cerr << "[LICENSE] No license key found.\n"
                   << "          Run: ./starminer --activate YOUR_KEY\n"
-                  << "          Purchase at: https://collisionprotocol.com/pro\n";
+                  << "          Purchase at: https://github.com/Soumya001/starminer\n";
         out_exit_code = 1;
         return false;
     }
@@ -72,7 +72,7 @@ bool validate_startup_license(int& out_exit_code) {
         std::cerr << "[LICENSE] License invalid or expired.\n"
                   << "          Key: " << stored_key << "\n"
                   << "          Error: " << result.error << "\n"
-                  << "          Visit: https://collisionprotocol.com/pro\n";
+                  << "          Visit: https://github.com/Soumya001/starminer\n";
         out_exit_code = 1;
         return false;
     }

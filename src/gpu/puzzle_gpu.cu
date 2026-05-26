@@ -1,5 +1,5 @@
 /**
- * Collider GPU Puzzle Solver
+ * StarMiner GPU Puzzle Solver
  *
  * Multi-GPU implementation using optimized kernels with:
  * - Precomputed EC tables (16x speedup)

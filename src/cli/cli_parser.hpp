@@ -84,10 +84,9 @@ struct Arguments {
 
     // Pool mode (distributed solving)
     bool pool_mode = false;               // Connect to pool for distributed solving
-    std::string pool_url;                 // Pool URL (jlp://host:port or http://host:port)
+    std::string pool_url;                 // Pool URL (jlp://host:port or jlps://host:port)
     std::string pool_worker;              // Worker name (Bitcoin address for rewards)
     std::string pool_password;            // Pool password (optional)
-    std::string pool_api_key;             // API key for HTTP pools (optional)
 
     // Config file
     std::string config_file;              // Custom config file path (default: ./config.yml)

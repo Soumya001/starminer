@@ -222,7 +222,7 @@ struct KangarooWorkFile {
         std::ofstream f(filename);
         if (!f) return false;
 
-        f << "# Collider Kangaroo Work File v1.0\n";
+        f << "# StarMiner Kangaroo Work File v1.0\n";
         f << "target=" << target_pubkey_hex << "\n";
         f << "range_start=" << range_start_hex << "\n";
         f << "range_end=" << range_end_hex << "\n";

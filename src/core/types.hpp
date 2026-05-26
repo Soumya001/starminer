@@ -1,5 +1,5 @@
 /**
- * Collider Core Types
+ * StarMiner Core Types
  *
  * Common type definitions for the intelligence layer and GPU pipeline.
  */
@@ -222,7 +222,7 @@ using CandidateCallback = std::function<void(Candidate&&)>;
 // -----------------------------------------------------------------------------
 
 /**
- * Collider configuration.
+ * StarMiner configuration.
  */
 struct Config {
     // GPU settings

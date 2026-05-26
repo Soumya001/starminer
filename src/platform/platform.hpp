@@ -1,5 +1,5 @@
 /**
- * Collider Platform Abstraction Layer
+ * StarMiner Platform Abstraction Layer
  *
  * Provides unified interface for GPU compute across:
  * - NVIDIA CUDA (Windows/Linux - RTX 3060, 5090)

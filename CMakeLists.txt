@@ -621,7 +621,6 @@ endif()
 set(POOL_SOURCES
     src/pool/jlp_pool_client.cpp
     src/pool/pool_manager.cpp
-    src/pool/http_pool_client.cpp
 )
 
 # Check if source files exist
@@ -1194,10 +1193,9 @@ if(STARMINER_BUILD_TESTS)
         set_tests_properties(LicenseCache PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 
-    # JLP pool TLS handshake live integration test. Connects to
-    # collisionprotocol.com:17403, runs a verified TLS handshake, sends an
-    # AUTH frame, reads the response. Returns 77 (skip) if
-    # STARMINER_SKIP_NETWORK_TESTS is set or TCP connect fails within 5
+    # JLP pool TLS handshake live integration test. Runs a verified TLS
+    # handshake, sends an AUTH frame, reads the response. Returns 77 (skip)
+    # if STARMINER_SKIP_NETWORK_TESTS is set or TCP connect fails within 5
     # seconds. Cert/protocol failures are real FAILs.
     if(EXISTS "${CMAKE_SOURCE_DIR}/tests/test_jlp_pool_handshake.cpp" AND OPENSSL_FOUND)
         add_executable(test_jlp_pool_handshake tests/test_jlp_pool_handshake.cpp)

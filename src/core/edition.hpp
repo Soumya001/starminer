@@ -28,7 +28,7 @@
     #define STARMINER_HAS_SCRAPERS       0
     #define STARMINER_HAS_CUSTOM_POOL    0
     #define STARMINER_EDITION_NAME       "starminer"
-    #define STARMINER_FREE_POOL_URL      "jlps://collisionprotocol.com:17403"
+    #define STARMINER_FREE_POOL_URL      ""
 
 // ============================================================================
 // Feature Check Macros
