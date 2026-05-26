@@ -347,7 +347,7 @@ __global__ __launch_bounds__(128, 2) void v2_addr_kernel(
     }
 
     // Bloom probe helper
-    auto check_and_emit = [&](uint8_t addr_type, const uint8_t h160[20]) __device__ {
+    auto check_and_emit = [&](uint8_t addr_type, const uint8_t h160[20]) {
         if (!bloom || bloom_bits == 0) return;
         if (!::starminer::gpu::bloom_check_h160(bloom, bloom_bits, (uint32_t)bloom_hashes, bloom_seed, h160))
             return;
@@ -494,9 +494,9 @@ cudaError_t v2_brain_wallet_batch(
     size_t count,
     uint32_t scheme_mask,
     uint32_t addr_mask,
-    const uint8_t* /*d_bloom*/,
-    uint64_t /*bloom_bits*/,
-    int /*bloom_hashes*/,
+    const uint8_t* d_bloom,
+    uint64_t bloom_bits,
+    int bloom_hashes,
     V2MatchRecord* d_matches,
     uint32_t* d_match_count,
     cudaStream_t stream)
