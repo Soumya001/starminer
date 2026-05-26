@@ -233,15 +233,20 @@ include(CheckIPOSupported)
 check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_ERROR)
 
 if(IPO_SUPPORTED AND CMAKE_BUILD_TYPE STREQUAL "Release"
-   AND NOT STARMINER_DISABLE_IPO)
+   AND NOT STARMINER_DISABLE_IPO
+   AND NOT STARMINER_BACKEND STREQUAL "CUDA")
+    # Note: CUDA builds skip global IPO entirely. Setting
+    # CMAKE_INTERPROCEDURAL_OPTIMIZATION=TRUE compiles starminer_gpu objects
+    # as device LTO bitcode; the final device link step then requires -dlto
+    # across 8 GPU architectures, which OOM-kills the 7 GB CI runner.
+    # CMAKE_CUDA_INTERPROCEDURAL_OPTIMIZATION=FALSE does not reliably suppress
+    # this — the only safe fix is to not enable global IPO with CUDA at all.
     message(STATUS "LTO/IPO enabled for Release builds (host C/C++ only)")
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-    # CUDA device LTO (-dlto) pushes nvlink past its 1MB default stack on
-    # Windows for the starminer_pro symbol graph.
-    set(CMAKE_CUDA_INTERPROCEDURAL_OPTIMIZATION FALSE)
-    message(STATUS "LTO/IPO disabled for CUDA device link (avoids nvlink stack overflow)")
 else()
-    if(STARMINER_DISABLE_IPO)
+    if(STARMINER_BACKEND STREQUAL "CUDA")
+        message(STATUS "LTO/IPO disabled: CUDA build — device-link -dlto OOM-kills CI runner on 8-arch builds")
+    elseif(STARMINER_DISABLE_IPO)
         message(STATUS "LTO/IPO disabled by STARMINER_DISABLE_IPO=ON")
     elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
         message(STATUS "LTO/IPO disabled (not Release build)")
@@ -948,10 +953,6 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/main.cpp")
             CUDA_SEPARABLE_COMPILATION ON
             CUDA_RESOLVE_DEVICE_SYMBOLS ON
             CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
-            # Override global CMAKE_INTERPROCEDURAL_OPTIMIZATION for this target.
-            # The device link step (cmake_device_link.o) inherits IPO and adds -dlto,
-            # which OOM-kills GitHub Actions runners when compiling 8 GPU architectures.
-            INTERPROCEDURAL_OPTIMIZATION FALSE
         )
     endif()
 endif()
