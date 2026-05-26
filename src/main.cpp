@@ -245,9 +245,21 @@ int main(int argc, char* argv[]) {
 
     if (args.debug) std::cout << "[DEBUG] Starting starminer...\n" << std::flush;
 
-    // Setup signal handler.
+    // Setup signal handler. Use sigaction (not signal()) so the handler
+    // persists after each delivery — signal() on POSIX may reset the
+    // disposition to SIG_DFL, which would kill the process on the second
+    // Ctrl+C (critical for the interactive menu loop).
+#ifndef _WIN32
+    struct sigaction sa{};
+    sa.sa_handler = signal_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;  // restart syscalls interrupted by signal
+    sigaction(SIGINT,  &sa, nullptr);
+    sigaction(SIGTERM, &sa, nullptr);
+#else
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
+#endif
     if (args.debug) std::cout << "[DEBUG] Signal handlers set\n" << std::flush;
 
     // Initialize logger for crash diagnosis.
@@ -299,6 +311,12 @@ int main(int argc, char* argv[]) {
             g_shutdown.store(false, std::memory_order_release);
             g_shutdown_signal.store(0, std::memory_order_release);
             g_shutdown_logged.store(false, std::memory_order_release);
+            // On Windows, signal() resets to SIG_DFL after delivery.
+            // Re-arm so the next session's Ctrl+C also sets g_shutdown.
+#ifdef _WIN32
+            signal(SIGINT, signal_handler);
+            signal(SIGTERM, signal_handler);
+#endif
 
             // Run the selected mode (ignoring exit code — we're looping back).
             if (args.pool_mode) {
