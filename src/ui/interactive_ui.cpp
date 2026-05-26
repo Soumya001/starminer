@@ -41,6 +41,7 @@
 #include "tools/utxo_bloom_builder.hpp"
 #include "ui/banner.hpp"
 #include "ui/interactive.hpp"
+#include "core/edition.hpp"
 
 #ifdef STARMINER_PRO
 #include "core/brainwallet_state.hpp"
@@ -107,8 +108,8 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
 
     // Standalone mode - select puzzle
     std::cout << "\n";
-    std::cout << "Enter puzzle number (1-256) or 'auto' for smart selection";
-    int puzzle_choice = Interactive::prompt_number("", 1, 256, true);
+    int puzzle_choice = Interactive::prompt_number(
+        "Enter puzzle number (1-256)", 1, 256, true);
 
     if (puzzle_choice == -1) {
         // Auto mode - use smart selection
@@ -628,7 +629,7 @@ Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys) {
         args.go_back = false;
 
         // Display main menu
-        MainMenuChoice choice = Interactive::display_main_menu("1.4.0");
+        MainMenuChoice choice = Interactive::display_main_menu(STARMINER_VERSION);
 
         switch (choice) {
             case MainMenuChoice::PUZZLE_MODE: {

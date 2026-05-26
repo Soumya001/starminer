@@ -397,12 +397,17 @@ public:
         std::cout << "\n";
         display_section("Pool Configuration");
 
-        // Pool URL - use official pool as fallback default when none is configured.
-        const std::string effective_default = default_url;
-        std::cout << "Pool URL [" << colors::CYAN << effective_default << colors::RESET << "]: ";
-        {
+        // Pool URL — show default if configured, re-prompt if left empty.
+        while (true) {
+            if (!default_url.empty()) {
+                std::cout << "Pool URL [" << colors::CYAN << default_url << colors::RESET << "]: ";
+            } else {
+                std::cout << "Pool URL (e.g. jlps://host:17403): ";
+            }
             std::string input = read_line();
-            pool_url = input.empty() ? effective_default : input;
+            pool_url = input.empty() ? default_url : input;
+            if (!pool_url.empty()) break;
+            std::cout << colors::YELLOW << "[!] Pool URL is required." << colors::RESET << "\n";
         }
 
         // Worker name (Bitcoin address)

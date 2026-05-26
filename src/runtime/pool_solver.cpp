@@ -314,21 +314,16 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                       ps.total_dps,
                       ps.your_dps);
 
-        // v1.5: periodic checkpoint save
-        {
-            auto now = std::chrono::steady_clock::now();
-            if (now - last_checkpoint_time >= checkpoint_interval) {
-                last_checkpoint_time = now;
-                if (save_checkpoint(work)) {
-                    // Silent save to avoid log spam
-                }
-            }
+        // v1.5: periodic checkpoint + telemetry — one clock read shared by both.
+        const auto now = std::chrono::steady_clock::now();
+
+        if (now - last_checkpoint_time >= checkpoint_interval) {
+            last_checkpoint_time = now;
+            save_checkpoint(work);
         }
 
-        // v1.5: periodic telemetry upload
 #ifdef STARMINER_USE_CUDA
         if (nvml_ok) {
-            auto now = std::chrono::steady_clock::now();
             if (now - last_telemetry_time >= telemetry_interval) {
                 last_telemetry_time = now;
                 auto telemetry = nvml.get_telemetry(args.gpu_ids);
@@ -343,7 +338,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
                 pool_manager.set_gpu_telemetry(gpu_names, gpu_mhs);
             }
         }
-#endif
+#endif  // STARMINER_USE_CUDA
         return true;
     };
     cb.on_solution = [&pool_manager](const uint8_t key[32]) {
