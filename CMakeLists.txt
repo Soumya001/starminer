@@ -948,6 +948,10 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/src/main.cpp")
             CUDA_SEPARABLE_COMPILATION ON
             CUDA_RESOLVE_DEVICE_SYMBOLS ON
             CUDA_RUNTIME_LIBRARY $<IF:$<BOOL:${WIN32}>,Static,Shared>
+            # Override global CMAKE_INTERPROCEDURAL_OPTIMIZATION for this target.
+            # The device link step (cmake_device_link.o) inherits IPO and adds -dlto,
+            # which OOM-kills GitHub Actions runners when compiling 8 GPU architectures.
+            INTERPROCEDURAL_OPTIMIZATION FALSE
         )
     endif()
 endif()
