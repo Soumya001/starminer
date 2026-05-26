@@ -384,11 +384,6 @@ set(CORE_SOURCES
     src/core/rule_engine.cpp
     src/core/cpu_kangaroo_backend.cpp
     src/core/kangaroo_backend_factory.cpp
-    src/generators/passphrase_generator.cpp
-    src/generators/priority_queue.cpp
-    # v1.4.1 A.3: CLI argument parsing extracted from main.cpp so the
-    # runtime drivers and the tests/test_cli_parser target can share a
-    # single source of truth for Arguments / parse_args / print_usage.
     src/cli/cli_parser.cpp
     # v1.4.1 A.3: top-level interactive flow (banner + main menu + per-mode
     # submenus + Windows ANSI enabler) extracted from main.cpp. The brain
@@ -513,44 +508,23 @@ if(APPLE AND STARMINER_USE_METAL
     endif()
 endif()
 
-# Pro-only host-side sources for the brain wallet pipeline.
-# Excluded entirely from the free build (no #ifdef wrapping inside the .cpp;
-# the file simply is not handed to the compiler).
-if(TRUE)
-    list(APPEND CORE_SOURCES src/gpu/brain_wallet_gpu.cpp)
-    # v1.4.1 C.1/C.2: pimpl bodies for the brain-wallet generators. Both
-    # block; the .cpp companions match that gating so the free build
-    # never compiles them.
-    list(APPEND CORE_SOURCES src/generators/streaming_brain_wallet.cpp)
-    list(APPEND CORE_SOURCES src/generators/brain_wallet_engine.cpp)
-    # v1.4.1 A.3: brain wallet runtime driver extracted from main.cpp.
-    list(APPEND CORE_SOURCES src/runtime/brain_wallet_runner.cpp)
-    # v1.4.1 A.3 (6/6): pre-dispatch license activation + startup
-    # validation. PRO-only because the underlying license/license_check.hpp
-    list(APPEND CORE_SOURCES src/runtime/license_gate.cpp)
-    # gpu_rules.cpp is fully #ifdef-guarded; on non-CUDA backends it
-    # provides stub implementations of GPURuleEngine that return false /
-    # 0 / "". Without it, main.cpp's references to GPURuleEngine fail to
-    # link on Metal/CPU backends. The CUDA-only .cu kernels remain in
-    # GPU_SOURCES under the STARMINER_BACKEND==CUDA branch.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/gpu_rules.cpp"
-       AND NOT STARMINER_BACKEND STREQUAL "CUDA")
-        list(APPEND CORE_SOURCES src/gpu/gpu_rules.cpp)
-    endif()
-    # Brain Wallet v2 host orchestrator (Phase 9): pure C++, no CUDA TU.
-    if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/v2_orchestrator.cpp")
-        list(APPEND CORE_SOURCES src/gpu/v2/v2_orchestrator.cpp)
-    endif()
-    # Phase 11 (v1.4.0): Metal dispatch (Obj-C++). Built only on macOS;
-    # the file is otherwise ignored (its symbols are referenced from
-    # v2_orchestrator.cpp behind __APPLE__ + STARMINER_USE_METAL gates).
-    if(APPLE AND STARMINER_USE_METAL AND
-       EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/v2_metal_dispatch.mm")
-        list(APPEND CORE_SOURCES src/gpu/v2/v2_metal_dispatch.mm)
-        # Mark as Obj-C++ so CMake hands it to the right compiler.
-        set_source_files_properties(src/gpu/v2/v2_metal_dispatch.mm
-            PROPERTIES COMPILE_FLAGS "-fobjc-arc -fobjc-weak")
-    endif()
+# Brain-wallet host-side sources.
+# brain_wallet_gpu.cu is CUDA-only (added to GPU_SOURCES below).
+# brain_wallet_runner.cpp and license_gate.cpp are pure C++ and always built.
+list(APPEND CORE_SOURCES src/runtime/brain_wallet_runner.cpp)
+list(APPEND CORE_SOURCES src/runtime/license_gate.cpp)
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/gpu_rules.cpp"
+   AND NOT STARMINER_BACKEND STREQUAL "CUDA")
+    list(APPEND CORE_SOURCES src/gpu/gpu_rules.cpp)
+endif()
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/v2_orchestrator.cpp")
+    list(APPEND CORE_SOURCES src/gpu/v2/v2_orchestrator.cpp)
+endif()
+if(APPLE AND STARMINER_USE_METAL AND
+   EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/v2_metal_dispatch.mm")
+    list(APPEND CORE_SOURCES src/gpu/v2/v2_metal_dispatch.mm)
+    set_source_files_properties(src/gpu/v2/v2_metal_dispatch.mm
+        PROPERTIES COMPILE_FLAGS "-fobjc-arc -fobjc-weak")
 endif()
 
 # Check if source files exist
@@ -736,34 +710,18 @@ if(STARMINER_BACKEND STREQUAL "CUDA")
         # algorithmic divergence; bloom impls were genuinely
         # interchangeable so consolidation made sense).
         src/gpu/h160_bloom_filter.cu
-        src/gpu/pipeline.cu
-        src/gpu/fused_pipeline.cu
         src/gpu/puzzle_gpu.cu
         src/gpu/puzzle_optimized.cu
         src/gpu/kangaroo_kernel.cu
+        # MultiGPUBrainWallet host-API implementation (pimpl body, CUDA-only)
+        src/gpu/brain_wallet_gpu.cu
     )
 
-    # Pro-only GPU sources. The brain-wallet rule engine, mega-fused kernel,
-    # and brain-wallet-specific kernels are excluded from the free build at
-    # the source-file level (not via #ifdef inside the file). The puzzle /
-    # kangaroo / hash160 kernels above are shared with the free build.
-    if(TRUE)
-        list(APPEND GPU_SOURCES
-            src/gpu/gpu_rule_kernel.cu
-            src/gpu/gpu_rules.cu
-            src/gpu/gpu_rules.cpp
-            src/gpu/mega_fused_kernel.cu
-        )
-
-        # Brain Wallet v2 unity TU (Phase 4..9, v1.4.0). All v2 kernels
-        # are consolidated into src/gpu/v2/v2_kernels_unity.cu so nvlink
-        # has a single device-symbol graph -- the alternative (one .cu
-        # per kernel) overflows nvlink's default 1MB stack on Windows
-        # given the cumulative starminer_gpu symbol count.
-        if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/v2_kernels_unity.cu" AND
-           NOT STARMINER_DISABLE_V2)
-            list(APPEND GPU_SOURCES src/gpu/v2/v2_kernels_unity.cu)
-        endif()
+    # Brain Wallet v2 unity TU (all v2 kernels in one TU so nvlink has
+    # a single device-symbol graph).
+    if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/v2/v2_kernels_unity.cu" AND
+       NOT STARMINER_DISABLE_V2)
+        list(APPEND GPU_SOURCES src/gpu/v2/v2_kernels_unity.cu)
     endif()
 
     # NOTE: src/gpu/v2/v2_orchestrator.cpp is compiled into starminer_core,
@@ -816,8 +774,6 @@ elseif(STARMINER_BACKEND STREQUAL "ROCM")
         src/gpu/secp256k1.cu
         src/gpu/ripemd160.cu
         src/gpu/h160_bloom_filter.cu
-        src/gpu/pipeline.cu
-        src/gpu/fused_pipeline.cu
         src/gpu/puzzle_gpu.cu
         src/gpu/puzzle_optimized.cu
         src/gpu/kangaroo_kernel.cu

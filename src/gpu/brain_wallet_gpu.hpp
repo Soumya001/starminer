@@ -1,11 +1,16 @@
 #pragma once
-// Stub: GPU brainwallet pipeline interface.
-// Full CUDA implementation is not required for pool mining mode.
+/**
+ * MultiGPUBrainWallet — host-facing API for the GPU v2 brain-wallet pipeline.
+ *
+ * Implementation is in brain_wallet_gpu.cu (CUDA only). Include this header
+ * from host .cpp files that need to drive the pipeline; the .cu file provides
+ * the full Impl body so CUDA types never leak into regular translation units.
+ */
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <stdexcept>
 
 namespace starminer {
 namespace gpu {
@@ -23,20 +28,39 @@ public:
         uint64_t processed = 0;
     };
 
-    explicit MultiGPUBrainWallet(const Config& /*cfg*/) {}
+    explicit MultiGPUBrainWallet(const Config& cfg);
+    ~MultiGPUBrainWallet();
 
-    bool init() { return false; }
+    // Non-copyable, movable
+    MultiGPUBrainWallet(const MultiGPUBrainWallet&)            = delete;
+    MultiGPUBrainWallet& operator=(const MultiGPUBrainWallet&) = delete;
+    MultiGPUBrainWallet(MultiGPUBrainWallet&&)                 = default;
+    MultiGPUBrainWallet& operator=(MultiGPUBrainWallet&&)      = default;
 
-    bool load_bloom_filter(const uint8_t* /*data*/, size_t /*size*/,
-                           uint64_t /*bits*/, int /*k*/, uint32_t /*seed*/) {
-        return false;
-    }
+    /**
+     * Initialise the v2 GPU pipeline (EC table precompute, device allocations).
+     * Returns false if no compatible GPU is found or allocation fails.
+     */
+    bool init();
 
-    BatchResult process_batch(const std::vector<std::string>& batch) {
-        BatchResult r;
-        r.processed = batch.size();
-        return r;
-    }
+    /**
+     * Upload a bloom filter to device memory. Must be called after init().
+     * `seed` must match the seed used when building the .blf file.
+     */
+    bool load_bloom_filter(const uint8_t* data, size_t size,
+                           uint64_t bits, int k, uint32_t seed);
+
+    /**
+     * Run a batch of passphrases through the full pipeline
+     * (SHA-256 → secp256k1 → RIPEMD-160 → bloom probe).
+     * Blocks until the GPU finishes.
+     */
+    BatchResult process_batch(const std::vector<std::string>& batch);
+
+private:
+    Config cfg_;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
 };
 
 }  // namespace gpu
