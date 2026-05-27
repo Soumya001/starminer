@@ -4,7 +4,32 @@ All notable changes to StarMiner are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-This changelog covers both the Free and **(PRO VERSION ONLY)** editions. Pro-only changes are tagged inline.
+---
+
+## [1.0.12] - 2026-05-27
+
+### Fixed
+
+- **Signal handler persistence across interactive sessions.** `signal()` on POSIX may reset the handler disposition to `SIG_DFL` after the first delivery. In the interactive menu loop a second Ctrl+C would kill the process instead of gracefully stopping the current session. Switched to `sigaction` with `SA_RESTART` on Linux/macOS so the handler persists; re-arms via `signal()` per iteration on Windows as a fallback.
+
+---
+
+## [1.0.11] - 2026-05-26
+
+### Added
+
+- **Auto-update checker.** Background thread polls the GitHub Releases API at startup and prints a one-line notice if a newer version is available. Skippable with `--no-update-check`.
+- **Interactive menu loop.** Launching without arguments shows a mode-selection menu. After any session ends (solve, benchmark, Ctrl+C), the menu reappears instead of exiting the process.
+
+### Changed
+
+- Rebranded from Collider to **StarMiner**. Binary name, pool protocol prefix, and all documentation updated.
+- Removed legacy `HttpPoolClient`; pool mode exclusively uses the JLP binary protocol (`jlps://`).
+
+### Fixed
+
+- GPU detection description corrected to match actual backend probing order (Metal → CUDA → CPU).
+- Interactive UI polish: smoother status output, reduced callback overhead on DP submission.
 
 ---
 

@@ -1,6 +1,6 @@
 # Pool Mode Operator Guide
 
-How to join the Collision Protocol pool, what your worker does on the wire, how share-of-pool credit accrues, and what counts as good worker etiquette. This document is for operators running StarMiner in pool mode and want more than the README's quick-start gives.
+How to join the StarMiner pool, what your worker does on the wire, how share-of-pool credit accrues, and what counts as good worker etiquette. This document is for operators running StarMiner in pool mode and want more than the README's quick-start gives.
 
 For the wire format itself (frame layouts, byte offsets, struct sizes), see [JLP-PROTOCOL.md](JLP-PROTOCOL.md). This document is the operator-facing companion.
 
@@ -28,14 +28,14 @@ Pollard's Kangaroo recovers a private key from a pubkey plus a search range in r
 
 The kangaroo algorithm has a useful structural property: tame and wild walks deposit "distinguished points" (DPs, points whose X coordinate has a configurable number of leading zero bits) into a shared store. A collision between any tame and any wild DP, contributed by any worker, recovers the key. The work parallelizes cleanly: every worker contributes DPs to a common pool, and any collision finishes the puzzle.
 
-The Collision Protocol pool is the shared DP store plus the orchestration around it: chunk assignment, anti-cheat verification, share-of-pool accounting, and the broadcast when a solution is reconstructed.
+The StarMiner pool is the shared DP store plus the orchestration around it: chunk assignment, anti-cheat verification, share-of-pool accounting, and the broadcast when a solution is reconstructed.
 
 ---
 
 ## Joining the public pool in 30 seconds
 
 ```bash
-./starminer --pool jlps://collisionprotocol.com:17403 \
+./starminer --pool jlps://starnetlive.space:17403 \
            --worker 1YourBitcoinAddressForRewards
 ```
 
@@ -101,7 +101,7 @@ The pool credits DPs to the `worker_name` field in your AUTH payload. That field
 
 ### Payout policy
 
-Payout is server-side and outside the scope of this document. The reference Collision Protocol policy is "proportional credit at puzzle solve time, paid to the worker address on file" but exact rates, fees, vesting, and dispute resolution are owned by the pool operator. For the current public-pool policy, see [collisionprotocol.com](https://collisionprotocol.com).
+Payout is server-side and outside the scope of this document. The pool policy is "proportional credit at puzzle solve time, paid to the worker address on file" but exact rates, fees, vesting, and dispute resolution are owned by the pool operator. For the current public-pool policy, see [starnetlive.space](https://starnetlive.space).
 
 What the client guarantees:
 
@@ -164,7 +164,7 @@ StarMiner prints rolling telemetry to the terminal: GPU step rate, DPs submitted
 For headless operation:
 
 ```bash
-./starminer --pool jlps://collisionprotocol.com:17403 \
+./starminer --pool jlps://starnetlive.space:17403 \
            --worker bc1qYourBtcAddress \
            --verbose 2>&1 | tee -a starminer.log
 ```
@@ -238,7 +238,7 @@ Schemes:
 - `jlp://` (plaintext TCP). Acceptable on a LAN or in a test environment. Do not use over the public internet; AUTH frames travel in cleartext.
 - `http://` (HTTP variant). The client speaks a non-JLP REST variant; some legacy private pools use this. Wire-level features (batch sequencing, work_id attestation) are degraded.
 
-For running your own server: the reference implementation is [github.com/Soumya001/starminer](https://github.com/Soumya001/starminer), a Python pool server. The wire IDL at `protocol/jlp.yaml` plus the generated bindings (C++ `jlp_wire_generated.hpp`, Python `jlp_protocol_generated.py`) is the single source of truth; any conformant server reading the IDL can drive any conformant client.
+For running your own server: any server that speaks the JLP wire protocol works. The wire IDL at `protocol/jlp.yaml` plus the generated bindings (C++ `jlp_wire_generated.hpp`, Python `jlp_protocol_generated.py`) is the single source of truth; any conformant server reading the IDL can drive any conformant client.
 
 ---
 
@@ -272,7 +272,7 @@ Second-most-common: malformed worker name. Verify it is a real Bitcoin address b
 Diagnose:
 
 ```bash
-./starminer --pool jlps://collisionprotocol.com:17403 \
+./starminer --pool jlps://starnetlive.space:17403 \
            --worker bc1qYourBtcAddress \
            --verbose --debug
 ```
@@ -303,5 +303,5 @@ Your local stats line is computed from `DP_ACK` round trips. High RTT to the poo
 - [JLP-PROTOCOL.md](JLP-PROTOCOL.md) - wire format, frame layouts, anti-cheat rules in detail.
 - [CONFIGURATION.md](CONFIGURATION.md) - the `pool` section of `config.yml`, plus precedence between CLI and config.
 - [ARCHITECTURE.md](ARCHITECTURE.md) - where the pool client lives in the source tree (`src/pool/`).
-- [collisionprotocol.com](https://collisionprotocol.com) - public-pool dashboard, payout policy, status page.
+- [starnetlive.space](https://starnetlive.space) - public-pool dashboard, payout policy, status page.
 - [github.com/Soumya001/starminer](https://github.com/Soumya001/starminer) - reference Python server.

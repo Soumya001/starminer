@@ -1,70 +1,119 @@
 # StarMiner
 
-**StarMiner** is a GPU-accelerated Bitcoin puzzle solver with native HTTP/JSON pool support. Forked and heavily improved from StarMiner — no JLP binary protocol required.
+**StarMiner** is a GPU-accelerated Bitcoin puzzle solver with native JLP pool support. It targets [Puzzle #135](https://starnetlive.space/puzzle135) using Pollard's Kangaroo algorithm and connects to the **starnetlive.space** collaborative mining pool.
 
-## Quick Start
+## One-line install (recommended)
 
-### Linux / macOS (with Python)
+**Linux / macOS:**
 
 ```bash
-wget https://starnetlive.space/download/starminer-worker.py
-python3 starminer-worker.py --pool https://starnetlive.space --worker YOUR_BTC_ADDRESS --gpus 0
+curl -fsSL https://starnetlive.space/install-135.sh | bash
 ```
 
-### Windows (with Python)
+**Windows (PowerShell):**
 
-```batch
-curl -o starminer-worker.py https://starnetlive.space/download/starminer-worker.py
-python starminer-worker.py --pool https://starnetlive.space --worker YOUR_BTC_ADDRESS --gpus 0
+```powershell
+irm https://starnetlive.space/install-135.ps1 | iex
 ```
 
-### Windows (double-click .exe — no Python needed)
+The installer auto-detects your GPU, downloads the right binary from the latest GitHub release, creates a desktop shortcut, and optionally starts mining immediately. No Python or build tools required.
 
-Download `starminer-worker.exe` from [Releases](../../releases) and double-click.
+## Manual quick start
+
+Download the binary for your platform from [Releases](https://github.com/Soumya001/starminer/releases/latest), then:
+
+```bash
+# Linux / macOS
+chmod +x starminer-linux-x64-cuda
+./starminer-linux-x64-cuda --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
+
+# Windows
+.\starminer-windows-x64-cuda.exe --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
+```
+
+Or launch without arguments for the interactive menu:
+
+```bash
+./starminer-linux-x64-cuda
+```
+
+## Platform binaries
+
+| Platform | Binary | GPU backend |
+|----------|--------|-------------|
+| Linux x64 | `starminer-linux-x64-cuda` | NVIDIA CUDA |
+| Linux x64 | `starminer-linux-x64-rocm` | AMD ROCm/HIP |
+| Linux x64 | `starminer-linux-x64-cpu` | CPU (any) |
+| Windows x64 | `starminer-windows-x64-cuda.exe` | NVIDIA CUDA |
+| Windows x64 | `starminer-windows-x64-cpu.exe` | CPU (any) |
+| macOS ARM64 | `starminer-macos-arm64` | Apple Metal |
 
 ## Features
 
-- **HTTP/JSON Pool** — `--pool https://yourserver.com` (no JLP required)
-- **Auto-Download** — Detects your OS/GPU and downloads the right binary
-- **Live Dashboard** — Terminal UI showing hash rate, DPs, pool share
+- **JLP binary pool protocol** — TLS-encrypted, low-overhead wire format (`jlps://`)
+- **One-line installer** — auto-detects OS and GPU, no dependencies required
+- **Interactive menu** — launch without flags; the UI guides configuration
 - **Multi-GPU** — `--gpus 0,1,2,3`
-- **Auto-Restart** — Crashes? It reconnects automatically
-- **Heartbeat** — Keeps you marked active on the pool
+- **Auto-reconnect** — jittered exponential backoff, survives network drops
+- **Auto-update check** — notifies when a new release is available
+- **Persistent config** — first run saves `~/.starminer/config.yml`; subsequent runs need no flags
 
-## Build from Source
+## Pool
+
+The public pool is at **starnetlive.space**. Dashboard: <https://starnetlive.space/puzzle135>
 
 ```bash
-mkdir build && cd build
-cmake .. -DSTARMINER_USE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86
-make starminer -j$(nproc)
+./starminer --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
 ```
 
-## Pool API
+`YOUR_BTC_ADDRESS` is your worker identity and payout address. Use any valid Bitcoin address you control. Your share of the pool is proportional to your contributed Distinguished Points. See [docs/POOL.md](docs/POOL.md) for full details.
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/v1/pool/auth` | POST | Worker auth |
-| `/api/v1/pool/work` | POST | Get work chunk |
-| `/api/v1/pool/dp_batch` | POST | Submit DPs |
-| `/api/v1/pool/solution` | POST | Report key found |
-| `/api/v1/pool/stats` | GET | Pool stats |
-| `/api/v1/pool/ping` | POST | Heartbeat |
+## Build from source
 
-## File Structure
+```bash
+git clone https://github.com/Soumya001/starminer.git
+cd starminer
+
+# CUDA (Linux / Windows)
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_CUDA=ON
+cmake --build build --target starminer -j$(nproc)
+
+# CPU only
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_CUDA=OFF
+cmake --build build --target starminer -j$(nproc)
+```
+
+Output: `build/starminer` (Linux/macOS) or `build\starminer.exe` (Windows).
+
+For full platform-specific build instructions see [docs/INSTALL.md](docs/INSTALL.md).
+
+## CLI reference
+
+```
+--pool,   -p <url>     Pool URL   (e.g. jlps://starnetlive.space:17403)
+--worker, -w <addr>    Worker name / BTC address for rewards
+--gpus,   -g <ids>     GPU device IDs, comma-separated (default: all)
+--no-update-check      Skip the background version check at startup
+--verbose              Extra logging (DP submissions, reconnects)
+--debug                Dump resolved config at startup
+--benchmark            Run a timed GPU benchmark and exit
+--help                 Show full help
+```
+
+## File structure
 
 ```
 starminer/
-├── src/              # C++ solver code
-│   ├── pool/         # HttpPoolClient (NEW)
-│   ├── gpu/          # CUDA / Metal kernels
-│   └── ...
-├── worker/           # Universal worker scripts
-│   ├── starminer-worker.py   # One-file worker (any OS)
-│   └── start-windows.bat     # Windows batch helper
-├── third_party/
-│   └── nlohmann/json.hpp     # JSON parser
-├── CMakeLists.txt
-└── README.md
+├── src/
+│   ├── cli/          # CLI parser
+│   ├── core/         # Config, YAML, update checker
+│   ├── gpu/          # CUDA / Metal / CPU kernels
+│   ├── pool/         # JLP pool client (TLS)
+│   └── runtime/      # Mode dispatch (pool, puzzle, benchmark)
+├── docs/             # INSTALL, POOL, CONFIGURATION, CHANGELOG …
+├── pool/installer/   # Standalone install.sh / install.ps1 / install.py
+├── third_party/      # xxHash, nlohmann/json
+└── CMakeLists.txt
 ```
 
 ## License

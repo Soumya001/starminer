@@ -2,8 +2,6 @@
 
 This guide covers building StarMiner from source on Linux, Windows, and macOS. For prebuilt binaries see the [GitHub Releases page](https://github.com/Soumya001/starminer/releases).
 
-This document covers the **free** edition. **(PRO VERSION ONLY)** builds are issued per-license to paying customers; see [collisionprotocol.com/pro](https://collisionprotocol.com/pro).
-
 ---
 
 ## Table of Contents
@@ -113,7 +111,7 @@ cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES="8
 cmake --build build --parallel
 ```
 
-The default architecture list is `86;89;100` (Ampere, Ada, Blackwell).
+The default architecture list in release builds is `61;70;75;80;86;89;100;120` (Pascal through Blackwell). For local builds, target your own GPU for faster compile times.
 
 Output: `build/starminer`.
 
@@ -231,15 +229,19 @@ CMake options recognized by the project:
 | `STARMINER_BUILD_BENCHMARKS` | `ON`        | Build the benchmark targets.                                       |
 | `STARMINER_BUILD_TOOLS`      | `ON`        | Build CLI tools (`build_bloom`, `generate_license`, etc.).         |
 | `CMAKE_BUILD_TYPE`          | `Release`   | `Release`, `Debug`, or `RelWithDebInfo`.                           |
-| `CMAKE_CUDA_ARCHITECTURES`  | `86;89;100` | Target SM versions. Set to a single value for faster local builds. |
+| `CMAKE_CUDA_ARCHITECTURES`  | `61;70;75;80;86;89;100;120` | Target SM versions. Set to a single value for faster local builds. |
 
 ### CUDA architecture selection
 
 | GPU series | Compute capability | `CMAKE_CUDA_ARCHITECTURES` |
 | ---------- | ------------------ | -------------------------- |
+| GTX 1000   | sm_61              | `61`                       |
+| V100       | sm_70              | `70`                       |
 | RTX 2000   | sm_75              | `75`                       |
+| A100       | sm_80              | `80`                       |
 | RTX 3000   | sm_86              | `86`                       |
 | RTX 4000   | sm_89              | `89`                       |
+| H100       | sm_90              | `90`                       |
 | RTX 5000   | sm_100             | `100`                      |
 
 Example (RTX 4090 only):
