@@ -105,26 +105,19 @@ jobs:
           method: network
           sub-packages: '["nvcc", "cudart", "visual_studio_integration"]'
 
-      - name: Setup MSVC x64
-        uses: ilammy/msvc-dev-cmd@v1.13.0
-        with:
-          arch: x64
-
       - name: Install Ninja
         run: choco install ninja -y
 
       - name: Build
-        env:
-          VCPKG_ROOT: 'C:\vcpkg'
-          VCPKG_TARGET_TRIPLET: x64-windows-static
+        shell: cmd
         run: |
-          cmake -B build -G Ninja `
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
-            -DSTARMINER_USE_CUDA=ON `
-             `
-            -DSTARMINER_BUILD_TESTS=OFF `
-            -DSTARMINER_BUILD_BENCHMARKS=OFF `
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cmake -B build -G Ninja ^
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ^
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static ^
+            -DSTARMINER_USE_CUDA=ON ^
+            -DSTARMINER_BUILD_TESTS=OFF ^
+            -DSTARMINER_BUILD_BENCHMARKS=OFF ^
             -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89;100;120"
           cmake --build build --target starminer -j4
 
@@ -140,25 +133,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
-      - name: Setup MSVC x64
-        uses: ilammy/msvc-dev-cmd@v1.13.0
-        with:
-          arch: x64
-
       - name: Install Ninja
         run: choco install ninja -y
 
       - name: Build
-        env:
-          VCPKG_ROOT: 'C:\vcpkg'
-          VCPKG_TARGET_TRIPLET: x64-windows-static
+        shell: cmd
         run: |
-          cmake -B build -G Ninja `
-            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
-            -DVCPKG_TARGET_TRIPLET=x64-windows-static `
-            -DSTARMINER_USE_CUDA=OFF `
-             `
-            -DSTARMINER_BUILD_TESTS=OFF `
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cmake -B build -G Ninja ^
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ^
+            -DVCPKG_TARGET_TRIPLET=x64-windows-static ^
+            -DSTARMINER_USE_CUDA=OFF ^
+            -DSTARMINER_BUILD_TESTS=OFF ^
             -DSTARMINER_BUILD_BENCHMARKS=OFF
           cmake --build build --target starminer -j4
 
