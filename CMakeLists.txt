@@ -93,9 +93,7 @@ option(STARMINER_BUILD_TESTS "Build tests" ON)
 option(STARMINER_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(STARMINER_BUILD_TOOLS "Build CLI tools" ON)
 
-# All features enabled — no gating.
-add_compile_definitions(STARMINER_PRO=1)
-message(STATUS "Building StarMiner — all features enabled")
+message(STATUS "Building StarMiner")
 
 # ============================================================================
 # Backend Detection
