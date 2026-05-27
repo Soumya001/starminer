@@ -6,11 +6,14 @@ on:
       - 'worker/**'
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-windows-exe:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6.0.2
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,7 +28,7 @@ jobs:
           pyinstaller --onefile --name starminer-worker --icon=NONE worker/starminer-worker.py
 
       - name: Upload Windows executable
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: starminer-worker-windows
           path: dist/starminer-worker.exe
