@@ -182,15 +182,17 @@ jobs:
             }
           }
 
-          # MSI files must be installed with msiexec (7z extraction gives hashed filenames)
+          # Use msiexec /a (admin/extract mode) — copies files without running
+          # hardware-check custom actions that cause /i to hang in CI
           New-Item -ItemType Directory -Force -Path $hipPath | Out-Null
           foreach ($t in $targets) {
             $msi = Get-ChildItem "$rocmPkgs\$t" -Filter "*.msi" -ErrorAction SilentlyContinue |
                    Select-Object -First 1
             if ($msi) {
-              Write-Host "Installing $t ($($msi.Name)) via msiexec..."
-              $args = @("/quiet", "/i", $msi.FullName, "INSTALLDIR=$hipPath", "/log", "$env:TEMP\msi_$t.log")
-              $proc = Start-Process msiexec -ArgumentList $args -Wait -PassThru
+              $dest = "$hipPath\$t"
+              New-Item -ItemType Directory -Force -Path $dest | Out-Null
+              Write-Host "Extracting $t ($($msi.Name)) via msiexec /a..."
+              $proc = Start-Process msiexec -ArgumentList @("/a", $msi.FullName, "TARGETDIR=$dest", "/quiet", "/norestart") -Wait -PassThru
               Write-Host "  exit code: $($proc.ExitCode)"
             }
           }
