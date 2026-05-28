@@ -25,7 +25,7 @@
 #include "puzzle_check.cuh"   // brings the static __device__ helper + externs
 
 #include <climits>
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 namespace starminer {
 namespace gpu {

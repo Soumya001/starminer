@@ -9,7 +9,7 @@
 #include "brain_wallet_gpu.hpp"
 #include "v2/brain_wallet_v2.hpp"
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 #include <cstring>
 #include <vector>

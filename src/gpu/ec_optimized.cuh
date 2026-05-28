@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdint>
 
 namespace starminer {

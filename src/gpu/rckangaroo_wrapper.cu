@@ -26,7 +26,7 @@
 #include "GpuKang.h"
 #include "utils.h"
 
-#include "cuda_runtime.h"
+#include "hip_cuda_compat.hpp"
 
 // Global variables required by RCKangaroo (defined in RCKangaroo.cpp but we use our wrapper)
 bool gGenMode = false;      // Tames generation mode

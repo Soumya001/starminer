@@ -14,7 +14,7 @@
 #pragma once
 
 #include "brain_wallet_v2.hpp"
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 namespace starminer {
 namespace gpu {

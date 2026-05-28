@@ -760,6 +760,11 @@ if(STARMINER_BACKEND STREQUAL "CUDA")
         target_link_libraries(starminer_gpu
             ${CUDA_RT_TARGET}
         )
+        # Ensure gpu/ is on the include path so hip_cuda_compat.hpp resolves
+        # from both src/gpu/*.cu and src/gpu/v2/*.cu
+        target_include_directories(starminer_gpu PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/gpu
+        )
         # Link RCKangaroo if enabled
         if(STARMINER_USE_RCKANGAROO AND TARGET rckangaroo)
             target_link_libraries(starminer_gpu rckangaroo)

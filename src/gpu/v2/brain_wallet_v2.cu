@@ -20,7 +20,7 @@
 #include "brain_wallet_v2.hpp"
 #include "device_hashes.cuh"   // device::sha512 + hmac_sha512 + pbkdf2 + bip32
 #include "../secp256k1_device_api.cuh"   // starminer::gpu::uint256/ECPointAffine/ec_mul_simple
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstring>
 #include <cstdio>
 #include <type_traits>

@@ -17,7 +17,7 @@
 #include "device_hashes.cuh"
 #include "puzzle_check.cuh"   // static __device__ helper + extern __constant__
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 namespace starminer {
 namespace gpu {

@@ -16,7 +16,7 @@
 #pragma once
 
 #include <cstdint>
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 #include "../hash_rounds.cuh"
 

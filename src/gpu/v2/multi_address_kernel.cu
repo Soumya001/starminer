@@ -17,7 +17,7 @@
 #include "device_hashes.cuh"
 #include "../secp256k1_device_api.cuh"
 
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 // Forward declaration of the production probe defined in
 // src/gpu/h160_bloom_filter.cu. It lives in `starminer::gpu`, so the

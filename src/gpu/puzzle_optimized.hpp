@@ -10,7 +10,7 @@
 #include <cstdint>
 
 #ifdef STARMINER_USE_CUDA
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 
 extern "C" {
 

@@ -11,7 +11,7 @@
  */
 
 #include "puzzle_gpu.hpp"
-#include <cuda_runtime.h>
+#include "hip_cuda_compat.hpp"
 #include <cstdio>
 #include <chrono>
 #include <algorithm>
