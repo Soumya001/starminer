@@ -62,10 +62,6 @@ struct Arguments {
     size_t save_interval = 1000000;       // Save state every N passphrases checked
     bool cpu_rules = false;               // Force CPU rule processing (enables multi-GPU)
 
-    // Brain Wallet v2 (Phase 9, restructure plan v1.4.0).
-    // --puzzle-only-v2 enables the multi-scheme puzzle-mode bloom check that
-    // short-circuits before EC_MUL when no puzzle target hits. Requires
-    // STARMINER_PRO=OFF.
     bool puzzle_only_v2 = false;
     std::string puzzle_keys_file;         // Override path to puzzle_history.json
     std::string schemes_csv;              // Phase 3: comma list of derivation schemes

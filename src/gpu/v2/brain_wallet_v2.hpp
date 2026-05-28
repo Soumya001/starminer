@@ -27,8 +27,8 @@
 // kernel signatures, so we shim the CUDA-specific types when the include
 // isn't available. The kernel-launching APIs are themselves gated under
 // STARMINER_USE_CUDA below.
-#if defined(STARMINER_USE_CUDA) || defined(__CUDACC__)
-#  include <cuda_runtime.h>
+#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM) || defined(__CUDACC__)
+#  include "hip_cuda_compat.hpp"
 #  define STARMINER_V2_HAVE_CUDA 1
 #else
    // Provide enough type stand-ins for the prototype declarations to parse.

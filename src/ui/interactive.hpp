@@ -266,19 +266,6 @@ public:
 
         std::cout << "  " << colors::BRIGHT_GREEN << "[1]" << colors::RESET
                   << " Solve Bitcoin Puzzle Challenge\n";
-#ifdef STARMINER_PRO
-        std::cout << "  " << colors::BRIGHT_GREEN << "[2]" << colors::RESET
-                  << " Brain Wallet Scanner\n";
-        std::cout << "  " << colors::BRIGHT_GREEN << "[3]" << colors::RESET
-                  << " Run Benchmark\n";
-        std::cout << "  " << colors::BRIGHT_GREEN << "[4]" << colors::RESET
-                  << " Show Help\n";
-        std::cout << "\n";
-        std::cout << "  " << colors::DIM << "[0]" << colors::RESET
-                  << colors::DIM << " Exit" << colors::RESET << "\n";
-        int choice = prompt_menu_choice(0, 4);
-        return static_cast<MainMenuChoice>(choice);
-#else
         std::cout << "  " << colors::BRIGHT_GREEN << "[2]" << colors::RESET
                   << " Run Benchmark\n";
         std::cout << "  " << colors::BRIGHT_GREEN << "[3]" << colors::RESET
@@ -287,11 +274,9 @@ public:
         std::cout << "  " << colors::DIM << "[0]" << colors::RESET
                   << colors::DIM << " Exit" << colors::RESET << "\n";
         int choice = prompt_menu_choice(0, 3);
-        // Map free-build choices to MainMenuChoice (Brain Wallet is never returned).
         if (choice == 2) return MainMenuChoice::BENCHMARK_MODE;
         if (choice == 3) return MainMenuChoice::SHOW_HELP;
-        return static_cast<MainMenuChoice>(choice);  // 0=EXIT, 1=PUZZLE_MODE
-#endif
+        return static_cast<MainMenuChoice>(choice);
     }
 
     /**

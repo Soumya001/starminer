@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#ifdef STARMINER_USE_CUDA
+#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
 #include "hip_cuda_compat.hpp"
 
 extern "C" {

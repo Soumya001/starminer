@@ -8,9 +8,7 @@
  * wallet) live in src/runtime/.
  *
  * `run_interactive_mode` mutates a base Arguments and returns the user's
- * selection; main() then dispatches to the matching mode runner. The
- * brain wallet submenu is gated on STARMINER_PRO inside the .cpp; this
- * header is identical in Free + Pro builds.
+ * selection; main() then dispatches to the matching mode runner.
  */
 #pragma once
 
@@ -29,14 +27,6 @@ void enable_windows_ansi();
  * Pure UI; returns an Arguments configured for the chosen flow.
  */
 Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys);
-
-#ifdef STARMINER_PRO
-/**
- * Run brain wallet interactive submenu (wordlist setup, bloom filter
- * detection / build, resume prompt). PRO-only.
- */
-Arguments run_brainwallet_interactive(Arguments base_args);
-#endif
 
 /**
  * Run interactive mode - top-level main menu loop. Calls into the per-

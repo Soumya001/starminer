@@ -244,10 +244,6 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
         return 1;
     }
 
-#ifdef STARMINER_PRO
-    // Bloom filter loading is a Pro feature and is supported only by the
-    // CUDA backend today. Other backends silently return false from
-    // try_set_bloom_filter (interface default).
     if (!args.bloom_file.empty()) {
         if (backend->try_set_bloom_filter(args.bloom_file)) {
             std::cout << "[*] Bloom filter loaded - opportunistic address checking enabled\n";
@@ -255,11 +251,7 @@ int run_pool_mode(const Arguments& args, const GPUDetectionResult& gpu_info) {
             std::cerr << "[!] WARNING: Failed to load bloom filter: "
                       << args.bloom_file << " (" << backend->error() << ")\n";
         }
-        // Backends that simply don't support bloom filtering fall through
-        // silently -- not an error; the user opted in but the platform
-        // doesn't have the feature.
     }
-#endif
 
     // Pool Solving header. Backend supplies its own name + device summary.
     std::cout << "\n";

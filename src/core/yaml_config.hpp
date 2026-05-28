@@ -532,18 +532,8 @@ void apply_config_to_args(Arguments& args, const AppConfig& config, const CLIFla
 
     // ------------------------------------------------------------------------
     // Bloom filter / GPU
-    // ------------------------------------------------------------------------
-    // Bloom-filter opportunistic address checking is a Pro feature.
-    // The free build silently ignores bloom file from config.yml and emits
-    // a one-time hint, instead of loading address data into the GPU.
     if (!cli.bloom_file_set && !config.bloom_file.empty()) {
-#ifdef STARMINER_PRO
         args.bloom_file = config.bloom_file;
-#else
-        std::cerr << "[Pro] Ignoring bloom filter '" << config.bloom_file
-                  << "' from config — opportunistic address scanning requires StarMiner Pro."
-                  << std::endl;
-#endif
     }
     if (!cli.gpu_ids_set && !config.gpu_devices.empty()) {
         args.gpu_ids = config.gpu_devices;

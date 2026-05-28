@@ -28,7 +28,7 @@ struct GPUKangarooResult {
     double elapsed_seconds;
 };
 
-#ifdef STARMINER_USE_CUDA
+#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
 
 /**
  * High-level GPU Kangaroo Solver (CUDA)

@@ -518,9 +518,6 @@ endif()
 
 # Brain-wallet host-side sources.
 # brain_wallet_gpu.cu is CUDA-only (added to GPU_SOURCES below).
-# brain_wallet_runner.cpp and license_gate.cpp are pure C++ and always built.
-list(APPEND CORE_SOURCES src/runtime/brain_wallet_runner.cpp)
-list(APPEND CORE_SOURCES src/runtime/license_gate.cpp)
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/gpu_rules.cpp"
    AND NOT STARMINER_BACKEND STREQUAL "CUDA")
     list(APPEND CORE_SOURCES src/gpu/gpu_rules.cpp)
@@ -671,22 +668,6 @@ if(EXISTING_POOL_SOURCES)
     message(STATUS "Pool client library enabled")
 endif()
 
-# ============================================================================
-# Pro License Check Library (Pro build only, requires libcurl + OpenSSL)
-# ============================================================================
-if(CURL_FOUND AND OPENSSL_FOUND AND
-   EXISTS "${CMAKE_SOURCE_DIR}/src/license/license_check.cpp")
-    add_library(starminer_license STATIC src/license/license_check.cpp)
-    target_include_directories(starminer_license PUBLIC ${CMAKE_SOURCE_DIR}/src/license)
-    target_link_libraries(starminer_license
-        CURL::libcurl
-        OpenSSL::SSL OpenSSL::Crypto
-    )
-    if(WIN32)
-        target_link_libraries(starminer_license ws2_32 crypt32)
-    endif()
-    message(STATUS "License validation library enabled")
-endif()
 
 # ============================================================================
 # RCKangaroo - High-performance Kangaroo solver (GPLv3, RetiredCoder)

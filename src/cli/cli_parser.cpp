@@ -1,9 +1,5 @@
 /**
  * cli_parser.cpp - StarMiner CLI argument parser.
- *
- * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor; no
- * behavior changes. Pro-only flags stay gated by STARMINER_PRO so the free
- * build still compiles cleanly.
  */
 #include "cli/cli_parser.hpp"
 
@@ -126,18 +122,8 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             args.dp_bits = std::stoi(argv[++i]);
             cli.dp_bits_set = true;
         } else if (arg == "--bloom" && i + 1 < argc) {
-#ifdef STARMINER_PRO
             args.bloom_file = argv[++i];
             cli.bloom_file_set = true;
-#else
-            // Pro-only: opportunistic address scanning. Consume the path
-            // arg but ignore it; one-time hint so the user knows why.
-            std::string ignored = argv[++i];
-            std::cerr << "[Pro] --bloom '" << ignored
-                      << "' ignored -- opportunistic address scanning is a "
-                         "Pro feature. Contact pool operator for access."
-                      << std::endl;
-#endif
         } else if (arg == "--brainwallet") {
             args.brainwallet_mode = true;
             args.pool_mode = false;     // Brainwallet overrides pool mode from config
@@ -146,19 +132,8 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
         } else if (arg == "--brainwallet-setup") {
             args.brainwallet_setup = true;
         } else if (arg == "--puzzle-only-v2") {
-#ifdef STARMINER_PRO
-            // Phase 9, v1.4.0: enable v2 puzzle-mode kernel + multi-scheme.
-            args.puzzle_only_v2 = true;
-            args.brainwallet_mode = true;   // Goes through the brainwallet pipeline
-            args.pool_mode = false;
-            args.pool_url.clear();
-#else
-            // Exact text per v1.4.0 spec; do NOT add URLs or extra trailing text.
-            std::cerr << "I'm sorry, but this is a pro function. If you'd like "
-                         "to try pro, go and visit the website to purchase and "
-                         "download." << std::endl;
+            std::cerr << "[!] --puzzle-only-v2 is not available in this build.\n";
             return 2;
-#endif
         } else if (arg == "--puzzle-keys" && i + 1 < argc) {
             args.puzzle_keys_file = argv[++i];
         } else if (arg == "--schemes" && i + 1 < argc) {
@@ -292,31 +267,6 @@ Smart Selection:
                               controls within-range search direction.
 
 )";
-#ifdef STARMINER_PRO
-    std::cout << R"(License:
-  --activate <KEY>        Activate your Pro license key (run once after purchase)
-                          Example: ./starminer --activate YOUR-LICENSE-KEY
-
-Brainwallet Mode (PRO):
-  --brainwallet           Brainwallet-only mode (requires --bloom)
-                          Generates passphrases and checks against bloom filter
-  --brainwallet-setup     Run the brainwallet setup wizard
-                          Configure wordlists, deduplication, and PCFG training
-  --bloom <file.blf>      Bloom filter file with funded addresses
-  --resume                Resume from last saved checkpoint
-  --save-interval <n>     Save state every N passphrases (default: 1000000)
-  --cpu-rules             Force CPU rule processing (enables multi-GPU parallelism)
-
-)";
-#else
-    std::cout << R"(Brainwallet Mode:
-  Brain wallet scanning is a Pro feature. This is the FREE build.
-  Pro adds: --brainwallet, --brainwallet-setup, --bloom, --resume,
-            --save-interval, --cpu-rules.
-  Contact pool operator for Pro access.
-
-)";
-#endif
     std::cout << R"(Pool Mode (Distributed Solving):
   --pool, -p <url>        Connect to pool for distributed Kangaroo solving
                           URL format: jlps://host:port (TLS, recommended)
@@ -361,12 +311,6 @@ Examples:
   starminer --benchmark
 
 )";
-#ifdef STARMINER_PRO
-    std::cout << R"(  # Brainwallet mode - scan for compromised brainwallets (PRO)
-  starminer --brainwallet --bloom funded_addresses.blf
-
-)";
-#endif
     std::cout << R"(  # Custom address + range, brute force (no kangaroo because no
   # revealed pubkey for an arbitrary address; see README on which
   # puzzles ARE kangaroo-able).

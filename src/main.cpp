@@ -57,28 +57,7 @@
 #include "runtime/runtime_globals.hpp"
 #include "ui/interactive.hpp"
 #include "ui/interactive_ui.hpp"
-#ifdef STARMINER_PRO
-#include "runtime/brain_wallet_runner.hpp"
-#include "runtime/license_gate.hpp"
-#include "ui/brainwallet_setup.hpp"
-#endif
 
-// ============================================================================
-// v1.4.1 A.3 refactor (commits 1/6 - 6/6) summary
-// ============================================================================
-// StarMiner's mode runners and helpers all live in dedicated runtime
-// modules. main.cpp is the thin dispatcher: parse args -> license gate
-// (Pro) -> signal handler / logger init -> GPU detect -> mode dispatch.
-//
-//   - cli_parser.{hpp,cpp}       Arguments / parse_args / print_usage  (1)
-//   - ui/interactive_ui.{hpp,cpp} run_interactive_mode + submenus     (2)
-//   - runtime/pool_solver.{hpp,cpp}        run_pool_mode               (3)
-//   - runtime/brain_wallet_runner.{hpp,cpp} run_brain_wallet_mode (PRO)(4)
-//   - runtime/puzzle_solver.{hpp,cpp}      run_benchmark / run_puzzle  (5)
-//   - runtime/gpu_detection.{hpp,cpp}      detect_gpus                 (6)
-//   - runtime/license_gate.{hpp,cpp}       process_activate_flag /
-//                                          validate_startup_license   (6 PRO)
-// ============================================================================
 
 using namespace starminer;
 
@@ -202,45 +181,14 @@ int main(int argc, char* argv[]) {
         update_handle = starminer::check_for_updates_async();
     }
 
-#ifndef STARMINER_PRO
-    // Free build: brain-wallet code is not compiled in. Reject early
-    // with a pointer to the Pro upgrade. Both --brainwallet (CLI) and
-    // brainwallet_enabled (config.yml) end up setting brainwallet_mode.
     if (args.brainwallet_mode) {
-        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n";
+        std::cerr << "[!] Brain wallet mode is not available in this build.\n";
         return 1;
     }
-#endif
 
-#ifdef STARMINER_PRO
-    // --activate KEY: save and validate a new license key, then exit.
-    {
-        int activate_exit = 0;
-        if (starminer::runtime::process_activate_flag(argc, argv, activate_exit)) {
-            return activate_exit;
-        }
-    }
-    // Startup license check (cache-backed, 24h).
-    {
-        int license_exit = 0;
-        if (!starminer::runtime::validate_startup_license(license_exit)) {
-            return license_exit;
-        }
-    }
-#endif
-
-    // Run brainwallet setup wizard if requested (Pro-only feature; the
-    // free build rejected --brainwallet-setup at parse time via the
-    // brainwallet_mode early-exit above when applicable).
     if (args.brainwallet_setup) {
-#ifdef STARMINER_PRO
-        ui::enable_windows_ansi();
-        ui::BrainwalletSetup::run_wizard();
-        return 0;
-#else
-        std::cerr << "[PRO] Brain wallet scanning requires StarMiner Pro.\n";
+        std::cerr << "[!] Brain wallet setup is not available in this build.\n";
         return 1;
-#endif
     }
 
     if (args.debug) std::cout << "[DEBUG] Starting starminer...\n" << std::flush;
@@ -321,13 +269,7 @@ int main(int argc, char* argv[]) {
             // Run the selected mode (ignoring exit code — we're looping back).
             if (args.pool_mode) {
                 starminer::runtime::run_pool_mode(args, gpu_info);
-            }
-#ifdef STARMINER_PRO
-            else if (args.puzzle_only_v2 || args.brainwallet_mode) {
-                starminer::runtime::run_brain_wallet_mode(args);
-            }
-#endif
-            else if (args.benchmark) {
+            } else if (args.benchmark) {
                 starminer::runtime::run_benchmark(args, gpu_info);
             } else {
                 auto_enable_puzzle_mode_if_needed(args);
@@ -348,13 +290,6 @@ int main(int argc, char* argv[]) {
     if (args.pool_mode) {
         return starminer::runtime::run_pool_mode(args, gpu_info);
     }
-
-    // BRAINWALLET MODE / --puzzle-only-v2 (Pro-only).
-#ifdef STARMINER_PRO
-    if (args.puzzle_only_v2 || args.brainwallet_mode) {
-        return starminer::runtime::run_brain_wallet_mode(args);
-    }
-#endif
 
     // If neither benchmark nor puzzle is set, auto-enable puzzle mode.
     auto_enable_puzzle_mode_if_needed(args);

@@ -1,11 +1,5 @@
 /**
- * puzzle_solver.cpp - Implementation of StarMiner's puzzle-mode and
- * benchmark runtime drivers.
- *
- * Extracted verbatim from src/main.cpp during the v1.4.1 A.3 refactor
- * (commit 5/6); no behavior changes. Available in BOTH Free and Pro
- * builds. The Pro-only branches inside the benchmark and puzzle paths
- * remain gated by #ifdef STARMINER_PRO.
+ * puzzle_solver.cpp - Puzzle-mode and benchmark runtime drivers.
  */
 #include "runtime/puzzle_solver.hpp"
 
@@ -88,9 +82,6 @@ extern "C" cudaError_t sha256_batch(
 #include "gpu/puzzle_gpu.hpp"
 #ifdef STARMINER_USE_RCKANGAROO
 #include "gpu/rckangaroo_wrapper.hpp"
-#endif
-#ifdef STARMINER_PRO
-#include "gpu/brain_wallet_gpu.hpp"
 #endif
 #include "runtime/runtime_globals.hpp"
 #include "ui/banner.hpp"
@@ -710,10 +701,6 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
     Arguments args = args_in;
     display_dispatch_banner(args, gpu_info);
 
-#ifndef STARMINER_PRO
-        // Free benchmark: SHA-256 throughput on CPU + GPU/backend info.
-        // Gives users a real number to validate their hardware without
-        // requiring the brain-wallet pipeline (Pro-only).
         {
             namespace boxui = ::starminer::ui::box;
             std::cout << "\n";
@@ -872,186 +859,6 @@ int run_benchmark(const Arguments& args_in, const GPUDetectionResult& gpu_info) 
         std::cout << "connect to a pool:\n";
         std::cout << "  ./starminer --pool jlps://your-pool-host:17403 --worker bc1q...\n";
         return 0;
-#else
-        {
-            namespace boxui = ::starminer::ui::box;
-            std::cout << "\n";
-            boxui::top(std::cout);
-            boxui::centered(std::cout, "GPU PERFORMANCE BENCHMARK");
-            boxui::top(std::cout);
-            {
-                std::ostringstream dur;
-                dur << args.benchmark_seconds << " seconds";
-                boxui::kv(std::cout, "Duration", dur.str());
-            }
-            {
-                std::ostringstream gpu_list;
-                for (size_t i = 0; i < args.gpu_ids.size() && i < 8; i++) {
-                    gpu_list << args.gpu_ids[i];
-                    if (i < args.gpu_ids.size() - 1) gpu_list << ",";
-                }
-                boxui::kv(std::cout, "GPUs", gpu_list.str());
-            }
-            boxui::kv(std::cout, "Batch", format_number(args.batch_size));
-            boxui::bottom(std::cout);
-            std::cout << "\n";
-        }
-
-        // Generate synthetic test candidates (random strings)
-        std::cout << "[*] Generating synthetic test data...\n";
-        std::vector<std::string> test_candidates;
-        test_candidates.reserve(args.batch_size);
-
-        // Create deterministic but varied test passphrases
-        const char* test_words[] = {
-            "bitcoin", "satoshi", "wallet", "crypto", "moon", "hodl",
-            "lambo", "diamond", "hands", "rocket", "2024", "password",
-            "freedom", "wealth", "future", "secure", "private", "key"
-        };
-        const size_t num_words = sizeof(test_words) / sizeof(test_words[0]);
-
-        for (size_t i = 0; i < args.batch_size; i++) {
-            // Create varied length passphrases
-            std::string passphrase;
-            size_t word_count = 2 + (i % 5);  // 2-6 words
-            for (size_t w = 0; w < word_count; w++) {
-                if (w > 0) passphrase += " ";
-                passphrase += test_words[(i + w * 7) % num_words];
-                // Add number suffix sometimes
-                if ((i + w) % 3 == 0) {
-                    passphrase += std::to_string(i % 1000);
-                }
-            }
-            test_candidates.push_back(std::move(passphrase));
-        }
-        std::cout << "[*] Generated " << format_number(test_candidates.size()) << " test candidates\n\n";
-
-        // Run benchmark
-        std::cout << "[*] Starting GPU benchmark...\n";
-        std::cout << "    (Full SHA256 -> secp256k1 -> RIPEMD160 -> Bloom pipeline)\n\n";
-
-#ifdef STARMINER_USE_CUDA
-        // Initialize GPU pipeline for benchmarking
-        gpu::MultiGPUBrainWallet::Config bench_config;
-        bench_config.gpu_ids = args.gpu_ids;
-        bench_config.batch_size = args.batch_size;
-        bench_config.max_passphrase_length = 256;
-        bench_config.store_private_keys = false;  // Don't need keys for benchmark
-
-        gpu::MultiGPUBrainWallet bench_pipeline(bench_config);
-        if (!bench_pipeline.init()) {
-            std::cerr << "[!] Failed to initialize GPU for benchmark\n";
-            return 1;
-        }
-
-        // Create minimal "all-zeros" bloom filter (no false positives = fast path)
-        // 1MB bloom filter is enough for benchmarking purposes
-        const size_t bench_bloom_size = 1024 * 1024;  // 1MB
-        const uint64_t bench_bloom_bits = bench_bloom_size * 8;
-        std::vector<uint8_t> dummy_bloom(bench_bloom_size, 0);
-
-        if (!bench_pipeline.load_bloom_filter(dummy_bloom.data(), dummy_bloom.size(),
-                                               bench_bloom_bits, 8, 0x5F3759DF)) {
-            std::cerr << "[!] Failed to load benchmark bloom filter\n";
-            return 1;
-        }
-        std::cout << "[*] GPU pipeline initialized with dummy bloom filter\n\n";
-#endif
-
-        auto bench_start = std::chrono::steady_clock::now();
-        auto bench_end = bench_start + std::chrono::seconds(args.benchmark_seconds);
-        uint64_t total_hashed = 0;
-        uint64_t iterations = 0;
-        auto last_status = bench_start;
-
-        while (std::chrono::steady_clock::now() < bench_end && !g_shutdown) {
-#ifdef STARMINER_USE_CUDA
-            // Run actual GPU pipeline
-            auto result = bench_pipeline.process_batch(test_candidates);
-            total_hashed += result.processed;
-#else
-            // CPU fallback: simulate batch processing time
-            std::this_thread::sleep_for(std::chrono::microseconds(1600));
-            total_hashed += test_candidates.size();
-#endif
-            iterations++;
-
-            // Status update every second
-            auto now = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(now - last_status).count() >= 1) {
-                auto elapsed_sec = std::chrono::duration_cast<std::chrono::milliseconds>(now - bench_start).count() / 1000.0;
-                auto remaining = std::chrono::duration_cast<std::chrono::seconds>(bench_end - now).count();
-                double rate = total_hashed / elapsed_sec;
-
-                std::cout << "\r[*] Progress: " << std::setw(3) << (args.benchmark_seconds - remaining) << "s / "
-                          << args.benchmark_seconds << "s | "
-                          << "Hashed: " << std::setw(12) << format_number(total_hashed) << " | "
-                          << "Rate: " << std::setw(8) << format_rate(rate)
-                          << "     " << std::flush;
-
-                last_status = now;
-            }
-        }
-
-        // Calculate final results
-        auto actual_end = std::chrono::steady_clock::now();
-        double actual_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(actual_end - bench_start).count() / 1000.0;
-        double final_rate = total_hashed / actual_seconds;
-
-        // Performance projections
-        double projected_daily = final_rate * 86400;
-
-        // Compare to targets
-        double target_per_gpu = 2.5e9;  // 2.5B/s per RTX 5090
-        double expected = target_per_gpu * args.gpu_ids.size();
-        double efficiency = (final_rate / expected) * 100.0;
-
-        {
-            namespace boxui = ::starminer::ui::box;
-            std::cout << "\n\n";
-            boxui::top(std::cout);
-            boxui::centered(std::cout, "BENCHMARK RESULTS");
-            boxui::top(std::cout);
-            {
-                std::ostringstream dur;
-                dur << std::fixed << std::setprecision(2) << actual_seconds << " seconds";
-                boxui::kv(std::cout, "Duration", dur.str());
-            }
-            boxui::kv(std::cout, "Total Processed", format_number(total_hashed));
-            {
-                std::ostringstream it;
-                it << iterations;
-                boxui::kv(std::cout, "Iterations", it.str());
-            }
-            boxui::kv(std::cout, "Average Rate", format_rate(final_rate));
-            boxui::sep(std::cout);
-            boxui::kv(std::cout, "Projected Daily",
-                      format_number(static_cast<uint64_t>(projected_daily)));
-            boxui::sep(std::cout);
-            boxui::kv(std::cout, "Expected (RTX 5090)", format_rate(expected));
-            {
-                std::ostringstream eff;
-                eff << std::fixed << std::setprecision(1) << efficiency << "%";
-                boxui::kv(std::cout, "Efficiency", eff.str());
-            }
-            boxui::bottom(std::cout);
-            std::cout << "\n";
-        }
-
-#ifndef STARMINER_USE_CUDA
-        std::cout << "[!] Note: CUDA not available - benchmark used CPU simulation.\n";
-        std::cout << "    Real GPU performance will be significantly higher.\n";
-        std::cout << "    Build with CUDA enabled for actual GPU benchmarks.\n";
-#else
-        if (efficiency < 80.0) {
-            std::cout << "[*] Note: Performance varies by GPU. RTX 5090 target is 2.5B/s.\n";
-        } else {
-            std::cout << "[+] GPU pipeline performing at expected efficiency.\n";
-        }
-#endif
-
-        return 0;
-#endif // STARMINER_PRO (benchmark)
 }
 
 int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info) {
@@ -1491,15 +1298,9 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                 // Initialize GPUs
                 int num_gpus = rc_kangaroo.init(args.gpu_ids);
                 if (num_gpus > 0) {
-                    // Load bloom filter if specified -- Pro feature; the
-                    // free build clears args.bloom_file at config merge,
-                    // so this block is a no-op there. #ifdef-guard the
-                    // load as defense-in-depth.
-#ifdef STARMINER_PRO
                     if (!args.bloom_file.empty()) {
                         if (rc_kangaroo.load_bloom_filter(args.bloom_file)) {
                             std::cout << "[*] Bloom filter loaded - opportunistic address checking enabled\n";
-                            // Optional: Set hit callback for real-time notifications
                             rc_kangaroo.bloom_hit_callback = [](const gpu::BloomHit& hit) {
                                 std::ofstream hitlog("bloom_hits.txt", std::ios::app);
                                 if (hitlog) {
@@ -1514,7 +1315,6 @@ int run_puzzle_mode(const Arguments& args_in, const GPUDetectionResult& gpu_info
                             std::cerr << "[!] WARNING: Failed to load bloom filter: " << args.bloom_file << "\n";
                         }
                     }
-#endif
 
                     // Set target public key. v1.4.1: prefer the --pubkey
                     // CLI / config override when set; fall back to the
