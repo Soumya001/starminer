@@ -15,7 +15,7 @@
 
 #if defined(STARMINER_BACKEND_CUDA)
 
-#include <cuda_runtime.h>
+#include "gpu/hip_cuda_compat.hpp"
 #include <vector>
 
 namespace starminer {
