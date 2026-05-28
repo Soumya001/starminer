@@ -26,8 +26,8 @@
 #include <functional>
 #include <map>
 
-#ifdef STARMINER_USE_CUDA
-// Forward declare CUDA types OUTSIDE namespace to match global ::cudaStream_t
+#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
+// Forward declare stream type OUTSIDE namespace
 struct CUstream_st;
 typedef CUstream_st* cudaStream_t;
 #endif
@@ -35,7 +35,7 @@ typedef CUstream_st* cudaStream_t;
 namespace starminer {
 namespace gpu {
 
-#ifdef STARMINER_USE_CUDA
+#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
 
 // Note: Optimized kernel API (init_puzzle_optimized, cleanup_puzzle_optimized,
 // puzzle_search_batch_optimized) are declared in puzzle_gpu.cu with proper

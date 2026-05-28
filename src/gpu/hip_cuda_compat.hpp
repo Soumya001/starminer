@@ -112,11 +112,9 @@
 // __umul64hi is already defined in AMD's amd_device_functions.h.
 // No need to define it here — AMD provides it natively.
 
-// __syncwarp(mask): NVIDIA-only warp synchronization primitive.
-// On AMD GCN/RDNA all threads in a wavefront execute in lockstep,
-// so an explicit warp sync is a no-op.
-#define __syncwarp(mask)  ((void)0)
-#define __syncwarp()      ((void)0)
+// __syncwarp([mask]): NVIDIA-only warp sync. AMD wavefronts execute
+// in lockstep, so this is a no-op. Variadic to accept 0 or 1 args.
+#define __syncwarp(...)   ((void)0)
 
 #else
 // ── NVIDIA CUDA compilation path ─────────────────────────────────────────────
