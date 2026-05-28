@@ -22,17 +22,9 @@ namespace starminer::ui {
  */
 void enable_windows_ansi();
 
-/**
- * Run puzzle-mode interactive submenu (standalone vs pool, puzzle picker).
- * Pure UI; returns an Arguments configured for the chosen flow.
- */
 Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys);
-
-/**
- * Run interactive mode - top-level main menu loop. Calls into the per-
- * mode submenus above. Returns when the user picks a mode (or sets the
- * exit_program / help flag in Arguments).
- */
+Arguments run_brainwallet_interactive(Arguments base_args);
+Arguments run_range_scan_interactive(Arguments base_args);
 Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys);
 
 }  // namespace starminer::ui

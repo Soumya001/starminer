@@ -198,31 +198,105 @@ Arguments run_puzzle_interactive(Arguments base_args, double gpu_speed_mkeys) {
     return args;
 }
 
+// ── Brain Wallet interactive setup ───────────────────────────────────────────
+Arguments run_brainwallet_interactive(Arguments base_args) {
+    using namespace ::starminer::ui;
+    Arguments args = base_args;
 
+    Interactive::display_section("Brain Wallet Scanner");
+    std::cout << "Hashes passphrases from a wordlist and checks the resulting\n"
+              << "Bitcoin addresses against a bloom filter of funded wallets.\n\n";
+
+    // Wordlist
+    std::string wordlist = Interactive::prompt_path("Wordlist file path", true);
+    if (wordlist.empty()) { args.go_back = true; return args; }
+    args.wordlist_file = wordlist;
+
+    // Bloom filter
+    std::string bloom = Interactive::prompt_path("Bloom filter (.blf) path", true);
+    if (bloom.empty()) { args.go_back = true; return args; }
+    args.bloom_file = bloom;
+
+    if (!Interactive::prompt_yes_no("Start brain wallet scan?", true)) {
+        args.go_back = true;
+        return args;
+    }
+
+    args.brainwallet_mode = true;
+    args.pool_mode = false;
+    return args;
+}
+
+// ── Range Scan interactive setup ─────────────────────────────────────────────
+Arguments run_range_scan_interactive(Arguments base_args) {
+    using namespace ::starminer::ui;
+    Arguments args = base_args;
+
+    Interactive::display_section("Range Scan");
+    std::cout << "Sweeps every private key in [2^(N-1), 2^N-1] for each bit width N\n"
+              << "and checks the resulting address against a bloom filter.\n"
+              << "Practical up to ~42 bits (CPU); larger ranges take days.\n\n";
+
+    // Bloom filter
+    std::string bloom = Interactive::prompt_path("Bloom filter (.blf) path", true);
+    if (bloom.empty()) { args.go_back = true; return args; }
+    args.bloom_file = bloom;
+
+    // Min bits
+    int min_bits = Interactive::prompt_number("Start bit width (min)", 1, 160, false);
+    if (min_bits <= 0) min_bits = 1;
+    args.range_scan_min_bits = min_bits;
+
+    // Max bits
+    int max_bits = Interactive::prompt_number("End bit width (max)", min_bits, 160, false);
+    if (max_bits <= 0) max_bits = 50;
+    args.range_scan_max_bits = max_bits;
+
+    if (max_bits > 42) {
+        Interactive::warning_message(
+            "Ranges > 42 bits are impractically slow on CPU. Continue?");
+        if (!Interactive::prompt_yes_no("", true)) {
+            args.go_back = true;
+            return args;
+        }
+    }
+
+    if (!Interactive::prompt_yes_no("Start range scan?", true)) {
+        args.go_back = true;
+        return args;
+    }
+
+    args.range_scan = true;
+    args.brainwallet_mode = true;
+    args.pool_mode = false;
+    return args;
+}
 
 Arguments run_interactive_mode(Arguments base_args, double gpu_speed_mkeys) {
     using namespace ::starminer::ui;
     Arguments args = base_args;
 
     while (true) {
-        // Reset navigation flags
         args.go_back = false;
-
-        // Display main menu
         MainMenuChoice choice = Interactive::display_main_menu(STARMINER_VERSION);
 
         switch (choice) {
             case MainMenuChoice::PUZZLE_MODE: {
                 args = run_puzzle_interactive(args, gpu_speed_mkeys);
-                if (args.go_back) {
-                    continue;  // Return to main menu
-                }
+                if (args.go_back) continue;
                 return args;
             }
 
             case MainMenuChoice::BRAINWALLET_MODE: {
-                std::cout << "\n[!] Brain wallet mode is not available in this build.\n\n";
-                continue;
+                args = run_brainwallet_interactive(args);
+                if (args.go_back) continue;
+                return args;
+            }
+
+            case MainMenuChoice::RANGE_SCAN_MODE: {
+                args = run_range_scan_interactive(args);
+                if (args.go_back) continue;
+                return args;
             }
 
             case MainMenuChoice::BENCHMARK_MODE:

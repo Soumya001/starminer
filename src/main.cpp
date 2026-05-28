@@ -266,6 +266,10 @@ int main(int argc, char* argv[]) {
             // Run the selected mode (ignoring exit code — we're looping back).
             if (args.pool_mode) {
                 starminer::runtime::run_pool_mode(args, gpu_info);
+            } else if (args.range_scan) {
+                starminer::runtime::run_range_scan(args);
+            } else if (args.brainwallet_mode) {
+                starminer::runtime::run_brain_wallet_mode(args);
             } else if (args.benchmark) {
                 starminer::runtime::run_benchmark(args, gpu_info);
             } else {

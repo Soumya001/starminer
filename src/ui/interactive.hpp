@@ -28,11 +28,12 @@ namespace ui {
  * Interactive mode menu choices.
  */
 enum class MainMenuChoice {
-    PUZZLE_MODE = 1,
+    PUZZLE_MODE      = 1,
     BRAINWALLET_MODE = 2,
-    BENCHMARK_MODE = 3,
-    SHOW_HELP = 4,
-    EXIT = 0
+    RANGE_SCAN_MODE  = 3,
+    BENCHMARK_MODE   = 4,
+    SHOW_HELP        = 5,
+    EXIT             = 0
 };
 
 /**
@@ -267,15 +268,19 @@ public:
         std::cout << "  " << colors::BRIGHT_GREEN << "[1]" << colors::RESET
                   << " Solve Bitcoin Puzzle Challenge\n";
         std::cout << "  " << colors::BRIGHT_GREEN << "[2]" << colors::RESET
-                  << " Run Benchmark\n";
+                  << " Brain Wallet Scanner  (passphrase → address bloom check)\n";
         std::cout << "  " << colors::BRIGHT_GREEN << "[3]" << colors::RESET
+                  << " Range Scan            (key range sweep against bloom filter)\n";
+        std::cout << "  " << colors::BRIGHT_GREEN << "[4]" << colors::RESET
+                  << " Run Benchmark\n";
+        std::cout << "  " << colors::BRIGHT_GREEN << "[5]" << colors::RESET
                   << " Show Help\n";
         std::cout << "\n";
         std::cout << "  " << colors::DIM << "[0]" << colors::RESET
                   << colors::DIM << " Exit" << colors::RESET << "\n";
-        int choice = prompt_menu_choice(0, 3);
-        if (choice == 2) return MainMenuChoice::BENCHMARK_MODE;
-        if (choice == 3) return MainMenuChoice::SHOW_HELP;
+        int choice = prompt_menu_choice(0, 5);
+        if (choice == 4) return MainMenuChoice::BENCHMARK_MODE;
+        if (choice == 5) return MainMenuChoice::SHOW_HELP;
         return static_cast<MainMenuChoice>(choice);
     }
 
