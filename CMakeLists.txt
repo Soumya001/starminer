@@ -793,6 +793,11 @@ elseif(STARMINER_BACKEND STREQUAL "ROCM")
         add_library(starminer_gpu STATIC ${EXISTING_ROCM_SOURCES})
         target_link_libraries(starminer_gpu hip::host)
         set_target_properties(starminer_gpu PROPERTIES POSITION_INDEPENDENT_CODE ON)
+        # src/gpu is needed so sub-directory .cu files (e.g. v2/brain_wallet_v2.hpp)
+        # can resolve #include "hip_cuda_compat.hpp"
+        target_include_directories(starminer_gpu PRIVATE
+            ${CMAKE_SOURCE_DIR}/src/gpu
+        )
     endif()
 
 elseif(STARMINER_BACKEND STREQUAL "METAL")
