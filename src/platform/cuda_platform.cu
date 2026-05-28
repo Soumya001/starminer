@@ -13,7 +13,7 @@
 
 #include "platform.hpp"
 
-#if defined(STARMINER_BACKEND_CUDA)
+#if defined(STARMINER_BACKEND_CUDA) || defined(STARMINER_USE_ROCM)
 
 #include "gpu/hip_cuda_compat.hpp"
 #include <vector>
@@ -467,4 +467,4 @@ IPlatform& get_platform() {
 }  // namespace platform
 }  // namespace starminer
 
-#endif  // STARMINER_BACKEND_CUDA
+#endif  // STARMINER_BACKEND_CUDA || STARMINER_USE_ROCM
