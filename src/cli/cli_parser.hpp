@@ -67,6 +67,11 @@ struct Arguments {
     int  range_scan_min_bits = 1;         // Start from 2^(N-1)
     int  range_scan_max_bits = 50;        // End at 2^N - 1
 
+    // Brain wallet pool mode
+    bool        brainwallet_server = false;  // Run as brain wallet pool server
+    std::string brainwallet_pool_url;        // Connect to pool: host:port
+    uint16_t    brainwallet_pool_port = 17404;
+
     bool puzzle_only_v2 = false;
     std::string puzzle_keys_file;         // Override path to puzzle_history.json
     std::string schemes_csv;              // Phase 3: comma list of derivation schemes

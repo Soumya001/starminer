@@ -14,12 +14,14 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "core/crypto_cpu.hpp"
 #include "runtime/runtime_globals.hpp"
 #include "tools/utxo_bloom_builder.hpp"
 #include "ui/box_render.hpp"
+#include "pool/brainwallet_pool.hpp"
 
 #if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
 #include "gpu/brain_wallet_gpu.hpp"
@@ -103,19 +105,164 @@ static void print_summary(uint64_t checked, uint64_t hits,
     std::cout << "\n";
 }
 
+// ── Server mode ───────────────────────────────────────────────────────────────
+static int run_brainwallet_server(const Arguments& args)
+{
+    namespace boxui = ::starminer::ui::box;
+
+    if (args.bloom_file.empty()) {
+        std::cerr << "[!] --brainwallet-server requires --bloom <file.blf>\n";
+        return 1;
+    }
+
+    pool::BrainWalletServerConfig cfg;
+    cfg.port       = args.brainwallet_pool_port;
+    cfg.bloom_file = args.bloom_file;
+    cfg.batch_size = (args.batch_size > 0) ? args.batch_size : 65536;
+
+    pool::BrainWalletPoolServer server;
+    server.on_hit = [](const std::string& pw, int scheme) {
+        std::cout << "\n[HIT] Passphrase: " << pw
+                  << "  scheme=" << scheme << "\n" << std::flush;
+        std::ofstream log("brainwallet_hits.txt", std::ios::app);
+        if (log) { log << pw << "\t" << scheme << "\n"; log.flush(); }
+    };
+
+    if (!server.start(cfg)) {
+        std::cerr << "[!] Server start failed: " << server.error() << "\n";
+        return 1;
+    }
+
+    boxui::top(std::cout);
+    boxui::centered(std::cout, "BRAIN WALLET POOL SERVER");
+    boxui::top(std::cout);
+    boxui::kv(std::cout, "Port", std::to_string(cfg.port));
+    boxui::kv(std::cout, "Bloom filter", cfg.bloom_file);
+    boxui::kv(std::cout, "Hits saved to", "brainwallet_hits.txt");
+    boxui::bottom(std::cout);
+    std::cout << "\n[*] Waiting for clients... (Ctrl+C to stop)\n\n";
+
+    while (!g_shutdown && server.running()) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    server.stop();
+    std::cout << "\n[*] Server stopped.\n";
+    return 0;
+}
+
+// ── Pool client mode ──────────────────────────────────────────────────────────
+static int run_brainwallet_pool_client(const Arguments& args)
+{
+    namespace boxui = ::starminer::ui::box;
+
+    if (args.wordlist_file.empty()) {
+        std::cerr << "[!] --brainwallet-pool requires --wordlist <file>\n";
+        return 1;
+    }
+
+    // Parse host:port
+    std::string host = args.brainwallet_pool_url;
+    uint16_t port    = args.brainwallet_pool_port;
+    auto colon = host.rfind(':');
+    if (colon != std::string::npos) {
+        port = (uint16_t)std::stoi(host.substr(colon + 1));
+        host = host.substr(0, colon);
+    }
+
+    std::ifstream wl(args.wordlist_file);
+    if (!wl) {
+        std::cerr << "[!] Cannot open wordlist: " << args.wordlist_file << "\n";
+        return 1;
+    }
+
+    pool::BrainWalletPoolClient client;
+    std::cout << "[*] Connecting to " << host << ":" << port << "...\n";
+    if (!client.connect(host, port)) {
+        std::cerr << "[!] " << client.error() << "\n";
+        return 1;
+    }
+    std::cout << "[*] Connected.\n\n";
+
+    boxui::top(std::cout);
+    boxui::centered(std::cout, "BRAIN WALLET POOL CLIENT");
+    boxui::top(std::cout);
+    boxui::kv(std::cout, "Server", host + ":" + std::to_string(port));
+    boxui::kv(std::cout, "Wordlist", args.wordlist_file);
+    boxui::bottom(std::cout);
+    std::cout << "\n";
+
+    std::ofstream hitlog("brainwallet_hits.txt", std::ios::app);
+    const int batch_size = (args.batch_size > 0) ? args.batch_size : 4096;
+    uint64_t total_checked = 0, total_hits = 0;
+    const auto t_start = std::chrono::steady_clock::now();
+    auto t_last = t_start;
+
+    std::vector<std::string> batch;
+    batch.reserve(batch_size);
+    std::string line;
+
+    auto flush_batch = [&]() {
+        if (batch.empty()) return;
+        pool::BrainWalletScanResult result;
+        if (!client.scan_batch(batch, result)) {
+            std::cerr << "\n[!] Server error: " << client.error() << "\n";
+            return;
+        }
+        total_checked += batch.size();
+        for (const auto& h : result.hits) {
+            ++total_hits;
+            std::cout << "\n[HIT] " << h.passphrase
+                      << "  scheme=" << h.scheme_id << "\n";
+            if (hitlog) { hitlog << h.passphrase << "\t" << h.scheme_id << "\n"; hitlog.flush(); }
+        }
+        batch.clear();
+    };
+
+    while (!g_shutdown && client.connected() && std::getline(wl, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line.empty() || (int)line.size() > 256) continue;
+        batch.push_back(line);
+        if ((int)batch.size() >= batch_size) flush_batch();
+
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration<double>(now - t_last).count() >= 1.0) {
+            double secs = std::chrono::duration<double>(now - t_start).count();
+            std::cout << "\r[*] Sent: " << total_checked
+                      << "  Rate: " << bw_format_rate(total_checked / (secs > 0 ? secs : 1))
+                      << "  Hits: " << total_hits << "     " << std::flush;
+            t_last = now;
+        }
+    }
+    flush_batch();
+    client.disconnect();
+
+    print_summary(total_checked, total_hits, t_start);
+    return 0;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 int run_brain_wallet_mode(const Arguments& args)
 {
     namespace boxui = ::starminer::ui::box;
 
+    // Server mode: bloom filter stays on server
+    if (args.brainwallet_server) {
+        return run_brainwallet_server(args);
+    }
+
+    // Pool client mode: send passphrases to server, no local bloom needed
+    if (!args.brainwallet_pool_url.empty()) {
+        return run_brainwallet_pool_client(args);
+    }
+
     if (args.bloom_file.empty()) {
-        std::cerr << "[!] Brain wallet mode requires a bloom filter.\n"
-                  << "    Use: --bloom funded_addresses.blf\n";
+        std::cerr << "[!] Brain wallet mode requires --bloom <file.blf>\n"
+                  << "    Or connect to a pool: --brainwallet-pool host:17404\n";
         return 1;
     }
     if (args.wordlist_file.empty()) {
-        std::cerr << "[!] Brain wallet mode requires a wordlist.\n"
-                  << "    Use: --wordlist passphrases.txt\n";
+        std::cerr << "[!] Brain wallet mode requires --wordlist <passphrases.txt>\n";
         return 1;
     }
 

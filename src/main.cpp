@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
                 starminer::runtime::run_pool_mode(args, gpu_info);
             } else if (args.range_scan) {
                 starminer::runtime::run_range_scan(args);
-            } else if (args.brainwallet_mode) {
+            } else if (args.brainwallet_server || args.brainwallet_mode) {
                 starminer::runtime::run_brain_wallet_mode(args);
             } else if (args.benchmark) {
                 starminer::runtime::run_benchmark(args, gpu_info);
@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
         return starminer::runtime::run_range_scan(args);
     }
 
-    if (args.brainwallet_mode) {
+    if (args.brainwallet_server || args.brainwallet_mode) {
         return starminer::runtime::run_brain_wallet_mode(args);
     }
 
