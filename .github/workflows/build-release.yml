@@ -182,18 +182,24 @@ jobs:
             }
           }
 
-          # Use msiexec /a (admin/extract mode) — copies files without running
-          # hardware-check custom actions that cause /i to hang in CI
+          # Use lessmsi — reads MSI database directly, zero custom actions run
+          # msiexec /i and /a both trigger AMD's hardware-check custom actions
+          $lessmsiZip = "$env:TEMP\lessmsi.zip"
+          $lessmsiDir = "$env:TEMP\lessmsi"
+          $lessmsi    = "$lessmsiDir\lessmsi.exe"
+          Write-Host "Downloading lessmsi..."
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri "https://github.com/activescott/lessmsi/releases/download/v1.10.0/lessmsi-v1.10.0.zip" -OutFile $lessmsiZip -UseBasicParsing
+          Expand-Archive $lessmsiZip -DestinationPath $lessmsiDir -Force
+
           New-Item -ItemType Directory -Force -Path $hipPath | Out-Null
           foreach ($t in $targets) {
             $msi = Get-ChildItem "$rocmPkgs\$t" -Filter "*.msi" -ErrorAction SilentlyContinue |
                    Select-Object -First 1
             if ($msi) {
               $dest = "$hipPath\$t"
-              New-Item -ItemType Directory -Force -Path $dest | Out-Null
-              Write-Host "Extracting $t ($($msi.Name)) via msiexec /a..."
-              $proc = Start-Process msiexec -ArgumentList @("/a", $msi.FullName, "TARGETDIR=$dest", "/quiet", "/norestart") -Wait -PassThru
-              Write-Host "  exit code: $($proc.ExitCode)"
+              Write-Host "Extracting $t via lessmsi..."
+              & $lessmsi x $msi.FullName $dest\ 2>&1 | Select-Object -Last 3
             }
           }
 
