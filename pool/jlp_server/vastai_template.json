@@ -1,19 +1,23 @@
 {
-  "_comment": "Vast.ai template for StarMiner Puzzle #135 GPU worker",
-  "_usage": "Replace POOL_HOST with your server's public IP or hostname, WORKER_NAME with your BTC address",
-  "image": "nvidia/cuda:12.2.0-base-ubuntu22.04",
-  "disk": 8,
+  "_comment": "Vast.ai instance template for StarMiner Puzzle #135 — Pollard's Kangaroo pool worker",
+  "_usage": "Paste this JSON into Vast.ai 'Edit Image & Config' or use it via the CLI. Set WORKER_NAME to your BTC address.",
+
+  "image": "nvidia/cuda:12.2.0-runtime-ubuntu22.04",
+  "disk": 4,
+
   "env": {
-    "POOL_URL": "jlp://POOL_HOST:17403",
-    "WORKER_NAME": "YOUR_BTC_ADDRESS",
-    "GPU_IDS": "0"
+    "POOL_URL": "jlp://115.187.38.11:5678",
+    "WORKER_NAME": "YOUR_BTC_ADDRESS_HERE"
   },
-  "onstart": "#!/bin/bash\nset -e\napt-get update -qq && apt-get install -y -qq python3 python3-pip curl wget\nwget -q https://starnetlive.space/download/starminer-linux-x86_64 -O /usr/local/bin/starminer\nchmod +x /usr/local/bin/starminer\nwget -q https://starnetlive.space/download/starminer-worker.py -O /root/starminer-worker.py\npython3 /root/starminer-worker.py --pool \"${POOL_URL}\" --worker \"${WORKER_NAME}\" --gpu-ids \"${GPU_IDS}\"",
-  "ports": [],
+
+  "onstart": "#!/bin/bash\nset -euo pipefail\nBIN=/usr/local/bin/starminer\nURL=https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-cuda\necho '[*] Downloading StarMiner...'\nwget -q \"$URL\" -O \"$BIN\" && chmod +x \"$BIN\"\necho '[+] Starting pool worker...'\nexec \"$BIN\" --pool \"${POOL_URL}\" --worker \"${WORKER_NAME}\" --gpus all",
+
   "notes": [
-    "Port 17403 must be open on the pool host (TCP ingress).",
-    "Use jlps:// and provide --cert/--key to the server for encrypted connections.",
-    "Worker name should be a Bitcoin address for payout tracking.",
-    "Vast.ai runs this as a docker container — GPU is passed through automatically."
+    "Pool JLP server listens on TCP port 5678 — no extra ports needed on the Vast.ai side.",
+    "WORKER_NAME must be a Bitcoin address — rewards are tracked by this name.",
+    "POOL_URL: jlp:// = binary JLP protocol (recommended). Use jlps:// for TLS.",
+    "Binary is downloaded from the latest GitHub release on each container start.",
+    "GPU is passed through automatically by Vast.ai — no extra config needed.",
+    "Recommended GPUs: RTX 3060 Ti or better (CUDA 11.8+ required)."
   ]
 }
