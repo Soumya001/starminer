@@ -109,9 +109,14 @@
 #define cudaAccessPropertyPersisting     0
 #define cudaAccessPropertyStreaming      0
 
-// __umul64hi is already defined in AMD's amd_device_functions.h as a
-// static inline function (not a macro), so #ifndef cannot guard it.
-// Simply omit our definition entirely on the HIP path — AMD provides it.
+// __umul64hi is already defined in AMD's amd_device_functions.h.
+// No need to define it here — AMD provides it natively.
+
+// __syncwarp(mask): NVIDIA-only warp synchronization primitive.
+// On AMD GCN/RDNA all threads in a wavefront execute in lockstep,
+// so an explicit warp sync is a no-op.
+#define __syncwarp(mask)  ((void)0)
+#define __syncwarp()      ((void)0)
 
 #else
 // ── NVIDIA CUDA compilation path ─────────────────────────────────────────────
