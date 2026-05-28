@@ -145,50 +145,70 @@ jobs:
 
       - name: Install AMD HIP SDK
         if: steps.cache-hip.outputs.cache-hit != 'true'
-        shell: cmd
+        shell: powershell
         timeout-minutes: 40
         run: |
-          set URL=https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe
-          set INSTALLER=%TEMP%\hip-sdk.exe
-          set EXTRACT=%TEMP%\hip-extract
-          echo Downloading AMD HIP SDK via curl.exe...
-          curl.exe -L --retry 3 --retry-delay 5 -o "%INSTALLER%" "%URL%"
-          if errorlevel 1 ( echo Download failed & exit /b 1 )
-          echo Download complete. Extracting with 7-Zip...
-          "C:\Program Files\7-Zip\7z.exe" x "%INSTALLER%" -o"%EXTRACT%" -y
-          if errorlevel 1 ( echo Extraction failed & exit /b 1 )
-          echo Extraction done. Searching for hipcc...
-          dir "%EXTRACT%" /s /b | findstr /i "hipcc"
-          echo Top-level contents:
-          dir "%EXTRACT%"
+          $url      = "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
+          $inst     = "$env:TEMP\hip-sdk.exe"
+          $ext1     = "$env:TEMP\hip-ext1"
+          $ext2     = "$env:TEMP\hip-ext2"
+          $7z       = "C:\Program Files\7-Zip\7z.exe"
+          $hipPath  = "${{ env.HIP_PATH }}"
 
-      - name: Copy HIP files to install path
-        if: steps.cache-hip.outputs.cache-hit != 'true'
-        shell: powershell
-        run: |
-          $extract = "$env:TEMP\hip-extract"
-          Write-Host "Searching for hipcc in: $extract"
-          $hits = Get-ChildItem $extract -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
-          if (-not $hits) {
-            Write-Host "hipcc not found. Full tree (depth 3):"
-            Get-ChildItem $extract -Recurse -Depth 3 | ForEach-Object { Write-Host $_.FullName }
+          Write-Host "Downloading..."
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri $url -OutFile $inst -UseBasicParsing
+          Write-Host "Downloaded $((Get-Item $inst).Length) bytes"
+
+          Write-Host "Extracting outer installer..."
+          & $7z x $inst -o"$ext1" -y | Out-Null
+
+          # The structure is:
+          #   Packages\Apps\ROCmSDKPackages\SDKCore\          <- hipcc, clang HIP compiler
+          #   Packages\Apps\ROCmSDKPackages\LibrariesDevelopment\  <- headers + lib
+          # Each subfolder contains one .msi — extract them all with 7z
+          $rocmPkgs = "$ext1\Packages\Apps\ROCmSDKPackages"
+          $targets  = @("SDKCore", "LibrariesDevelopment", "LibrariesRuntime")
+
+          foreach ($t in $targets) {
+            $msi = Get-ChildItem "$rocmPkgs\$t" -Filter "*.msi" -ErrorAction SilentlyContinue |
+                   Select-Object -First 1
+            if ($msi) {
+              Write-Host "Extracting $t ($($msi.Name))..."
+              & $7z x $msi.FullName -o"$ext2\$t" -y | Out-Null
+            } else {
+              Write-Host "No .msi in $t (skipping)"
+            }
+          }
+
+          Write-Host "Searching for hipcc..."
+          $hits = Get-ChildItem $ext2 -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
+          $hits | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+
+          if ($hits.Count -eq 0) {
+            Write-Host "hipcc not found. Contents of ext2:"
+            Get-ChildItem $ext2 -Recurse -Depth 3 | ForEach-Object { Write-Host $_.FullName }
             exit 1
           }
-          $hipBin  = Split-Path $hits[0].FullName
-          $hipRoot = Split-Path $hipBin
-          Write-Host "HIP root detected: $hipRoot"
-          Write-Host "Copying to ${{ env.HIP_PATH }} ..."
-          New-Item -ItemType Directory -Force -Path "${{ env.HIP_PATH }}" | Out-Null
-          Copy-Item "$hipRoot\*" "${{ env.HIP_PATH }}" -Recurse -Force
-          Write-Host "Copy complete."
+
+          # Copy each extracted package into HIP_PATH
+          New-Item -ItemType Directory -Force -Path $hipPath | Out-Null
+          foreach ($t in $targets) {
+            if (Test-Path "$ext2\$t") {
+              Write-Host "Merging $t into $hipPath..."
+              Copy-Item "$ext2\$t\*" $hipPath -Recurse -Force -ErrorAction SilentlyContinue
+            }
+          }
+          Write-Host "Done. Contents of HIP_PATH\bin:"
+          Get-ChildItem "$hipPath\bin" -ErrorAction SilentlyContinue |
+            Select-Object -First 10 | ForEach-Object { Write-Host " $($_.Name)" }
 
       - name: Verify HIP installation
         shell: cmd
         run: |
-          dir "${{ env.HIP_PATH }}\bin" 2>nul || echo bin dir missing
           if exist "${{ env.HIP_PATH }}\bin\hipcc.bin.exe" ( echo HIP OK & exit /b 0 )
           if exist "${{ env.HIP_PATH }}\bin\hipcc"         ( echo HIP OK & exit /b 0 )
-          echo HIP not found - listing HIP_PATH:
+          echo HIP not found - listing:
           dir "${{ env.HIP_PATH }}" /s /b 2>nul
           exit /b 1
 
