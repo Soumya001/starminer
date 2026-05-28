@@ -145,22 +145,24 @@ jobs:
 
       - name: Install AMD HIP SDK
         if: steps.cache-hip.outputs.cache-hit != 'true'
-        shell: powershell
-        timeout-minutes: 90
+        shell: cmd
+        timeout-minutes: 40
         run: |
-          $url = "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
-          $installer = "$env:TEMP\hip-sdk.exe"
-          Write-Host "Downloading AMD HIP SDK ${{ env.HIP_VERSION }} (~2 GB)..."
-          $ProgressPreference = 'SilentlyContinue'  # much faster than default
-          Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Write-Host "Download complete ($('{0:N0}' -f (Get-Item $installer).Length) bytes)"
-          Write-Host "Installing silently..."
-          $proc = Start-Process -FilePath $installer -ArgumentList "/S" -PassThru -Wait
-          if ($proc.ExitCode -ne 0) {
-            Write-Error "Installer exited with code $($proc.ExitCode)"
-            exit 1
-          }
-          Write-Host "HIP SDK installed to ${{ env.HIP_PATH }}"
+          echo Downloading AMD HIP SDK %HIP_VERSION% via curl...
+          curl.exe -L --retry 3 --retry-delay 5 --progress-bar ^
+            -o "%TEMP%\hip-sdk.exe" ^
+            "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
+          echo Download complete. Extracting with 7-zip (no install needed)...
+          7z x "%TEMP%\hip-sdk.exe" -o"%TEMP%\hip-extract" -y -bso0 -bsp0
+          echo Copying HIP SDK files to %HIP_PATH%...
+          if not exist "%HIP_PATH%\bin" mkdir "%HIP_PATH%\bin"
+          if not exist "%HIP_PATH%\include" mkdir "%HIP_PATH%\include"
+          if not exist "%HIP_PATH%\lib" mkdir "%HIP_PATH%\lib"
+          xcopy /E /I /Q "%TEMP%\hip-extract\HIP\bin"     "%HIP_PATH%\bin"     >nul 2>&1 || echo no bin
+          xcopy /E /I /Q "%TEMP%\hip-extract\HIP\include" "%HIP_PATH%\include" >nul 2>&1 || echo no include
+          xcopy /E /I /Q "%TEMP%\hip-extract\HIP\lib"     "%HIP_PATH%\lib"     >nul 2>&1 || echo no lib
+          dir "%HIP_PATH%"
+          echo HIP SDK extracted.
 
       - name: Verify HIP installation
         shell: powershell
