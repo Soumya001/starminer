@@ -130,22 +130,50 @@ jobs:
   windows-hip:
     name: Windows x64 (HIP/AMD)
     runs-on: windows-2022
+    env:
+      HIP_VERSION: "6.3.0"
+      HIP_PATH: "C:\\Program Files\\AMD\\ROCm\\6.3"
     steps:
       - uses: actions/checkout@v6.0.2
 
+      - name: Cache AMD HIP SDK
+        id: cache-hip
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.HIP_PATH }}
+          key: amd-hip-sdk-${{ env.HIP_VERSION }}-windows
+
       - name: Install AMD HIP SDK
+        if: steps.cache-hip.outputs.cache-hit != 'true'
         shell: powershell
+        timeout-minutes: 90
         run: |
           $url = "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
           $installer = "$env:TEMP\hip-sdk.exe"
-          Write-Host "Downloading AMD HIP SDK..."
+          Write-Host "Downloading AMD HIP SDK ${{ env.HIP_VERSION }} (~2 GB)..."
+          $ProgressPreference = 'SilentlyContinue'  # much faster than default
           Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-          Write-Host "Installing AMD HIP SDK (silent)..."
-          Start-Process -Wait -FilePath $installer -ArgumentList "/S"
-          Write-Host "HIP SDK installed."
+          Write-Host "Download complete ($('{0:N0}' -f (Get-Item $installer).Length) bytes)"
+          Write-Host "Installing silently..."
+          $proc = Start-Process -FilePath $installer -ArgumentList "/S" -PassThru -Wait
+          if ($proc.ExitCode -ne 0) {
+            Write-Error "Installer exited with code $($proc.ExitCode)"
+            exit 1
+          }
+          Write-Host "HIP SDK installed to ${{ env.HIP_PATH }}"
+
+      - name: Verify HIP installation
+        shell: powershell
+        run: |
+          if (!(Test-Path "${{ env.HIP_PATH }}\bin\hipcc.bin.exe") -and
+              !(Test-Path "${{ env.HIP_PATH }}\bin\hipcc")) {
+            Write-Error "HIP not found at ${{ env.HIP_PATH }}"
+            exit 1
+          }
+          Write-Host "HIP SDK OK"
 
       - name: Install Ninja
-        run: choco install ninja -y
+        run: choco install ninja -y --no-progress
 
       - name: Build
         shell: cmd
@@ -155,7 +183,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ^
             -DSTARMINER_USE_ROCM=ON ^
             -DSTARMINER_USE_CUDA=OFF ^
-            -DCMAKE_PREFIX_PATH="C:\Program Files\AMD\ROCm\6.3" ^
+            -DCMAKE_PREFIX_PATH="${{ env.HIP_PATH }}" ^
             -DSTARMINER_BUILD_TESTS=OFF ^
             -DSTARMINER_BUILD_BENCHMARKS=OFF ^
             -DCMAKE_HIP_ARCHITECTURES="gfx1010;gfx1030;gfx1100;gfx1101;gfx1102"
