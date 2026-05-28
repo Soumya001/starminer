@@ -145,59 +145,52 @@ jobs:
 
       - name: Install AMD HIP SDK
         if: steps.cache-hip.outputs.cache-hit != 'true'
-        shell: powershell
+        shell: cmd
         timeout-minutes: 40
         run: |
-          # Try winget first (fast, no 1.4GB download)
-          Write-Host "Trying winget install AMD HIP SDK..."
-          $wg = winget install --id AMD.ROCmDev --accept-source-agreements --accept-package-agreements --silent 2>&1
-          Write-Host $wg
-          if (Test-Path "${{ env.HIP_PATH }}\bin") {
-            Write-Host "winget install succeeded"
-          } else {
-            Write-Host "winget failed or wrong path, falling back to direct download + 7z extract..."
-            $url = "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
-            $installer = "$env:TEMP\hip-sdk.exe"
-            $extract   = "$env:TEMP\hip-extract"
-            Write-Host "Downloading $url ..."
-            $ProgressPreference = 'SilentlyContinue'
-            Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
-            Write-Host "Extracting with 7z..."
-            & "C:\Program Files\7-Zip\7z.exe" x $installer -o"$extract" -y | Out-Null
-            Write-Host "Extraction done. Top-level:"
-            Get-ChildItem $extract | Select-Object Name, Attributes
-            Write-Host "Searching for hipcc..."
-            $found = Get-ChildItem $extract -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue |
-                     Select-Object -First 5 FullName
-            $found | ForEach-Object { Write-Host "Found: $($_.FullName)" }
-            # Find HIP root (parent of bin containing hipcc)
-            if ($found) {
-              $hipBin = Split-Path $found[0].FullName
-              $hipRoot = Split-Path $hipBin
-              Write-Host "HIP root: $hipRoot"
-              New-Item -ItemType Directory -Force -Path "${{ env.HIP_PATH }}" | Out-Null
-              Copy-Item "$hipRoot\*" "${{ env.HIP_PATH }}" -Recurse -Force
-              Write-Host "Copied to ${{ env.HIP_PATH }}"
-            } else {
-              Write-Host "hipcc not found -- listing full tree (depth 3):"
-              Get-ChildItem $extract -Recurse -Depth 3 | Select-Object FullName
-              exit 1
-            }
-          }
+          set URL=https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe
+          set INSTALLER=%TEMP%\hip-sdk.exe
+          set EXTRACT=%TEMP%\hip-extract
+          echo Downloading AMD HIP SDK via curl.exe...
+          curl.exe -L --retry 3 --retry-delay 5 -o "%INSTALLER%" "%URL%"
+          if errorlevel 1 ( echo Download failed & exit /b 1 )
+          echo Download complete. Extracting with 7-Zip...
+          "C:\Program Files\7-Zip\7z.exe" x "%INSTALLER%" -o"%EXTRACT%" -y
+          if errorlevel 1 ( echo Extraction failed & exit /b 1 )
+          echo Extraction done. Searching for hipcc...
+          dir "%EXTRACT%" /s /b | findstr /i "hipcc"
+          echo Top-level contents:
+          dir "%EXTRACT%"
 
-      - name: Verify HIP installation
+      - name: Copy HIP files to install path
+        if: steps.cache-hip.outputs.cache-hit != 'true'
         shell: powershell
         run: |
-          $hipBin = "${{ env.HIP_PATH }}\bin"
-          $found = Test-Path "$hipBin\hipcc.bin.exe" -or (Test-Path "$hipBin\hipcc")
-          if (!$found) {
-            Write-Host "Contents of HIP_PATH (depth 2):"
-            Get-ChildItem "${{ env.HIP_PATH }}" -Recurse -Depth 2 -ErrorAction SilentlyContinue |
-              Select-Object FullName | ForEach-Object { Write-Host $_.FullName }
-            Write-Error "HIP not found at ${{ env.HIP_PATH }}"
+          $extract = "$env:TEMP\hip-extract"
+          Write-Host "Searching for hipcc in: $extract"
+          $hits = Get-ChildItem $extract -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
+          if (-not $hits) {
+            Write-Host "hipcc not found. Full tree (depth 3):"
+            Get-ChildItem $extract -Recurse -Depth 3 | ForEach-Object { Write-Host $_.FullName }
             exit 1
           }
-          Write-Host "HIP SDK OK at $hipBin"
+          $hipBin  = Split-Path $hits[0].FullName
+          $hipRoot = Split-Path $hipBin
+          Write-Host "HIP root detected: $hipRoot"
+          Write-Host "Copying to ${{ env.HIP_PATH }} ..."
+          New-Item -ItemType Directory -Force -Path "${{ env.HIP_PATH }}" | Out-Null
+          Copy-Item "$hipRoot\*" "${{ env.HIP_PATH }}" -Recurse -Force
+          Write-Host "Copy complete."
+
+      - name: Verify HIP installation
+        shell: cmd
+        run: |
+          dir "${{ env.HIP_PATH }}\bin" 2>nul || echo bin dir missing
+          if exist "${{ env.HIP_PATH }}\bin\hipcc.bin.exe" ( echo HIP OK & exit /b 0 )
+          if exist "${{ env.HIP_PATH }}\bin\hipcc"         ( echo HIP OK & exit /b 0 )
+          echo HIP not found - listing HIP_PATH:
+          dir "${{ env.HIP_PATH }}" /s /b 2>nul
+          exit /b 1
 
       - name: Install Ninja
         run: choco install ninja -y --no-progress
