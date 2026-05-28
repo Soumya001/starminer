@@ -140,16 +140,6 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             args.range_scan_min_bits = std::stoi(argv[++i]);
         } else if (arg == "--max-bits" && i + 1 < argc) {
             args.range_scan_max_bits = std::stoi(argv[++i]);
-        } else if (arg == "--brainwallet-server") {
-            args.brainwallet_server = true;
-            args.brainwallet_mode = true;
-        } else if (arg == "--brainwallet-pool" && i + 1 < argc) {
-            args.brainwallet_pool_url = argv[++i];
-            args.brainwallet_mode = true;
-            args.pool_mode = false;
-            args.pool_url.clear();
-        } else if (arg == "--bw-port" && i + 1 < argc) {
-            args.brainwallet_pool_port = (uint16_t)std::stoi(argv[++i]);
         } else if (arg == "--brainwallet-setup") {
             args.brainwallet_setup = true;
         } else if (arg == "--puzzle-only-v2") {
@@ -275,15 +265,6 @@ Brain Wallet Mode:
   --min-bits <N>              Start bit width for range scan (default: 1).
   --max-bits <N>              End bit width for range scan (default: 50).
 
-Brain Wallet Pool (server holds bloom filter; clients just need a wordlist):
-  --brainwallet-server        Run as pool server. Clients connect and send passphrases.
-                              Requires --bloom <file> on the server.
-                              Example: starminer --brainwallet-server --bloom funded.blf
-  --brainwallet-pool <host:port>
-                              Connect to a brain wallet pool server instead of
-                              scanning locally. Requires --wordlist but NOT --bloom.
-                              Example: starminer --brainwallet --brainwallet-pool 192.168.1.10:17404 --wordlist rockyou.txt
-  --bw-port <N>               Brain wallet server port (default: 17404).
 
 GPU Options:
   --gpus, -g <ids>            GPU device IDs to use (default: auto-detect all).

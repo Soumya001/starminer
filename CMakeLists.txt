@@ -632,7 +632,6 @@ endif()
 set(POOL_SOURCES
     src/pool/jlp_pool_client.cpp
     src/pool/pool_manager.cpp
-    src/pool/brainwallet_pool.cpp
 )
 
 # Check if source files exist

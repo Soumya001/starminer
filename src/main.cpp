@@ -295,7 +295,7 @@ int main(int argc, char* argv[]) {
         return starminer::runtime::run_range_scan(args);
     }
 
-    if (args.brainwallet_server || args.brainwallet_mode) {
+    if (args.brainwallet_mode) {
         return starminer::runtime::run_brain_wallet_mode(args);
     }
 
