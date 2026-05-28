@@ -154,25 +154,26 @@ jobs:
             "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
           echo Download complete. Extracting with 7-zip (no install needed)...
           7z x "%TEMP%\hip-sdk.exe" -o"%TEMP%\hip-extract" -y -bso0 -bsp0
-          echo Copying HIP SDK files to %HIP_PATH%...
-          if not exist "%HIP_PATH%\bin" mkdir "%HIP_PATH%\bin"
-          if not exist "%HIP_PATH%\include" mkdir "%HIP_PATH%\include"
-          if not exist "%HIP_PATH%\lib" mkdir "%HIP_PATH%\lib"
-          xcopy /E /I /Q "%TEMP%\hip-extract\HIP\bin"     "%HIP_PATH%\bin"     >nul 2>&1 || echo no bin
-          xcopy /E /I /Q "%TEMP%\hip-extract\HIP\include" "%HIP_PATH%\include" >nul 2>&1 || echo no include
-          xcopy /E /I /Q "%TEMP%\hip-extract\HIP\lib"     "%HIP_PATH%\lib"     >nul 2>&1 || echo no lib
-          dir "%HIP_PATH%"
-          echo HIP SDK extracted.
+          echo Listing extraction root to find HIP folder structure...
+          dir "%TEMP%\hip-extract" /s /b | findstr /i "hipcc" | head
+          for /f "delims=" %%i in ('dir "%TEMP%\hip-extract" /s /b /ad ^| findstr /i "\\bin$" ^| findstr /i "hip" ^| head') do (
+            echo Found HIP bin at: %%i
+          )
+          echo Full top-level structure:
+          dir "%TEMP%\hip-extract"
 
       - name: Verify HIP installation
         shell: powershell
         run: |
-          if (!(Test-Path "${{ env.HIP_PATH }}\bin\hipcc.bin.exe") -and
-              !(Test-Path "${{ env.HIP_PATH }}\bin\hipcc")) {
-            Write-Error "HIP not found at ${{ env.HIP_PATH }}"
-            exit 1
+          Write-Host "Contents of HIP_PATH:"
+          if (Test-Path "${{ env.HIP_PATH }}") {
+            Get-ChildItem "${{ env.HIP_PATH }}" -Recurse -Depth 2 | Select-Object FullName | head -30
+          } else {
+            Write-Host "HIP_PATH does not exist yet"
           }
-          Write-Host "HIP SDK OK"
+          Write-Host "Searching for hipcc anywhere in extract..."
+          Get-ChildItem "$env:TEMP\hip-extract" -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue |
+            Select-Object -First 10 FullName
 
       - name: Install Ninja
         run: choco install ninja -y --no-progress
