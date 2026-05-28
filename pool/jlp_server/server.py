@@ -50,6 +50,7 @@ CHUNK_BITS    = 48
 CHUNK_SIZE    = 2**CHUNK_BITS
 CHUNK_TIMEOUT = 1800   # seconds before a work assignment expires
 DP_BITS       = 28
+NUM_CHUNKS    = (RANGE_END - RANGE_START + 1) // CHUNK_SIZE  # = 2^86
 
 _HERE      = Path(__file__).resolve().parent
 DB_PATH    = _HERE.parent.parent / "data" / "pool_dps.db"
@@ -158,9 +159,9 @@ async def assign_work(db: aiosqlite.Connection, worker_name: str) -> dict:
     await db.commit()
 
     for _ in range(300):
-        chunk_id = random.randint(0, (2**38) - 1)
+        chunk_id = random.randint(0, NUM_CHUNKS - 1)
         rs = RANGE_START + chunk_id * CHUNK_SIZE
-        re = rs + CHUNK_SIZE - 1
+        re = min(rs + CHUNK_SIZE - 1, RANGE_END)
         rs_hex = f"0x{rs:064x}"
         re_hex = f"0x{re:064x}"
 
