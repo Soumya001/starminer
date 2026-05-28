@@ -5,7 +5,8 @@
  * (SHA-256 -> secp256k1 -> RIPEMD-160), checks resulting addresses
  * against a bloom filter of funded Bitcoin addresses.
  *
- * Supports CUDA, ROCm (HIP), and Apple Metal backends.
+ * GPU: CUDA (full), Metal (full). ROCm brain wallet not supported due to
+ * HIP device linker limitations with extern __device__ symbols.
  */
 
 #include "runtime/brain_wallet_runner.hpp"
@@ -24,7 +25,7 @@
 #include "tools/utxo_bloom_builder.hpp"
 #include "ui/box_render.hpp"
 
-#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
+#if defined(STARMINER_USE_CUDA)
 #include "gpu/brain_wallet_gpu.hpp"
 #elif defined(STARMINER_USE_METAL)
 #include "gpu/brain_wallet_metal.hpp"
@@ -135,7 +136,7 @@ int run_brain_wallet_mode(const Arguments& args)
     const auto t_start   = std::chrono::steady_clock::now();
     auto       t_last    = t_start;
 
-#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
+#if defined(STARMINER_USE_CUDA)
     {
         gpu::MultiGPUBrainWallet::Config cfg;
         cfg.gpu_ids    = args.gpu_ids;
