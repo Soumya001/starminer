@@ -62,6 +62,11 @@ struct Arguments {
     size_t save_interval = 1000000;       // Save state every N passphrases checked
     bool cpu_rules = false;               // Force CPU rule processing (enables multi-GPU)
 
+    // Range scan mode (GPU bloom filter sweep across key ranges)
+    bool range_scan = false;              // Scan key ranges against bloom filter
+    int  range_scan_min_bits = 1;         // Start from 2^(N-1)
+    int  range_scan_max_bits = 50;        // End at 2^N - 1
+
     bool puzzle_only_v2 = false;
     std::string puzzle_keys_file;         // Override path to puzzle_history.json
     std::string schemes_csv;              // Phase 3: comma list of derivation schemes

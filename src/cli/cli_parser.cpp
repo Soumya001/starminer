@@ -131,6 +131,15 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             cli.brainwallet_set = true;
         } else if (arg == "--wordlist" && i + 1 < argc) {
             args.wordlist_file = argv[++i];
+        } else if (arg == "--range-scan") {
+            args.range_scan = true;
+            args.brainwallet_mode = true;
+            args.pool_mode = false;
+            args.pool_url.clear();
+        } else if (arg == "--min-bits" && i + 1 < argc) {
+            args.range_scan_min_bits = std::stoi(argv[++i]);
+        } else if (arg == "--max-bits" && i + 1 < argc) {
+            args.range_scan_max_bits = std::stoi(argv[++i]);
         } else if (arg == "--brainwallet-setup") {
             args.brainwallet_setup = true;
         } else if (arg == "--puzzle-only-v2") {
@@ -249,7 +258,12 @@ Brain Wallet Mode:
   --brainwallet               Scan passphrases against funded Bitcoin addresses.
   --wordlist <file>           Passphrase list to scan (one per line).
   --bloom <file.blf>          Bloom filter of funded addresses (.blf format).
-                              Build one with: ./build_bloom --utxo dump.csv
+                              Build one with: ./build_bloom -i utxo.csv -o out.blf
+  --range-scan                GPU sweep of raw key ranges against bloom filter.
+                              Scans private keys k = 2^(N-1)..2^N-1 for each bit
+                              width N from --min-bits to --max-bits. Requires --bloom.
+  --min-bits <N>              Start bit width for range scan (default: 1).
+  --max-bits <N>              End bit width for range scan (default: 50).
 
 GPU Options:
   --gpus, -g <ids>            GPU device IDs to use (default: auto-detect all).

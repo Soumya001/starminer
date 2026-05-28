@@ -466,6 +466,11 @@ if(APPLE AND STARMINER_USE_METAL
         set_source_files_properties(src/gpu/metal_multi_gpu_puzzle.mm
             PROPERTIES COMPILE_FLAGS "-fobjc-arc")
     endif()
+    if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/brain_wallet_metal.mm")
+        list(APPEND CORE_SOURCES src/gpu/brain_wallet_metal.mm)
+        set_source_files_properties(src/gpu/brain_wallet_metal.mm
+            PROPERTIES COMPILE_FLAGS "-fobjc-arc")
+    endif()
     # Bake the MSL source into a generated C++ header so neither the
     # production dispatcher nor the test binaries need to search the
     # filesystem for kangaroo.metal at runtime. The previous approach

@@ -5,6 +5,7 @@ namespace starminer {
 namespace runtime {
 
 int run_brain_wallet_mode(const Arguments& args);
+int run_range_scan(const Arguments& args);
 
 }  // namespace runtime
 }  // namespace starminer

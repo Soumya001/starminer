@@ -26,10 +26,15 @@
 #include <functional>
 #include <map>
 
-#if defined(STARMINER_USE_CUDA) || defined(STARMINER_USE_ROCM)
-// Forward declare stream type OUTSIDE namespace
+#if defined(STARMINER_USE_CUDA)
+// Forward-declare CUDA stream type — matches global ::cudaStream_t
 struct CUstream_st;
 typedef CUstream_st* cudaStream_t;
+#elif defined(STARMINER_USE_ROCM)
+// On HIP, cudaStream_t is mapped to hipStream_t by hip_cuda_compat.hpp.
+// Include the HIP header here so the type is visible in this header.
+#include <hip/hip_runtime_api.h>
+typedef hipStream_t cudaStream_t;
 #endif
 
 namespace starminer {
