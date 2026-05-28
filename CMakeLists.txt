@@ -551,7 +551,9 @@ if(CORE_SOURCES)
         starminer_platform
         Threads::Threads
     )
-    target_include_directories(starminer_core PUBLIC ${XXHASH_INCLUDE_DIR})
+    target_include_directories(starminer_core PUBLIC
+        ${XXHASH_INCLUDE_DIR}
+        ${CMAKE_SOURCE_DIR}/src/gpu)
     # v1.4.1 UI: btc_balance.cpp uses libcurl when available. Define
     # STARMINER_HAVE_CURL=1 so the header's #ifdef chooses the live
     # mempool.space code path; otherwise the stub returns nullopt.

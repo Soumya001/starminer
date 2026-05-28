@@ -31,10 +31,16 @@
 struct CUstream_st;
 typedef CUstream_st* cudaStream_t;
 #elif defined(STARMINER_USE_ROCM)
-// On HIP, cudaStream_t is mapped to hipStream_t by hip_cuda_compat.hpp.
-// Include the HIP header here so the type is visible in this header.
-#include <hip/hip_runtime_api.h>
-typedef hipStream_t cudaStream_t;
+// In HIP .cu compilation, hip_cuda_compat.hpp (included early in every .cu)
+// defines cudaStream_t via macro. For regular C++ compilation units that
+// include this header, use a void* placeholder — same ABI, no HIP headers
+// needed.
+#  ifdef __HIPCC__
+#    include <hip/hip_runtime_api.h>
+     typedef hipStream_t cudaStream_t;
+#  else
+     typedef void* cudaStream_t;
+#  endif
 #endif
 
 namespace starminer {
