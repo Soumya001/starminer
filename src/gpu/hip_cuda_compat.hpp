@@ -46,11 +46,16 @@
 
 // Memory management
 #define cudaMalloc               hipMalloc
+#define cudaMallocManaged        hipMallocManaged
+#define cudaMallocHost           hipHostMalloc
 #define cudaFree                 hipFree
 #define cudaMemcpy               hipMemcpy
 #define cudaMemcpyAsync          hipMemcpyAsync
+#define cudaMemcpyPeer           hipMemcpyPeer
+#define cudaMemcpyPeerAsync      hipMemcpyPeerAsync
 #define cudaMemset               hipMemset
 #define cudaMemsetAsync          hipMemsetAsync
+#define cudaMemGetInfo           hipMemGetInfo
 #define cudaHostAlloc            hipHostMalloc
 #define cudaFreeHost             hipHostFree
 
@@ -63,11 +68,13 @@
 #define cudaGetErrorString       hipGetErrorString
 
 // Stream management
-#define cudaStreamCreate         hipStreamCreate
-#define cudaStreamDestroy        hipStreamDestroy
-#define cudaStreamSynchronize    hipStreamSynchronize
-#define cudaStreamDefault        hipStreamDefault
-#define cudaStreamNonBlocking    hipStreamNonBlocking
+#define cudaStreamCreate              hipStreamCreate
+#define cudaStreamCreateWithFlags     hipStreamCreateWithFlags
+#define cudaStreamDestroy             hipStreamDestroy
+#define cudaStreamSynchronize         hipStreamSynchronize
+#define cudaStreamWaitEvent           hipStreamWaitEvent
+#define cudaStreamDefault             hipStreamDefault
+#define cudaStreamNonBlocking         hipStreamNonBlocking
 
 // Event management
 #define cudaEventCreate          hipEventCreate
