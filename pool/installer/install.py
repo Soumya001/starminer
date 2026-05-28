@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
 Puzzle #135 Pool — Universal Installer
-One script. Any OS. Terminal-first.
+One script. Any OS. Works interactively OR headless (Vast.ai / CI).
+
+  Interactive:  curl -fsSL https://starnetlive.space/install-135.sh | bash
+  Vast.ai:      set WORKER_NAME env var → fully automatic, no prompts
 """
 
 import json
@@ -15,10 +18,14 @@ import urllib.request
 from pathlib import Path
 
 # ─── Config ───────────────────────────────────────────────────────────
-VERSION = "1.0.0"
-POOL_URL_DEFAULT = "https://starnetlive.space"
-WORKER_URL = "https://raw.githubusercontent.com/Soumya001/puzzle-135-pool/main/worker/puzzle135_worker.py"
-APP_NAME = "Puzzle135Worker"
+VERSION      = "2.0.0"
+POOL_JLP     = "jlp://115.187.38.11:5678"
+GH_RELEASE   = "https://github.com/Soumya001/starminer/releases/latest/download"
+APP_NAME     = "StarMiner135"
+
+# Headless mode: set WORKER_NAME env var to skip all prompts (Vast.ai / Docker)
+HEADLESS     = bool(os.environ.get("WORKER_NAME", "").strip())
+WORKER_ENV   = os.environ.get("WORKER_NAME", "").strip()
 
 # ─── Colors ───────────────────────────────────────────────────────────
 C = {
@@ -26,52 +33,51 @@ C = {
     "b": "\033[94m", "c": "\033[96m", "w": "\033[97m", "x": "\033[0m",
     "bold": "\033[1m", "dim": "\033[2m",
 }
-
 if platform.system() == "Windows":
     try:
         import ctypes
-        kernel32 = ctypes.windll.kernel32
-        kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+        ctypes.windll.kernel32.SetConsoleMode(ctypes.windll.kernel32.GetStdHandle(-11), 7)
     except Exception:
         C = {k: "" for k in C}
 
-# ─── Platform helpers ─────────────────────────────────────────────────
-IS_WIN = platform.system() == "Windows"
-IS_MAC = platform.system() == "Darwin"
+# ─── Platform ─────────────────────────────────────────────────────────
+IS_WIN   = platform.system() == "Windows"
+IS_MAC   = platform.system() == "Darwin"
 IS_LINUX = platform.system() == "Linux"
-ARCH = platform.machine().lower()
 
 if IS_WIN:
-    INSTALL_DIR = Path.home() / "Puzzle135"
-    BINARY_NAME = "collider.exe"
+    INSTALL_DIR  = Path.home() / "Puzzle135"
+    BINARY_NAME  = "starminer.exe"
 else:
-    INSTALL_DIR = Path.home() / ".puzzle135"
-    BINARY_NAME = "collider"
+    INSTALL_DIR  = Path.home() / ".puzzle135"
+    BINARY_NAME  = "starminer"
 
-WORKER_PATH = INSTALL_DIR / "puzzle135_worker.py"
-CONFIG_PATH = INSTALL_DIR / "worker.json"
-BINARY_PATH = INSTALL_DIR / BINARY_NAME
+BINARY_PATH  = INSTALL_DIR / BINARY_NAME
+CONFIG_PATH  = INSTALL_DIR / "config.json"
 
-# ─── UI helpers ───────────────────────────────────────────────────────
+# ─── UI ───────────────────────────────────────────────────────────────
 def banner():
+    mode = f"{C['y']}[HEADLESS — Vast.ai]{C['x']} " if HEADLESS else ""
     print(f"""
 {C['c']}{'═'*55}{C['x']}
-{C['bold']}  Puzzle #135 Pool  {C['dim']}—{C['x']}{C['bold']}  Universal Installer v{VERSION}{C['x']}
+{C['bold']}  Puzzle #135 Pool  {C['dim']}—{C['x']}{C['bold']}  StarMiner v{VERSION}  {mode}{C['x']}
 {C['c']}{'─'*55}{C['x']}
   Prize: ~13.5 BTC  |  Algorithm: Pollard's Kangaroo
 {C['c']}{'═'*55}{C['x']}
 """)
 
-def ok(msg):   print(f"{C['g']}[+] {C['x']}{msg}")
-def info(msg): print(f"{C['b']}[*] {C['x']}{msg}")
-def warn(msg): print(f"{C['y']}[!] {C['x']}{msg}")
-def err(msg):  print(f"{C['r']}[✗] {C['x']}{msg}")
+def ok(msg):   print(f"{C['g']}[+]{C['x']} {msg}", flush=True)
+def info(msg): print(f"{C['b']}[*]{C['x']} {msg}", flush=True)
+def warn(msg): print(f"{C['y']}[!]{C['x']} {msg}", flush=True)
+def err(msg):  print(f"{C['r']}[✗]{C['x']} {msg}", flush=True)
 
 def ask(prompt, default=""):
+    if HEADLESS:
+        return default
     if default:
-        print(f"{C['dim']}{prompt} [{default}]:{C['x']}", end=" ")
+        print(f"{C['dim']}{prompt} [{default}]:{C['x']}", end=" ", flush=True)
     else:
-        print(f"{C['w']}{prompt}:{C['x']}", end=" ")
+        print(f"{C['w']}{prompt}:{C['x']}", end=" ", flush=True)
     try:
         val = input().strip()
     except EOFError:
@@ -80,279 +86,248 @@ def ask(prompt, default=""):
 
 def ask_required(prompt):
     while True:
-        print(f"{C['w']}{prompt}:{C['x']}", end=" ")
-        val = input().strip()
+        val = ask(prompt)
         if val:
             return val
-        err("Required. Please enter a value.")
+        warn("This field is required.")
 
-# ─── Core ─────────────────────────────────────────────────────────────
+# ─── GPU detection ────────────────────────────────────────────────────
 def detect_gpus():
-    """Try to detect GPUs and determine backend type."""
-    nvidia_gpus = []
-    amd_gpus = []
-    intel_gpus = []
-
-    # NVIDIA detection
+    nvidia, amd = [], []
     if shutil.which("nvidia-smi"):
         try:
-            out = subprocess.check_output(["nvidia-smi", "-L"], text=True, stderr=subprocess.DEVNULL)
-            for i, line in enumerate(out.strip().split("\n")):
-                if line.startswith("GPU "):
-                    nvidia_gpus.append(str(i))
+            out = subprocess.check_output(["nvidia-smi", "-L"], text=True,
+                                          stderr=subprocess.DEVNULL)
+            nvidia = [str(i) for i, l in enumerate(out.splitlines())
+                      if l.startswith("GPU ")]
         except Exception:
             pass
+    if not nvidia:
+        for path in ["/proc/bus/pci/devices", "/sys/class/drm"]:
+            if Path(path).exists():
+                try:
+                    out = subprocess.check_output(["lspci"], text=True,
+                                                  stderr=subprocess.DEVNULL)
+                    amd = [l for l in out.splitlines()
+                           if "AMD" in l and ("Radeon" in l or "Navi" in l)]
+                except Exception:
+                    pass
+                break
+    return {"nvidia": nvidia, "amd": amd}
 
-    # AMD detection (Linux)
-    if IS_LINUX and shutil.which("lspci"):
-        try:
-            out = subprocess.check_output(["lspci"], text=True, stderr=subprocess.DEVNULL)
-            for line in out.split("\n"):
-                if "VGA" in line or "Display" in line:
-                    if "AMD" in line or "ATI" in line:
-                        amd_gpus.append(line.strip())
-                    elif "Intel" in line and "Arc" in line:
-                        intel_gpus.append(line.strip())
-        except Exception:
-            pass
+# ─── Binary selection ─────────────────────────────────────────────────
+def select_binary(gpu_info):
+    """Return (download_url, label) for the best available binary."""
+    if IS_WIN:
+        if gpu_info["nvidia"]:
+            return f"{GH_RELEASE}/starminer-windows-x64-cuda.exe",   "Windows CUDA (NVIDIA)"
+        if gpu_info["amd"]:
+            return f"{GH_RELEASE}/starminer-windows-x64-hip.exe",    "Windows HIP (AMD)"
+        return     f"{GH_RELEASE}/starminer-windows-x64-cpu.exe",    "Windows CPU"
+    if IS_MAC:
+        return     f"{GH_RELEASE}/starminer-macos-arm64",            "macOS Apple Silicon"
+    # Linux
+    if gpu_info["nvidia"]:
+        return     f"{GH_RELEASE}/starminer-linux-x64-cuda",         "Linux CUDA (NVIDIA)"
+    if gpu_info["amd"]:
+        return     f"{GH_RELEASE}/starminer-linux-x64-rocm",         "Linux ROCm (AMD)"
+    return         f"{GH_RELEASE}/starminer-linux-x64-cpu",          "Linux CPU"
 
-    return {
-        "nvidia": nvidia_gpus,
-        "amd": amd_gpus,
-        "intel": intel_gpus,
-    }
-
-def download_worker():
-    INSTALL_DIR.mkdir(parents=True, exist_ok=True)
-    info(f"Downloading worker to {WORKER_PATH}")
+# ─── Download ─────────────────────────────────────────────────────────
+def download_binary(url, dest: Path):
+    info(f"Downloading {url.split('/')[-1]} ...")
+    dest.parent.mkdir(parents=True, exist_ok=True)
     try:
-        urllib.request.urlretrieve(WORKER_URL, str(WORKER_PATH))
-        ok(f"Worker saved ({WORKER_PATH.stat().st_size:,} bytes)")
+        urllib.request.urlretrieve(url, str(dest))
+        if not IS_WIN:
+            dest.chmod(0o755)
+        ok(f"Saved to {dest}  ({dest.stat().st_size:,} bytes)")
+        return True
     except Exception as e:
         err(f"Download failed: {e}")
-        sys.exit(1)
+        return False
 
-def save_config(cfg):
-    with open(CONFIG_PATH, "w") as f:
-        json.dump(cfg, f, indent=2)
-    ok(f"Config saved to {CONFIG_PATH}")
-
-def create_linux_desktop(name, cmd, icon_text="🧩"):
-    """Create .desktop launcher on Linux."""
+# ─── Desktop / service helpers ────────────────────────────────────────
+def create_linux_desktop(cmd):
     apps_dir = Path.home() / ".local" / "share" / "applications"
     apps_dir.mkdir(parents=True, exist_ok=True)
-    desktop_path = apps_dir / f"{APP_NAME}.desktop"
-    desktop_content = f"""[Desktop Entry]
-Name={name}
-Comment=Puzzle #135 Pool Worker
+    desktop = apps_dir / f"{APP_NAME}.desktop"
+    desktop.write_text(f"""[Desktop Entry]
+Name={APP_NAME}
+Comment=Puzzle #135 Kangaroo Pool Worker
 Exec={cmd}
 Type=Application
 Terminal=true
 Icon=utilities-terminal
-Categories=Utility;
-"""
-    desktop_path.write_text(desktop_content)
-    desktop_path.chmod(0o755)
-    ok(f"Application menu entry: {desktop_path}")
+""")
+    desktop.chmod(0o755)
+    ok(f"App menu entry: {desktop}")
+    d = Path.home() / "Desktop"
+    if d.exists():
+        shutil.copy2(desktop, d / f"{APP_NAME}.desktop")
+        (d / f"{APP_NAME}.desktop").chmod(0o755)
+        ok(f"Desktop shortcut: {d / APP_NAME}.desktop")
 
-    # Also copy to Desktop if it exists
-    desktop_dir = Path.home() / "Desktop"
-    if desktop_dir.exists():
-        desktop_copy = desktop_dir / f"{APP_NAME}.desktop"
-        shutil.copy2(desktop_path, desktop_copy)
-        desktop_copy.chmod(0o755)
-        ok(f"Desktop shortcut: {desktop_copy}")
+def create_macos_command(cmd):
+    d = Path.home() / "Desktop"
+    d.mkdir(exist_ok=True)
+    p = d / f"{APP_NAME}.command"
+    p.write_text(f"#!/bin/bash\ncd {INSTALL_DIR}\n{cmd}\n")
+    p.chmod(0o755)
+    ok(f"Desktop command: {p}")
 
-def create_macos_command(name, cmd):
-    """Create .command file on macOS."""
-    desktop_dir = Path.home() / "Desktop"
-    desktop_dir.mkdir(exist_ok=True)
-    cmd_path = desktop_dir / f"{APP_NAME}.command"
-    cmd_content = f"""#!/bin/bash
-cd {INSTALL_DIR}
-{cmd}
-"""
-    cmd_path.write_text(cmd_content)
-    cmd_path.chmod(0o755)
-    ok(f"Desktop command: {cmd_path}")
+def create_windows_bat(cmd):
+    for desktop in [Path.home() / "Desktop",
+                    Path.home() / "OneDrive" / "Desktop"]:
+        if desktop.exists():
+            bat = desktop / f"{APP_NAME}.bat"
+            bat.write_text(f'@echo off\ncd /d "{INSTALL_DIR}"\n{cmd}\npause\n')
+            ok(f"Desktop shortcut: {bat}")
+            return
+    bat = INSTALL_DIR / f"{APP_NAME}.bat"
+    bat.write_text(f'@echo off\ncd /d "{INSTALL_DIR}"\n{cmd}\npause\n')
+    ok(f"Batch file: {bat}")
 
-def create_windows_shortcut(name, cmd):
-    """Create .bat file on Windows Desktop."""
-    desktop = Path.home() / "Desktop"
-    # Handle OneDrive/Desktop or missing Desktop folder
-    if not desktop.exists():
-        one_drive_desktop = Path.home() / "OneDrive" / "Desktop"
-        if one_drive_desktop.exists():
-            desktop = one_drive_desktop
-        else:
-            desktop.mkdir(parents=True, exist_ok=True)
-    bat_path = desktop / f"{APP_NAME}.bat"
-    bat_path.write_text(f'@echo off\ncd /d "{INSTALL_DIR}"\n{cmd}\npause\n')
-    ok(f"Desktop batch: {bat_path}")
-
-def install_linux_service(worker_name, wallet, pool_url, use_cpu=False):
-    """Install systemd user service on Linux."""
-    systemd_dir = Path.home() / ".config" / "systemd" / "user"
-    systemd_dir.mkdir(parents=True, exist_ok=True)
-    service_path = systemd_dir / f"{APP_NAME}.service"
-    python = sys.executable
-    cpu_flag = " --cpu" if use_cpu else ""
-    service_content = f"""[Unit]
-Description=Puzzle #135 Pool Worker
+def install_systemd_service(cmd):
+    sd = Path.home() / ".config" / "systemd" / "user"
+    sd.mkdir(parents=True, exist_ok=True)
+    svc = sd / f"{APP_NAME}.service"
+    svc.write_text(f"""[Unit]
+Description=Puzzle #135 Kangaroo Pool Worker
 After=network.target
 
 [Service]
 Type=simple
 WorkingDirectory={INSTALL_DIR}
-ExecStart={python} {WORKER_PATH} --pool {pool_url} --name {worker_name} --wallet {wallet}{cpu_flag}
+ExecStart={cmd}
 Restart=always
 RestartSec=10
 
 [Install]
 WantedBy=default.target
-"""
-    service_path.write_text(service_content)
-    ok(f"Systemd user service: {service_path}")
-    info("To start background service:")
+""")
+    ok(f"Systemd service: {svc}")
+    info("Enable with:")
     print(f"  systemctl --user enable --now {APP_NAME}.service")
-    print(f"  systemctl --user status {APP_NAME}.service")
     print(f"  journalctl --user -u {APP_NAME}.service -f")
 
-def install_windows_service(worker_name, wallet, pool_url, use_cpu=False):
-    """Create scheduled task on Windows."""
-    cpu_flag = " --cpu" if use_cpu else ""
-    ok("To run in background on Windows, use Task Scheduler:")
-    print(f"  schtasks /create /tn {APP_NAME} /tr \"{sys.executable} {WORKER_PATH} --pool {pool_url} --name {worker_name} --wallet {wallet}{cpu_flag}\" /sc onlogon /rl highest")
-
+# ─── Main ─────────────────────────────────────────────────────────────
 def main():
     banner()
 
-    # ── Step 1: Detect GPUs ───────────────────────────────────────────
+    # ── Detect GPU ────────────────────────────────────────────────────
+    info("Detecting GPU...")
     gpu_info = detect_gpus()
-    use_cpu = False
     if gpu_info["nvidia"]:
-        ok(f"Detected {len(gpu_info['nvidia'])} NVIDIA GPU(s): {', '.join(gpu_info['nvidia'])}")
+        ok(f"NVIDIA GPU(s) detected: {', '.join(gpu_info['nvidia'])}")
     elif gpu_info["amd"]:
-        warn("AMD GPU detected — CUDA not available.")
-        info("StarMiner will use CPU mode (slower but works on any PC).")
-        use_cpu = True
-    elif gpu_info["intel"]:
-        warn("Intel Arc GPU detected — CUDA not available.")
-        info("StarMiner will use CPU mode (slower but works on any PC).")
-        use_cpu = True
+        warn("AMD GPU detected — will use ROCm/HIP binary")
     else:
-        warn("No NVIDIA GPU detected. Worker will run on CPU (slower but works on any PC).")
-        use_cpu = True
+        warn("No discrete GPU found — will use CPU binary (slower)")
 
-    # ── Step 2: Form ──────────────────────────────────────────────────
-    print(f"\n{C['bold']}┌─ Worker Configuration ──────────────────────────────┐{C['x']}")
-    print(f"{C['dim']}│  Pool: {POOL_URL_DEFAULT}                              │{C['x']}")
-    print(f"{C['dim']}│  Just enter your worker name and BTC payout address. │{C['x']}")
-    print(f"{C['bold']}└──────────────────────────────────────────────────────┘{C['x']}\n")
+    # ── Select binary ─────────────────────────────────────────────────
+    dl_url, dl_label = select_binary(gpu_info)
+    ok(f"Selected: {dl_label}")
 
-    default_name = f"worker-{platform.node()}"
-    worker_name = ask_required("Worker name (or BTC address)")
-    wallet = ask("BTC payout address (optional)", worker_name)
-    pool_url = POOL_URL_DEFAULT
+    # ── Worker name ───────────────────────────────────────────────────
+    if HEADLESS:
+        worker_name = WORKER_ENV
+        ok(f"Worker name from env: {worker_name}")
+    else:
+        print(f"\n{C['bold']}Enter your Bitcoin address as your worker name.{C['x']}")
+        print(f"{C['dim']}Rewards are tracked and paid out to this address.{C['x']}\n")
+        worker_name = ask_required("BTC address (worker name)")
 
-    print("")
+    pool_url = POOL_JLP
 
-    # ── Step 3: Download ──────────────────────────────────────────────
-    download_worker()
-    cfg = {
-        "worker_name": worker_name,
-        "wallet_address": wallet,
-        "pool_url": pool_url,
+    # ── Already installed? ────────────────────────────────────────────
+    if BINARY_PATH.exists() and not HEADLESS:
+        warn(f"StarMiner already installed at {INSTALL_DIR}")
+        choice = ask("  [R]einstall  [U]ninstall  [C]ancel", "R").upper()
+        if choice == "U":
+            shutil.rmtree(INSTALL_DIR, ignore_errors=True)
+            ok("Uninstalled.")
+            return
+        elif choice == "C":
+            return
+        info("Reinstalling...")
+        BINARY_PATH.unlink(missing_ok=True)
+
+    # ── Download binary ───────────────────────────────────────────────
+    if not download_binary(dl_url, BINARY_PATH):
+        # AMD HIP fallback to CPU on Windows if HIP binary not yet released
+        if IS_WIN and gpu_info["amd"]:
+            warn("HIP binary not available yet — falling back to CPU")
+            dl_url = f"{GH_RELEASE}/starminer-windows-x64-cpu.exe"
+            if not download_binary(dl_url, BINARY_PATH):
+                sys.exit(1)
+        else:
+            sys.exit(1)
+
+    # ── Save config ───────────────────────────────────────────────────
+    CONFIG_PATH.write_text(json.dumps({
+        "worker_name":  worker_name,
+        "pool_url":     pool_url,
+        "binary":       str(BINARY_PATH),
         "installed_at": time.time(),
-        "version": VERSION,
-    }
-    save_config(cfg)
+        "version":      VERSION,
+    }, indent=2))
+    ok(f"Config: {CONFIG_PATH}")
 
-    # ── Step 4: Desktop Launcher ──────────────────────────────────────
-    print(f"\n{C['bold']}┌─ Creating Desktop Launcher ─────────────────────────┐{C['x']}")
-    py = sys.executable
-    wp = str(WORKER_PATH)
-    # Quote paths on Windows if they contain spaces
-    if IS_WIN:
-        if " " in py:
-            py = f'"{py}"'
-        if " " in wp:
-            wp = f'"{wp}"'
-    cmd = f"{py} {wp} --pool {pool_url} --name {worker_name}"
-    if wallet:
-        cmd += f" --wallet {wallet}"
-    if use_cpu:
-        cmd += " --cpu"
+    # ── Build run command ─────────────────────────────────────────────
+    binary = f'"{BINARY_PATH}"' if IS_WIN and " " in str(BINARY_PATH) else str(BINARY_PATH)
+    cmd = f'{binary} --pool {pool_url} --worker {worker_name} --gpus all'
 
-    if IS_LINUX:
-        create_linux_desktop(APP_NAME, cmd)
-    elif IS_MAC:
-        create_macos_command(APP_NAME, cmd)
-    elif IS_WIN:
-        create_windows_shortcut(APP_NAME, cmd)
-    else:
-        warn("Unknown OS — no desktop shortcut created.")
+    # ── Desktop / service setup (skip in headless) ────────────────────
+    if not HEADLESS:
+        print(f"\n{C['bold']}Creating shortcut...{C['x']}")
+        if IS_LINUX:   create_linux_desktop(cmd)
+        elif IS_MAC:   create_macos_command(cmd)
+        elif IS_WIN:   create_windows_bat(cmd)
 
-    # ── Step 5: Background Service (optional) ─────────────────────────
-    print(f"\n{C['bold']}┌─ Background Service (optional) ─────────────────────┐{C['x']}")
-    print(f"{C['dim']}│  The desktop shortcut opens a terminal dashboard.   │{C['x']}")
-    print(f"{C['dim']}│  You can also run the worker as a background service.│{C['x']}")
-    print(f"{C['bold']}└──────────────────────────────────────────────────────┘{C['x']}\n")
+        if IS_LINUX and shutil.which("systemctl"):
+            print(f"\n{C['bold']}Background service (optional):{C['x']}")
+            if ask("Install systemd user service? [y/N]", "N").lower() == "y":
+                install_systemd_service(cmd)
 
-    if IS_LINUX and shutil.which("systemctl"):
-        install_linux_service(worker_name, wallet, pool_url, use_cpu)
-    elif IS_WIN:
-        install_windows_service(worker_name, wallet, pool_url, use_cpu)
-    else:
-        info("Background service setup not available on this OS.")
-
-    # ── Step 6: Start ─────────────────────────────────────────────────
+    # ── Summary ───────────────────────────────────────────────────────
     print(f"\n{C['g']}{'═'*55}{C['x']}")
-    print(f"{C['bold']}  Installation complete!{C['x']}")
+    print(f"{C['bold']}  {'Ready!' if HEADLESS else 'Installation complete!'}{C['x']}")
+    print(f"{C['g']}{'─'*55}{C['x']}")
+    print(f"  Worker : {C['c']}{worker_name}{C['x']}")
+    print(f"  Pool   : {C['c']}{pool_url}{C['x']}")
+    print(f"  Binary : {C['c']}{BINARY_PATH}{C['x']}")
     print(f"{C['g']}{'═'*55}{C['x']}\n")
 
-    print(f"{C['w']}Next steps:{C['x']}")
-    print(f"  1. Double-click the '{APP_NAME}' icon on your desktop")
-    print(f"  2. Or run directly:")
-    print(f"     {C['c']}{cmd}{C['x']}")
-    print("")
-
-    start_now = ask("Start worker now? [Y/n]", "Y").lower()
-    if start_now in ("y", "yes", ""):
-        print("")
-        info("Starting worker...")
-        print(f"{C['dim']}─" * 55 + f"{C['x']}\n")
-        try:
-            os.chdir(INSTALL_DIR)
-            if IS_WIN:
-                # Build command as list to avoid shell parsing issues
-                cmd_list = [sys.executable, str(WORKER_PATH), "--pool", pool_url, "--name", worker_name]
-                if wallet:
-                    cmd_list.extend(["--wallet", wallet])
-                if use_cpu:
-                    cmd_list.append("--cpu")
-                subprocess.run(cmd_list)
-            else:
-                subprocess.run(cmd, shell=True)
-        except KeyboardInterrupt:
-            pass
-        except Exception as e:
-            err(f"Failed to start worker: {e}")
-            print(f"  Try running manually: {cmd}")
+    # ── Start ─────────────────────────────────────────────────────────
+    if HEADLESS:
+        info("Starting StarMiner (headless mode — logs below)...")
+        print(f"{C['dim']}{'─'*55}{C['x']}\n", flush=True)
+        os.execv(str(BINARY_PATH), [
+            str(BINARY_PATH),
+            "--pool", pool_url,
+            "--worker", worker_name,
+            "--gpus", "all",
+        ])
     else:
-        ok("Done. Run the desktop shortcut anytime to start.")
+        start = ask("Start mining now? [Y/n]", "Y").lower()
+        if start in ("y", "yes", ""):
+            info("Starting StarMiner...")
+            print(f"{C['dim']}{'─'*55}{C['x']}\n", flush=True)
+            try:
+                os.chdir(INSTALL_DIR)
+                subprocess.run(cmd, shell=True)
+            except KeyboardInterrupt:
+                pass
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print(f"\n{C['y']}[!] Cancelled by user.{C['x']}")
+        print(f"\n{C['y']}[!] Cancelled.{C['x']}")
         sys.exit(0)
     except Exception as e:
         import traceback
         print(f"\n{C['r']}[✗] Installer crashed: {e}{C['x']}")
-        print(f"{C['dim']}--- Traceback ---{C['x']}")
         traceback.print_exc()
-        print(f"{C['dim']}-----------------{C['x']}")
-        print(f"\n{C['y']}[!] Please screenshot this error and report it.{C['x']}")
         sys.exit(1)

@@ -1,57 +1,55 @@
 #!/bin/bash
-# Puzzle #135 Pool Universal Installer
-# Linux / macOS — curl -fsSL https://starnetlive.space/install-135.sh | bash
+# Puzzle #135 Pool — Universal Installer
+#
+# Interactive (Linux/macOS):
+#   curl -fsSL https://starnetlive.space/install-135.sh | bash
+#
+# Vast.ai / headless (set WORKER_NAME, no prompts):
+#   WORKER_NAME=bc1qYOURBTCADDRESS bash -c \
+#     "curl -fsSL https://starnetlive.space/install-135.sh | bash"
+#
+# Vast.ai on-start field (paste as-is, replace BTC address):
+#   WORKER_NAME=bc1qYOURBTCADDRESS bash -c "curl -fsSL https://starnetlive.space/install-135.sh | bash"
 
 set -e
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+C_RED='\033[0;31m'; C_GREEN='\033[0;32m'
+C_YELLOW='\033[1;33m'; C_BLUE='\033[0;34m'
+C_CYAN='\033[0;36m'; C_NC='\033[0m'
 
-banner() {
-    echo ""
-    echo -e "${CYAN}===============================================${NC}"
-    echo -e "${CYAN}  Puzzle #135 Pool — Universal Installer${NC}"
-    echo -e "${CYAN}  Pollard's Kangaroo  |  ~13.5 BTC Prize${NC}"
-    echo -e "${CYAN}===============================================${NC}"
-    echo ""
-}
+_ok()   { echo -e "${C_GREEN}[+]${C_NC} $*"; }
+_info() { echo -e "${C_BLUE}[*]${C_NC} $*"; }
+_warn() { echo -e "${C_YELLOW}[!]${C_NC} $*"; }
+_err()  { echo -e "${C_RED}[x]${C_NC} $*"; }
 
-check_python() {
-    if command -v python3 &> /dev/null; then
+# ── Find Python 3 ────────────────────────────────────────────────────
+if   command -v python3 &>/dev/null; then PYTHON=python3
+elif command -v python  &>/dev/null; then PYTHON=python
+else
+    _info "Python not found — installing..."
+    if command -v apt-get &>/dev/null; then
+        apt-get update -qq && apt-get install -y -qq python3
         PYTHON=python3
-    elif command -v python &> /dev/null; then
-        PYTHON=python
+    elif command -v yum &>/dev/null; then
+        yum install -y -q python3
+        PYTHON=python3
     else
-        echo -e "${RED}[!] Python 3 is required but not found.${NC}"
-        echo -e "${YELLOW}    Please install Python 3.8+ and re-run.${NC}"
+        _err "Cannot install Python automatically. Please install python3 and re-run."
         exit 1
     fi
-    VER=$($PYTHON --version 2>&1 | awk '{print $2}')
-    echo -e "${GREEN}[+] Python found: $VER${NC}"
-}
+fi
+_ok "Python: $($PYTHON --version 2>&1)"
 
-download_installer() {
-    local url="https://raw.githubusercontent.com/Soumya001/puzzle-135-pool/main/installer/install.py"
-    local tmpfile=$(mktemp /tmp/pool135_installer.XXXXXX.py)
-    echo -e "${BLUE}[*] Downloading installer...${NC}"
-    if command -v curl &> /dev/null; then
-        curl -fsSL "$url" -o "$tmpfile"
-    elif command -v wget &> /dev/null; then
-        wget -q "$url" -O "$tmpfile"
-    else
-        echo -e "${RED}[!] curl or wget is required.${NC}"
-        exit 1
-    fi
-    echo -e "${GREEN}[+] Installer downloaded.${NC}"
-    echo ""
-    $PYTHON "$tmpfile"
-    rm -f "$tmpfile"
-}
+# ── Download and run install.py ───────────────────────────────────────
+URL="https://raw.githubusercontent.com/Soumya001/starminer/main/pool/installer/install.py"
+TMPFILE=$(mktemp /tmp/starminer_install.XXXXXX.py)
 
-banner
-check_python
-download_installer
+_info "Downloading installer..."
+if   command -v curl &>/dev/null;  then curl -fsSL  "$URL" -o "$TMPFILE"
+elif command -v wget &>/dev/null;  then wget -q "$URL" -O "$TMPFILE"
+else _err "curl or wget required."; exit 1; fi
+_ok "Ready."
+echo ""
+
+# WORKER_NAME is passed through to install.py via environment
+exec $PYTHON "$TMPFILE"
