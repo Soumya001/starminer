@@ -35,7 +35,7 @@ typedef CUstream_st* cudaStream_t;
 // defines cudaStream_t via macro. For regular C++ compilation units that
 // include this header, use a void* placeholder — same ABI, no HIP headers
 // needed.
-#  ifdef __HIPCC__
+#  if defined(__HIPCC__) || defined(__HIP_PLATFORM_AMD__) || defined(__HIP_PLATFORM_HCC__)
 #    include <hip/hip_runtime_api.h>
      typedef hipStream_t cudaStream_t;
 #  else

@@ -18,7 +18,7 @@
 // Platform detection
 // ============================================================================
 
-#if defined(__HIPCC__)
+#if defined(__HIPCC__) || defined(__HIP_PLATFORM_AMD__) || defined(__HIP_PLATFORM_HCC__)
 // ── AMD ROCm / HIP compilation path ─────────────────────────────────────────
 #include <hip/hip_runtime.h>
 
@@ -119,7 +119,7 @@
 #else
 // ── NVIDIA CUDA compilation path ─────────────────────────────────────────────
 #include <cuda_runtime.h>
-#endif  // __HIPCC__
+#endif  // __HIPCC__ / __HIP_PLATFORM_AMD__
 
 // ============================================================================
 // Note: portable carry-chain arithmetic (__uint128_t fallbacks for PTX) is
