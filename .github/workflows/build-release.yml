@@ -58,7 +58,7 @@ jobs:
           cmake --build build --target starminer -j4
           strip build/starminer
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-linux-x64-cuda
           path: build/starminer
@@ -86,7 +86,7 @@ jobs:
           cmake --build build --target starminer -j4
           strip build/starminer
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-linux-x64-cpu
           path: build/starminer
@@ -121,7 +121,7 @@ jobs:
             -DCMAKE_CUDA_ARCHITECTURES="61;70;75;80;86;89;100;120"
           cmake --build build --target starminer -j4
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-windows-x64-cuda
           path: build\starminer.exe
@@ -256,7 +256,7 @@ jobs:
             -DCMAKE_HIP_ARCHITECTURES="gfx1010;gfx1030;gfx1100;gfx1101;gfx1102"
           cmake --build build --target starminer -j4
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-windows-x64-hip
           path: build\starminer.exe
@@ -283,7 +283,7 @@ jobs:
             -DSTARMINER_BUILD_BENCHMARKS=OFF
           cmake --build build --target starminer -j4
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-windows-x64-cpu
           path: build\starminer.exe
@@ -309,7 +309,7 @@ jobs:
             -DSTARMINER_BUILD_BENCHMARKS=OFF
           cmake --build build --target starminer -j4
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-macos-arm64
           path: build/starminer
@@ -341,7 +341,7 @@ jobs:
           cmake --build build --target starminer -j4
           strip build/starminer
 
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/upload-artifact@v4
         with:
           name: starminer-linux-x64-rocm
           path: build/starminer
@@ -353,7 +353,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v8.0.1
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
