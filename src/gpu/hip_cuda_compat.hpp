@@ -80,19 +80,25 @@
 
 // Misc
 #define cudaDeviceReset          hipDeviceReset
+#define cudaGetLastError         hipGetLastError
+#define cudaPeekAtLastError      hipPeekAtLastError
 
-// __umul64hi: high 64 bits of 128-bit product (missing from HIP's device API).
-// CUDA provides this as a hardware intrinsic (IMUL.HI); HIP/ROCm exposes the
-// same operation via __uint128_t on GCN/RDNA, which the compiler lowers to
-// v_mul_hi_u32 pairs.  NOT placed in a shared header on the CUDA/MSVC path
-// because unsigned __int128 is unsupported by MSVC (the Windows nvcc host
-// compiler) — see the note at the bottom of this file.
+// Error codes missing from earlier compat mappings
+#define cudaErrorInvalidDevice   hipErrorInvalidDevice
+#define cudaErrorInvalidValue    hipErrorInvalidValue
+#define cudaErrorNotReady        hipErrorNotReady
+#define cudaErrorLaunchFailure   hipErrorLaunchFailure
+
+// __umul64hi: AMD HIP already defines this in amd_device_functions.h.
+// Only define our fallback if it hasn't been defined yet.
+#ifndef __umul64hi
 static __device__ __forceinline__
 unsigned long long __umul64hi(unsigned long long a, unsigned long long b) {
     return (unsigned long long)(
         (unsigned __int128)a * (unsigned __int128)b >> 64
     );
 }
+#endif
 
 #else
 // ── NVIDIA CUDA compilation path ─────────────────────────────────────────────
