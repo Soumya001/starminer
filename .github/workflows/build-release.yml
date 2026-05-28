@@ -205,9 +205,17 @@ jobs:
 
           # lessmsi extracts into nested SourceDir path — flatten it to a clean root
           Write-Host "Finding hipcc in extraction..."
-          $hipcc = Get-ChildItem $hipPath -Recurse -Filter "hipcc.exe" -ErrorAction SilentlyContinue |
+          # lessmsi may extract as hipcc or hipcc.exe — search for both
+          $hipcc = Get-ChildItem $hipPath -Recurse -ErrorAction SilentlyContinue |
+                   Where-Object { $_.Name -imatch "^hipcc(\.exe)?$" } |
                    Select-Object -First 1
-          if (-not $hipcc) { Write-Error "hipcc.exe not found after extraction"; exit 1 }
+          if (-not $hipcc) {
+            Write-Host "hipcc not found. Top 30 files in extraction:"
+            Get-ChildItem $hipPath -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 30 | ForEach-Object { Write-Host $_.FullName }
+            Write-Error "hipcc not found after extraction"
+            exit 1
+          }
 
           $nestedRoot = Split-Path (Split-Path $hipcc.FullName)  # parent of bin
           Write-Host "Nested ROCm root: $nestedRoot"
