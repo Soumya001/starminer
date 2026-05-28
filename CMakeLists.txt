@@ -517,7 +517,8 @@ if(APPLE AND STARMINER_USE_METAL
 endif()
 
 # Brain-wallet host-side sources.
-# brain_wallet_gpu.cu is CUDA-only (added to GPU_SOURCES below).
+# brain_wallet_gpu.cu is GPU-only (added to GPU_SOURCES below).
+list(APPEND CORE_SOURCES src/runtime/brain_wallet_runner.cpp)
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/gpu/gpu_rules.cpp"
    AND NOT STARMINER_BACKEND STREQUAL "CUDA")
     list(APPEND CORE_SOURCES src/gpu/gpu_rules.cpp)

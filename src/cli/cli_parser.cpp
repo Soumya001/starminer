@@ -126,9 +126,11 @@ int parse_args_core(int argc, char* argv[], Arguments& args,
             cli.bloom_file_set = true;
         } else if (arg == "--brainwallet") {
             args.brainwallet_mode = true;
-            args.pool_mode = false;     // Brainwallet overrides pool mode from config
-            args.pool_url.clear();      // Don't leak a pool URL once brainwallet is selected
+            args.pool_mode = false;
+            args.pool_url.clear();
             cli.brainwallet_set = true;
+        } else if (arg == "--wordlist" && i + 1 < argc) {
+            args.wordlist_file = argv[++i];
         } else if (arg == "--brainwallet-setup") {
             args.brainwallet_setup = true;
         } else if (arg == "--puzzle-only-v2") {
@@ -242,6 +244,12 @@ Puzzle Options:
   --all-unsolved              Auto-progress through all unsolved puzzles.
   --auto-next                 After solving the current puzzle, advance to the
                               next one automatically.
+
+Brain Wallet Mode:
+  --brainwallet               Scan passphrases against funded Bitcoin addresses.
+  --wordlist <file>           Passphrase list to scan (one per line).
+  --bloom <file.blf>          Bloom filter of funded addresses (.blf format).
+                              Build one with: ./build_bloom --utxo dump.csv
 
 GPU Options:
   --gpus, -g <ids>            GPU device IDs to use (default: auto-detect all).

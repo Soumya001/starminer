@@ -143,6 +143,23 @@ MultiGPUBrainWallet::process_batch(const std::vector<std::string>& batch)
             nullptr   // default (null) stream — synchronous
         );
         cudaDeviceSynchronize();
+
+        // Read back hits
+        uint32_t hit_count = 0;
+        cudaMemcpy(&hit_count, impl_->d_match_count, sizeof(uint32_t),
+                   cudaMemcpyDeviceToHost);
+        if (hit_count > 0) {
+            const uint32_t take = hit_count < (uint32_t)v2::V2_MAX_MATCHES_PER_BATCH
+                                  ? hit_count : (uint32_t)v2::V2_MAX_MATCHES_PER_BATCH;
+            std::vector<v2::V2MatchRecord> recs(take);
+            cudaMemcpy(recs.data(), impl_->d_matches,
+                       take * sizeof(v2::V2MatchRecord), cudaMemcpyDeviceToHost);
+            for (const auto& r : recs) {
+                if (r.pp_idx < batch.size()) {
+                    result.hits.push_back({batch[r.pp_idx], r.scheme_id});
+                }
+            }
+        }
     }
 
     cudaFree(d_pw);

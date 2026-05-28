@@ -1,10 +1,6 @@
 #pragma once
 /**
  * MultiGPUBrainWallet — host-facing API for the GPU v2 brain-wallet pipeline.
- *
- * Implementation is in brain_wallet_gpu.cu (CUDA only). Include this header
- * from host .cpp files that need to drive the pipeline; the .cu file provides
- * the full Impl body so CUDA types never leak into regular translation units.
  */
 
 #include <cstdint>
@@ -24,8 +20,14 @@ public:
         bool store_private_keys    = false;
     };
 
+    struct Hit {
+        std::string passphrase;
+        uint8_t     scheme_id = 0;
+    };
+
     struct BatchResult {
-        uint64_t processed = 0;
+        uint64_t        processed = 0;
+        std::vector<Hit> hits;
     };
 
     explicit MultiGPUBrainWallet(const Config& cfg);

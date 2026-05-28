@@ -52,6 +52,7 @@
 #include "core/update_checker.hpp"
 #include "core/yaml_config.hpp"
 #include "runtime/gpu_detection.hpp"        // detect_gpus
+#include "runtime/brain_wallet_runner.hpp"
 #include "runtime/pool_solver.hpp"
 #include "runtime/puzzle_solver.hpp"
 #include "runtime/runtime_globals.hpp"
@@ -181,13 +182,9 @@ int main(int argc, char* argv[]) {
         update_handle = starminer::check_for_updates_async();
     }
 
-    if (args.brainwallet_mode) {
-        std::cerr << "[!] Brain wallet mode is not available in this build.\n";
-        return 1;
-    }
-
     if (args.brainwallet_setup) {
-        std::cerr << "[!] Brain wallet setup is not available in this build.\n";
+        std::cerr << "[!] Brain wallet setup wizard is not yet implemented.\n"
+                  << "    Set up wordlists manually and use: --brainwallet --wordlist <file> --bloom <file>\n";
         return 1;
     }
 
@@ -286,9 +283,12 @@ int main(int argc, char* argv[]) {
     }
 
     // ---- Mode dispatch (CLI / non-interactive) --------------------------------
-    // POOL MODE first (its banner/header comes from the runtime driver).
     if (args.pool_mode) {
         return starminer::runtime::run_pool_mode(args, gpu_info);
+    }
+
+    if (args.brainwallet_mode) {
+        return starminer::runtime::run_brain_wallet_mode(args);
     }
 
     // If neither benchmark nor puzzle is set, auto-enable puzzle mode.
