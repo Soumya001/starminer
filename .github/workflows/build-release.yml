@@ -126,6 +126,46 @@ jobs:
           name: starminer-windows-x64-cuda
           path: build\starminer.exe
 
+  # ── Windows x64 — HIP/AMD (RDNA1+: RX 5000/6000/7000) ─────────────
+  windows-hip:
+    name: Windows x64 (HIP/AMD)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install AMD HIP SDK
+        shell: powershell
+        run: |
+          $url = "https://download.amd.com/developer/eula/rocm-hub/AMD-Software-PRO-Edition-24.Q4-Win10-Win11-For-HIP.exe"
+          $installer = "$env:TEMP\hip-sdk.exe"
+          Write-Host "Downloading AMD HIP SDK..."
+          Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+          Write-Host "Installing AMD HIP SDK (silent)..."
+          Start-Process -Wait -FilePath $installer -ArgumentList "/S"
+          Write-Host "HIP SDK installed."
+
+      - name: Install Ninja
+        run: choco install ninja -y
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          cmake -B build -G Ninja ^
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ^
+            -DSTARMINER_USE_ROCM=ON ^
+            -DSTARMINER_USE_CUDA=OFF ^
+            -DCMAKE_PREFIX_PATH="C:\Program Files\AMD\ROCm\6.3" ^
+            -DSTARMINER_BUILD_TESTS=OFF ^
+            -DSTARMINER_BUILD_BENCHMARKS=OFF ^
+            -DCMAKE_HIP_ARCHITECTURES="gfx1010;gfx1030;gfx1100;gfx1101;gfx1102"
+          cmake --build build --target starminer -j4
+
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: starminer-windows-x64-hip
+          path: build\starminer.exe
+
   # ── Windows x64 — CPU ───────────────────────────────────────────────
   windows-cpu:
     name: Windows x64 (CPU)
@@ -214,7 +254,7 @@ jobs:
   # ── GitHub Release ───────────────────────────────────────────────────
   release:
     name: Publish Release
-    needs: [linux-cuda, linux-cpu, linux-rocm, windows-cuda, windows-cpu, macos-arm64]
+    needs: [linux-cuda, linux-cpu, linux-rocm, windows-cuda, windows-hip, windows-cpu, macos-arm64]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -228,9 +268,8 @@ jobs:
           cp artifacts/starminer-linux-x64-cpu/starminer         starminer-linux-x64-cpu
           cp artifacts/starminer-linux-x64-rocm/starminer        starminer-linux-x64-rocm
           cp artifacts/starminer-windows-x64-cuda/starminer.exe  starminer-windows-x64-cuda.exe
+          cp artifacts/starminer-windows-x64-hip/starminer.exe   starminer-windows-x64-hip.exe
           cp artifacts/starminer-windows-x64-cpu/starminer.exe   starminer-windows-x64-cpu.exe
-          # Windows ROCm: CPU fallback until HIP is ported to Windows
-          cp artifacts/starminer-windows-x64-cpu/starminer.exe   starminer-windows-x64-rocm.exe
           cp artifacts/starminer-macos-arm64/starminer            starminer-macos-arm64
           chmod +x starminer-linux-x64-cuda starminer-linux-x64-cpu starminer-linux-x64-rocm starminer-macos-arm64
           ls -lh starminer-*
@@ -244,8 +283,8 @@ jobs:
             starminer-linux-x64-cpu
             starminer-linux-x64-rocm
             starminer-windows-x64-cuda.exe
+            starminer-windows-x64-hip.exe
             starminer-windows-x64-cpu.exe
-            starminer-windows-x64-rocm.exe
             starminer-macos-arm64
           body: |
             ## StarMiner ${{ github.ref_name }}

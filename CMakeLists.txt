@@ -177,23 +177,30 @@ elseif(STARMINER_USE_CUDA)
         endif()
     endif()
 elseif(STARMINER_USE_ROCM)
-    # Linux: Try AMD ROCm / HIP
+    # Linux/Windows: Try AMD ROCm / HIP
+    # On Windows, set CMAKE_PREFIX_PATH to AMD HIP SDK install dir before configuring
     find_package(hip QUIET)
     if(hip_FOUND)
         set(STARMINER_BACKEND "ROCM")
         enable_language(HIP)
         add_compile_definitions(STARMINER_USE_ROCM=1)
-        add_compile_definitions(STARMINER_PLATFORM_LINUX=1)
+        if(UNIX)
+            add_compile_definitions(STARMINER_PLATFORM_LINUX=1)
+        endif()
 
         # RDNA2 (RX 6xxx) = gfx1030, RDNA3 (RX 7xxx) = gfx1100-1102
-        # Vega (RX 5xxx/Vega) = gfx906/gfx908
+        # RDNA1 (RX 5xxx) = gfx1010, Vega = gfx906/gfx908
         if(NOT DEFINED CMAKE_HIP_ARCHITECTURES)
-            set(CMAKE_HIP_ARCHITECTURES "gfx906;gfx908;gfx1030;gfx1100;gfx1101;gfx1102")
+            set(CMAKE_HIP_ARCHITECTURES "gfx906;gfx908;gfx1010;gfx1030;gfx1100;gfx1101;gfx1102")
             message(STATUS "Compiling for HIP architectures: ${CMAKE_HIP_ARCHITECTURES}")
         endif()
 
-        set(CMAKE_HIP_FLAGS_RELEASE "-O3 -DNDEBUG")
-        message(STATUS "AMD ROCm/HIP backend enabled")
+        if(MSVC)
+            set(CMAKE_HIP_FLAGS_RELEASE "-O3 -DNDEBUG")
+        else()
+            set(CMAKE_HIP_FLAGS_RELEASE "-O3 -DNDEBUG")
+        endif()
+        message(STATUS "AMD ROCm/HIP backend enabled (${CMAKE_SYSTEM_NAME})")
     else()
         message(WARNING "STARMINER_USE_ROCM=ON but HIP not found — falling back to CPU")
     endif()
