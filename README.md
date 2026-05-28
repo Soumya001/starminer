@@ -23,12 +23,17 @@ The installer auto-detects your GPU, downloads the right binary from the latest 
 Download the binary for your platform from [Releases](https://github.com/Soumya001/starminer/releases/latest), then:
 
 ```bash
-# Linux / macOS
-chmod +x starminer-linux-x64-cuda
+# Linux / macOS — NVIDIA
 ./starminer-linux-x64-cuda --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
 
-# Windows
+# Linux — AMD
+./starminer-linux-x64-rocm --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
+
+# Windows — NVIDIA
 .\starminer-windows-x64-cuda.exe --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
+
+# Windows — AMD (RX 5000/6000/7000)
+.\starminer-windows-x64-hip.exe --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
 ```
 
 Or launch without arguments for the interactive menu:
@@ -39,24 +44,28 @@ Or launch without arguments for the interactive menu:
 
 ## Platform binaries
 
-| Platform | Binary | GPU backend |
-|----------|--------|-------------|
-| Linux x64 | `starminer-linux-x64-cuda` | NVIDIA CUDA |
-| Linux x64 | `starminer-linux-x64-rocm` | AMD ROCm/HIP |
-| Linux x64 | `starminer-linux-x64-cpu` | CPU (any) |
-| Windows x64 | `starminer-windows-x64-cuda.exe` | NVIDIA CUDA |
-| Windows x64 | `starminer-windows-x64-cpu.exe` | CPU (any) |
-| macOS ARM64 | `starminer-macos-arm64` | Apple Metal |
+| Platform | Binary | GPU |
+|----------|--------|-----|
+| Linux x64 | `starminer-linux-x64-cuda` | NVIDIA (CUDA) |
+| Linux x64 | `starminer-linux-x64-rocm` | AMD (ROCm/HIP) |
+| Linux x64 | `starminer-linux-x64-cpu` | CPU only |
+| Windows x64 | `starminer-windows-x64-cuda.exe` | NVIDIA (CUDA) |
+| Windows x64 | `starminer-windows-x64-hip.exe` | AMD RX 5000/6000/7000 (HIP) |
+| Windows x64 | `starminer-windows-x64-cpu.exe` | CPU only |
+| macOS ARM64 | `starminer-macos-arm64` | Apple Silicon (Metal) |
 
 ## Features
 
-- **JLP binary pool protocol** — TLS-encrypted, low-overhead wire format (`jlps://`)
+- **JLP pool protocol** — TLS-encrypted, low-overhead binary wire format (`jlps://`)
+- **Multi-platform GPU** — NVIDIA CUDA, AMD ROCm/HIP, Apple Metal, CPU fallback
 - **One-line installer** — auto-detects OS and GPU, no dependencies required
-- **Interactive menu** — launch without flags; the UI guides configuration
+- **Interactive menu** — launch without flags; guided setup for pool, puzzle, or brain wallet mode
 - **Multi-GPU** — `--gpus 0,1,2,3`
 - **Auto-reconnect** — jittered exponential backoff, survives network drops
 - **Auto-update check** — notifies when a new release is available
-- **Persistent config** — first run saves `~/.starminer/config.yml`; subsequent runs need no flags
+- **Persistent config** — saves to `~/.starminer/config.yml` on first run
+- **Brain wallet scanner** — hash passphrases (SHA-256 → secp256k1 → RIPEMD-160) and check against a bloom filter of funded addresses (`--brainwallet`)
+- **Range scan** — sweep raw key ranges against a bloom filter (`--range-scan`)
 
 ## Pool
 
@@ -66,7 +75,7 @@ The public pool is at **starnetlive.space**. Dashboard: <https://starnetlive.spa
 ./starminer --pool jlps://starnetlive.space:17403 --worker YOUR_BTC_ADDRESS
 ```
 
-`YOUR_BTC_ADDRESS` is your worker identity and payout address. Use any valid Bitcoin address you control. Your share of the pool is proportional to your contributed Distinguished Points. See [docs/POOL.md](docs/POOL.md) for full details.
+`YOUR_BTC_ADDRESS` is your worker identity and payout address. Use any valid Bitcoin address you control. Your share is proportional to contributed Distinguished Points. See [docs/POOL.md](docs/POOL.md) for details.
 
 ## Build from source
 
@@ -74,18 +83,28 @@ The public pool is at **starnetlive.space**. Dashboard: <https://starnetlive.spa
 git clone https://github.com/Soumya001/starminer.git
 cd starminer
 
-# CUDA (Linux / Windows)
+# NVIDIA CUDA (Linux / Windows)
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_CUDA=ON
 cmake --build build --target starminer -j$(nproc)
 
+# AMD ROCm/HIP (Linux)
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_ROCM=ON
+cmake --build build --target starminer -j$(nproc)
+
+# AMD HIP (Windows) — requires AMD HIP SDK at C:\AMD\HIP
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_ROCM=ON ^
+      -DCMAKE_CXX_COMPILER="C:/AMD/HIP/bin/clang++.exe"
+cmake --build build --target starminer -j4
+
 # CPU only
-cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_CUDA=OFF
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release ^
+      -DSTARMINER_USE_CUDA=OFF -DSTARMINER_USE_ROCM=OFF
 cmake --build build --target starminer -j$(nproc)
 ```
 
 Output: `build/starminer` (Linux/macOS) or `build\starminer.exe` (Windows).
 
-For full platform-specific build instructions see [docs/INSTALL.md](docs/INSTALL.md).
+For full platform-specific instructions see [docs/INSTALL.md](docs/INSTALL.md).
 
 ## CLI reference
 
@@ -93,10 +112,17 @@ For full platform-specific build instructions see [docs/INSTALL.md](docs/INSTALL
 --pool,   -p <url>     Pool URL   (e.g. jlps://starnetlive.space:17403)
 --worker, -w <addr>    Worker name / BTC address for rewards
 --gpus,   -g <ids>     GPU device IDs, comma-separated (default: all)
---no-update-check      Skip the background version check at startup
---verbose              Extra logging (DP submissions, reconnects)
---debug                Dump resolved config at startup
+--puzzle, -P [N]       Target puzzle number (default: auto-select)
 --benchmark            Run a timed GPU benchmark and exit
+--brainwallet          Brain wallet scanning mode (requires --wordlist + --bloom)
+--wordlist <file>      Passphrase list for brain wallet mode
+--bloom <file.blf>     Bloom filter of funded addresses
+--range-scan           Sweep key ranges against bloom filter (requires --bloom)
+--min-bits <N>         Start bit width for range scan (default: 1)
+--max-bits <N>         End bit width for range scan (default: 50)
+--no-update-check      Skip the background version check at startup
+--verbose              Extra logging
+--debug                Dump resolved config at startup
 --help                 Show full help
 ```
 
@@ -107,11 +133,11 @@ starminer/
 ├── src/
 │   ├── cli/          # CLI parser
 │   ├── core/         # Config, YAML, update checker
-│   ├── gpu/          # CUDA / Metal / CPU kernels
+│   ├── gpu/          # CUDA / HIP / Metal kernels + compat layer
 │   ├── pool/         # JLP pool client (TLS)
-│   └── runtime/      # Mode dispatch (pool, puzzle, benchmark)
-├── docs/             # INSTALL, POOL, CONFIGURATION, CHANGELOG …
-├── pool/installer/   # Standalone install.sh / install.ps1 / install.py
+│   ├── runtime/      # Mode runners (pool, puzzle, brain wallet, benchmark)
+│   └── tools/        # build_bloom — build .blf bloom filters from UTXO dumps
+├── docs/             # INSTALL, POOL, CONFIGURATION, CHANGELOG
 ├── third_party/      # xxHash, nlohmann/json
 └── CMakeLists.txt
 ```
