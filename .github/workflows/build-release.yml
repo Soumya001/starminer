@@ -203,48 +203,31 @@ jobs:
             }
           }
 
-          Write-Host "Searching for hipcc after msiexec installs..."
-          $hits = Get-ChildItem $hipPath -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
-          if ($hits.Count -eq 0) {
-            Write-Host "Not in INSTALLDIR. Searching whole C:\Program Files\AMD..."
-            $hits = Get-ChildItem "C:\Program Files\AMD" -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
-          }
-          $hits | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+          # lessmsi extracts into nested SourceDir path — flatten it to a clean root
+          Write-Host "Finding hipcc in extraction..."
+          $hipcc = Get-ChildItem $hipPath -Recurse -Filter "hipcc.exe" -ErrorAction SilentlyContinue |
+                   Select-Object -First 1
+          if (-not $hipcc) { Write-Error "hipcc.exe not found after extraction"; exit 1 }
 
-          if ($hits.Count -eq 0) {
-            Write-Host "hipcc not found anywhere. MSI log:"
-            Get-Content "$env:TEMP\msi_SDKCore.log" -ErrorAction SilentlyContinue | Select-Object -Last 30
-            exit 1
-          }
-          Write-Host "HIP SDK installed. bin contents:"
-          Get-ChildItem (Split-Path $hits[0].FullName) |
-            Select-Object -First 10 | ForEach-Object { Write-Host " $($_.Name)" }
+          $nestedRoot = Split-Path (Split-Path $hipcc.FullName)  # parent of bin
+          Write-Host "Nested ROCm root: $nestedRoot"
 
-      - name: Verify and fix HIP_PATH
-        shell: powershell
-        run: |
-          # hipcc might have installed to default AMD path even if INSTALLDIR was set
-          $search = @("${{ env.HIP_PATH }}", "C:\Program Files\AMD\ROCm")
-          $hipcc = $null
-          foreach ($base in $search) {
-            $found = Get-ChildItem $base -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue |
-                     Select-Object -First 1
-            if ($found) { $hipcc = $found; break }
+          # Copy flattened SDK to clean path
+          $cleanRoot = "C:\AMD\HIP"
+          New-Item -ItemType Directory -Force -Path $cleanRoot | Out-Null
+          Write-Host "Flattening to $cleanRoot ..."
+          Copy-Item "$nestedRoot\*" $cleanRoot -Recurse -Force
+          echo "HIP_PATH=$cleanRoot" >> $env:GITHUB_ENV
+
+          # Also find and copy amdhip64.dll next to hipcc so cmake can run it
+          $dll = Get-ChildItem $hipPath -Recurse -Filter "amdhip64.dll" -ErrorAction SilentlyContinue |
+                 Select-Object -First 1
+          if ($dll) {
+            Copy-Item $dll.FullName "$cleanRoot\bin\" -Force
+            Write-Host "Copied amdhip64.dll to bin"
           }
-          if (-not $hipcc) {
-            Write-Error "hipcc not found in any expected location"
-            exit 1
-          }
-          $actualBin  = Split-Path $hipcc.FullName
-          $actualRoot = Split-Path $actualBin
-          Write-Host "hipcc found at: $($hipcc.FullName)"
-          Write-Host "HIP root: $actualRoot"
-          # If installed somewhere other than HIP_PATH, update the env for the build step
-          if ($actualRoot -ne "${{ env.HIP_PATH }}") {
-            Write-Host "Updating HIP_PATH to $actualRoot"
-            echo "HIP_PATH=$actualRoot" >> $env:GITHUB_ENV
-          }
-          Write-Host "HIP OK"
+          Write-Host "hipcc at: $cleanRoot\bin\hipcc.exe"
+          Get-ChildItem "$cleanRoot\bin" | Select-Object -First 8 | ForEach-Object { Write-Host " $($_.Name)" }
 
       - name: Install Ninja
         run: choco install ninja -y --no-progress
@@ -253,11 +236,13 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          set PATH=%HIP_PATH%\bin;%PATH%
           cmake -B build -G Ninja ^
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} ^
             -DSTARMINER_USE_ROCM=ON ^
             -DSTARMINER_USE_CUDA=OFF ^
-            -DCMAKE_PREFIX_PATH="${{ env.HIP_PATH }}" ^
+            -DCMAKE_PREFIX_PATH="%HIP_PATH%" ^
+            -DCMAKE_HIP_COMPILER="%HIP_PATH%\bin\hipcc.exe" ^
             -DSTARMINER_BUILD_TESTS=OFF ^
             -DSTARMINER_BUILD_BENCHMARKS=OFF ^
             -DCMAKE_HIP_ARCHITECTURES="gfx1010;gfx1030;gfx1100;gfx1101;gfx1102"
