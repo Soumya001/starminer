@@ -250,7 +250,7 @@ jobs:
             -DSTARMINER_USE_ROCM=ON ^
             -DSTARMINER_USE_CUDA=OFF ^
             -DCMAKE_PREFIX_PATH="%HIP_PATH%" ^
-            -DCMAKE_HIP_COMPILER="%HIP_PATH%\bin\hipcc.exe" ^
+            -DCMAKE_HIP_COMPILER="%HIP_PATH%\bin\clang++.exe" ^
             -DSTARMINER_BUILD_TESTS=OFF ^
             -DSTARMINER_BUILD_BENCHMARKS=OFF ^
             -DCMAKE_HIP_ARCHITECTURES="gfx1010;gfx1030;gfx1100;gfx1101;gfx1102"
