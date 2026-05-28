@@ -185,20 +185,24 @@ async def assign_work(db: aiosqlite.Connection, worker_name: str) -> dict:
 
 
 async def save_dps(db: aiosqlite.Connection, worker_name: str, dps: list[dict]) -> int:
+    accepted = 0
     for dp in dps:
-        await db.execute(
-            "INSERT INTO dps (work_id, worker_name, x, d, type, dp_bits, sequence)"
+        cursor = await db.execute(
+            "INSERT OR IGNORE INTO dps"
+            " (work_id, worker_name, x, d, type, dp_bits, sequence)"
             " VALUES (?,?,?,?,?,?,?)",
             (dp.get('work_id', 0), worker_name,
              dp['x'], dp['d'], dp['type'], dp['dp_bits'], dp.get('sequence')),
         )
-    await db.execute(
-        "UPDATE workers SET total_dps = total_dps + ?, last_seen = unixepoch()"
-        " WHERE worker_name = ?",
-        (len(dps), worker_name),
-    )
+        accepted += cursor.rowcount  # 1 if inserted, 0 if duplicate ignored
+    if accepted:
+        await db.execute(
+            "UPDATE workers SET total_dps = total_dps + ?, last_seen = unixepoch()"
+            " WHERE worker_name = ?",
+            (accepted, worker_name),
+        )
     await db.commit()
-    return len(dps)
+    return accepted
 
 
 _SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
