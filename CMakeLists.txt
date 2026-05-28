@@ -778,6 +778,8 @@ elseif(STARMINER_BACKEND STREQUAL "ROCM")
         src/gpu/puzzle_gpu.cu
         src/gpu/puzzle_optimized.cu
         src/gpu/kangaroo_kernel.cu
+        src/gpu/brain_wallet_gpu.cu
+        src/gpu/v2/v2_kernels_unity.cu
     )
     set(EXISTING_ROCM_SOURCES)
     foreach(SRC ${ROCM_GPU_SOURCES})
