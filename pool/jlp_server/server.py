@@ -200,19 +200,55 @@ async def save_dps(db: aiosqlite.Connection, worker_name: str, dps: list[dict]) 
     return len(dps)
 
 
+_SECP256K1_ORDER = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+
+
+def _verify_privkey(privkey_hex: str) -> bool:
+    """Return True iff privkey_hex * G == target PUBKEY."""
+    try:
+        from coincurve import PrivateKey
+        raw = bytes.fromhex(privkey_hex)
+        if len(raw) != 32 or int.from_bytes(raw, "big") == 0:
+            return False
+        return PrivateKey(raw).public_key.format(compressed=True).hex() == PUBKEY
+    except Exception:
+        return False
+
+
+def _compute_key(d_tame_hex: str, d_wild_hex: str) -> str | None:
+    """private_key = d_tame - d_wild (mod secp256k1 order).
+    Both distances already encode the kangaroo's starting scalar.
+    """
+    try:
+        key = (int(d_tame_hex, 16) - int(d_wild_hex, 16)) % _SECP256K1_ORDER
+        return f"{key:064x}" if key else None
+    except Exception:
+        return None
+
+
 async def check_collision(db: aiosqlite.Connection, dps: list[dict]) -> str | None:
-    """Check if any submitted DP collides with an existing DP of opposite type."""
+    """Check submitted DPs for a tame+wild collision; return verified privkey or None."""
     for dp in dps:
         opposite = 1 - dp['type']
         async with db.execute(
-            "SELECT x, d, type, work_id FROM dps WHERE x=? AND type=? LIMIT 1",
+            "SELECT d FROM dps WHERE x=? AND type=? LIMIT 1",
             (dp['x'], opposite),
         ) as cur:
             hit = await cur.fetchone()
-        if hit:
-            logger.critical("COLLISION DETECTED! x=%s type=%d vs type=%d",
-                            dp['x'], dp['type'], opposite)
-            return dp['x']
+        if not hit:
+            continue
+
+        d_tame, d_wild = (dp['d'], hit[0]) if dp['type'] == 1 else (hit[0], dp['d'])
+        candidate = _compute_key(d_tame, d_wild)
+        if not candidate:
+            continue
+
+        if _verify_privkey(candidate):
+            logger.critical("COLLISION VERIFIED! x=%s  privkey=%s", dp['x'], candidate)
+            return candidate
+        else:
+            logger.warning("Collision on x=%s but key failed pubkey check — false positive",
+                           dp['x'])
     return None
 
 
@@ -410,10 +446,24 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
                         now_t = time.time()
                         _dp_times.extend([now_t] * accepted)
 
-                    # Check for Kangaroo collision
-                    collision_x = await check_collision(db, dps)
-                    if collision_x:
-                        logger.critical("Potential collision on x=%s from %s", collision_x, worker_name)
+                    # Cross-worker collision detection — compute + verify key
+                    verified_key = await check_collision(db, dps)
+                    if verified_key:
+                        async with aiosqlite.connect(str(DB_PATH)) as sol_db:
+                            await sol_db.execute(
+                                "INSERT OR IGNORE INTO solutions"
+                                " (private_key, found_by, work_id) VALUES (?,?,?)",
+                                (verified_key, worker_name, session.current_work_id),
+                            )
+                            await sol_db.commit()
+                        with open(FOUND_PATH, "a") as f:
+                            f.write(
+                                f"PUZZLE #135 SOLVED (server collision)!\n"
+                                f"Key: {verified_key}\nBy: {worker_name}\n"
+                                f"At: {time.time()}\n\n"
+                            )
+                        await send_frame(writer, pack_solution_notify(verified_key))
+                        break
 
                     await send_frame(writer, pack_dp_ack())
 
@@ -459,11 +509,18 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
                         logger.error("Bad SOLUTION payload from %s: %s", worker_name, e)
                         continue
 
+                    if not _verify_privkey(privkey_hex):
+                        logger.warning(
+                            "Worker %s submitted INVALID solution key — rejected", worker_name
+                        )
+                        continue
+
                     logger.critical("PUZZLE #135 KEY FOUND by %s: %s", worker_name, privkey_hex)
 
                     async with aiosqlite.connect(str(DB_PATH)) as sol_db:
                         await sol_db.execute(
-                            "INSERT INTO solutions (private_key, found_by, work_id) VALUES (?,?,?)",
+                            "INSERT OR IGNORE INTO solutions"
+                            " (private_key, found_by, work_id) VALUES (?,?,?)",
                             (privkey_hex, worker_name, session.current_work_id),
                         )
                         await sol_db.commit()
