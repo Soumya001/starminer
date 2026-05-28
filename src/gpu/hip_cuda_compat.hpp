@@ -82,12 +82,32 @@
 #define cudaDeviceReset          hipDeviceReset
 #define cudaGetLastError         hipGetLastError
 #define cudaPeekAtLastError      hipPeekAtLastError
+#define cudaSetDeviceFlags       hipSetDeviceFlags
+#define cudaDriverGetVersion     hipDriverGetVersion
+#define cudaRuntimeGetVersion    hipRuntimeGetVersion
 
-// Error codes missing from earlier compat mappings
+// Memory
+#define cudaFreeAsync            hipFreeAsync
+#define cudaMemcpyToSymbol       hipMemcpyToSymbol
+#define cudaMemcpyToSymbolAsync  hipMemcpyToSymbolAsync
+
+// Error codes
 #define cudaErrorInvalidDevice   hipErrorInvalidDevice
 #define cudaErrorInvalidValue    hipErrorInvalidValue
 #define cudaErrorNotReady        hipErrorNotReady
 #define cudaErrorLaunchFailure   hipErrorLaunchFailure
+#define cudaErrorNotSupported    hipErrorNotSupported
+
+// Device flags
+#define cudaDeviceScheduleBlockingSync hipDeviceScheduleBlockingSync
+
+// CUDA L2 cache access policy hints — not supported on HIP/AMD, stub as no-ops.
+// These only affect performance (L2 cache residency), not correctness.
+#define cudaStreamAttrValue              int
+#define cudaStreamSetAttribute(s,a,v)    ((void)0)
+#define cudaStreamAttributeAccessPolicyWindow 0
+#define cudaAccessPropertyPersisting     0
+#define cudaAccessPropertyStreaming      0
 
 // __umul64hi: AMD HIP already defines this in amd_device_functions.h.
 // Only define our fallback if it hasn't been defined yet.
