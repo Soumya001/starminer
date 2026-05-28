@@ -778,9 +778,12 @@ elseif(STARMINER_BACKEND STREQUAL "ROCM")
         src/gpu/puzzle_gpu.cu
         src/gpu/puzzle_optimized.cu
         src/gpu/kangaroo_kernel.cu
-        src/gpu/brain_wallet_gpu.cu
-        src/gpu/v2/v2_kernels_unity.cu
     )
+    # brain_wallet_gpu.cu and v2_kernels_unity.cu use extern __device__ symbols
+    # (ec_mul_simple, bloom_check_h160) that require CUDA separable compilation
+    # (nvlink). HIP's amdgcn-link on Windows does not support this pattern.
+    # Brain wallet mode is therefore CUDA-only for now; the runtime already
+    # falls back gracefully when no GPU pipeline is available.
     set(EXISTING_ROCM_SOURCES)
     foreach(SRC ${ROCM_GPU_SOURCES})
         if(EXISTS "${CMAKE_SOURCE_DIR}/${SRC}")
@@ -789,14 +792,10 @@ elseif(STARMINER_BACKEND STREQUAL "ROCM")
     endforeach()
     if(EXISTING_ROCM_SOURCES)
         # Tell CMake to compile .cu files as HIP (hipcc instead of nvcc)
-        set_source_files_properties(${EXISTING_ROCM_SOURCES} PROPERTIES
-            LANGUAGE HIP
-            HIP_SEPARABLE_COMPILATION ON)
+        set_source_files_properties(${EXISTING_ROCM_SOURCES} PROPERTIES LANGUAGE HIP)
         add_library(starminer_gpu STATIC ${EXISTING_ROCM_SOURCES})
         target_link_libraries(starminer_gpu hip::host)
-        set_target_properties(starminer_gpu PROPERTIES
-            POSITION_INDEPENDENT_CODE ON
-            HIP_SEPARABLE_COMPILATION ON)
+        set_target_properties(starminer_gpu PROPERTIES POSITION_INDEPENDENT_CODE ON)
         # src/gpu is needed so sub-directory .cu files (e.g. v2/brain_wallet_v2.hpp)
         # can resolve #include "hip_cuda_compat.hpp"
         target_include_directories(starminer_gpu PRIVATE
