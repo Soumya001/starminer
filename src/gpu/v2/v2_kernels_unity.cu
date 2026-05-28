@@ -26,4 +26,11 @@
 #include "encoding_munge_kernel.cu"
 #include "legacy_kdf_kernel.cu"
 #include "electrum_kernel.cu"
+// multi_address_kernel.cu uses extern __device__ symbols from secp256k1.cu
+// and h160_bloom_filter.cu. CUDA resolves these via nvlink separable
+// compilation. HIP on Windows (amdgcn-link) does not support this pattern
+// — the multi-address session is already a stub on the non-CUDA path so
+// we simply exclude it from the ROCm unity build.
+#if !defined(STARMINER_USE_ROCM)
 #include "multi_address_kernel.cu"
+#endif
