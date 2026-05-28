@@ -181,36 +181,61 @@ jobs:
             }
           }
 
-          Write-Host "Searching for hipcc..."
-          $hits = Get-ChildItem $ext2 -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
+          # MSI files must be installed with msiexec (7z extraction gives hashed filenames)
+          New-Item -ItemType Directory -Force -Path $hipPath | Out-Null
+          foreach ($t in $targets) {
+            $msi = Get-ChildItem "$rocmPkgs\$t" -Filter "*.msi" -ErrorAction SilentlyContinue |
+                   Select-Object -First 1
+            if ($msi) {
+              Write-Host "Installing $t ($($msi.Name)) via msiexec..."
+              $args = @("/quiet", "/i", $msi.FullName, "INSTALLDIR=$hipPath", "/log", "$env:TEMP\msi_$t.log")
+              $proc = Start-Process msiexec -ArgumentList $args -Wait -PassThru
+              Write-Host "  exit code: $($proc.ExitCode)"
+            }
+          }
+
+          Write-Host "Searching for hipcc after msiexec installs..."
+          $hits = Get-ChildItem $hipPath -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
+          if ($hits.Count -eq 0) {
+            Write-Host "Not in INSTALLDIR. Searching whole C:\Program Files\AMD..."
+            $hits = Get-ChildItem "C:\Program Files\AMD" -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue
+          }
           $hits | ForEach-Object { Write-Host "Found: $($_.FullName)" }
 
           if ($hits.Count -eq 0) {
-            Write-Host "hipcc not found. Contents of ext2:"
-            Get-ChildItem $ext2 -Recurse -Depth 3 | ForEach-Object { Write-Host $_.FullName }
+            Write-Host "hipcc not found anywhere. MSI log:"
+            Get-Content "$env:TEMP\msi_SDKCore.log" -ErrorAction SilentlyContinue | Select-Object -Last 30
             exit 1
           }
-
-          # Copy each extracted package into HIP_PATH
-          New-Item -ItemType Directory -Force -Path $hipPath | Out-Null
-          foreach ($t in $targets) {
-            if (Test-Path "$ext2\$t") {
-              Write-Host "Merging $t into $hipPath..."
-              Copy-Item "$ext2\$t\*" $hipPath -Recurse -Force -ErrorAction SilentlyContinue
-            }
-          }
-          Write-Host "Done. Contents of HIP_PATH\bin:"
-          Get-ChildItem "$hipPath\bin" -ErrorAction SilentlyContinue |
+          Write-Host "HIP SDK installed. bin contents:"
+          Get-ChildItem (Split-Path $hits[0].FullName) |
             Select-Object -First 10 | ForEach-Object { Write-Host " $($_.Name)" }
 
-      - name: Verify HIP installation
-        shell: cmd
+      - name: Verify and fix HIP_PATH
+        shell: powershell
         run: |
-          if exist "${{ env.HIP_PATH }}\bin\hipcc.bin.exe" ( echo HIP OK & exit /b 0 )
-          if exist "${{ env.HIP_PATH }}\bin\hipcc"         ( echo HIP OK & exit /b 0 )
-          echo HIP not found - listing:
-          dir "${{ env.HIP_PATH }}" /s /b 2>nul
-          exit /b 1
+          # hipcc might have installed to default AMD path even if INSTALLDIR was set
+          $search = @("${{ env.HIP_PATH }}", "C:\Program Files\AMD\ROCm")
+          $hipcc = $null
+          foreach ($base in $search) {
+            $found = Get-ChildItem $base -Recurse -Filter "hipcc*" -ErrorAction SilentlyContinue |
+                     Select-Object -First 1
+            if ($found) { $hipcc = $found; break }
+          }
+          if (-not $hipcc) {
+            Write-Error "hipcc not found in any expected location"
+            exit 1
+          }
+          $actualBin  = Split-Path $hipcc.FullName
+          $actualRoot = Split-Path $actualBin
+          Write-Host "hipcc found at: $($hipcc.FullName)"
+          Write-Host "HIP root: $actualRoot"
+          # If installed somewhere other than HIP_PATH, update the env for the build step
+          if ($actualRoot -ne "${{ env.HIP_PATH }}") {
+            Write-Host "Updating HIP_PATH to $actualRoot"
+            echo "HIP_PATH=$actualRoot" >> $env:GITHUB_ENV
+          }
+          Write-Host "HIP OK"
 
       - name: Install Ninja
         run: choco install ninja -y --no-progress
