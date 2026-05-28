@@ -179,7 +179,7 @@ jobs:
               Copy-Item "$hipRoot\*" "${{ env.HIP_PATH }}" -Recurse -Force
               Write-Host "Copied to ${{ env.HIP_PATH }}"
             } else {
-              Write-Host "hipcc not found — listing full tree (depth 3):"
+              Write-Host "hipcc not found -- listing full tree (depth 3):"
               Get-ChildItem $extract -Recurse -Depth 3 | Select-Object FullName
               exit 1
             }
