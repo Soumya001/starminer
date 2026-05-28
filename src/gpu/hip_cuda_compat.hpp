@@ -109,16 +109,9 @@
 #define cudaAccessPropertyPersisting     0
 #define cudaAccessPropertyStreaming      0
 
-// __umul64hi: AMD HIP already defines this in amd_device_functions.h.
-// Only define our fallback if it hasn't been defined yet.
-#ifndef __umul64hi
-static __device__ __forceinline__
-unsigned long long __umul64hi(unsigned long long a, unsigned long long b) {
-    return (unsigned long long)(
-        (unsigned __int128)a * (unsigned __int128)b >> 64
-    );
-}
-#endif
+// __umul64hi is already defined in AMD's amd_device_functions.h as a
+// static inline function (not a macro), so #ifndef cannot guard it.
+// Simply omit our definition entirely on the HIP path — AMD provides it.
 
 #else
 // ── NVIDIA CUDA compilation path ─────────────────────────────────────────────
