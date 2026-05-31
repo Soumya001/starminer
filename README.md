@@ -173,7 +173,10 @@ Output: `build/starminer` (Linux/macOS) · `build\starminer.exe` (Windows)
 
 If StarMiner or the pool has been useful to you, donations are appreciated:
 
-**Bitcoin:** `bc1qevyu9pngzdq54v592whjf9tm5mcztv46zpu40p`
+<table><tr>
+<td valign="middle"><b>Bitcoin</b><br><code>bc1qevyu9pngzdq54v592whjf9tm5mcztv46zpu40p</code></td>
+<td><img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=bc1qevyu9pngzdq54v592whjf9tm5mcztv46zpu40p" alt="BTC QR"/></td>
+</tr></table>
 
 ---
 
