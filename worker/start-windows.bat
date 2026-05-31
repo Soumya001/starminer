@@ -23,7 +23,7 @@ if not exist "starminer-worker.py" (
 )
 
 echo  Starting StarMiner Worker...
-echo  Pool: https://starnetlive.space
+echo  Pool: jlp://pool.starnetlive.space:5678
 echo.
 
 REM Ask for worker name if not set
@@ -33,6 +33,6 @@ if "%WORKER%"=="" set WORKER=worker-%COMPUTERNAME%
 set /p GPUS="GPU IDs (comma-separated, default=0): "
 if "%GPUS%"=="" set GPUS=0
 
-python starminer-worker.py --pool https://starnetlive.space --worker %WORKER% --gpus %GPUS%
+python starminer-worker.py --pool jlp://pool.starnetlive.space:5678 --worker %WORKER% --gpus %GPUS%
 
 pause

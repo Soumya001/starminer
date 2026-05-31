@@ -19,7 +19,8 @@ import urllib.request
 from pathlib import Path
 
 VERSION = "1.0.0"
-DEFAULT_POOL = "https://starnetlive.space"
+DEFAULT_POOL    = "jlp://pool.starnetlive.space:5678"
+DOWNLOAD_BASE   = "https://starnetlive.space"
 APP_NAME = "StarMiner"
 
 IS_WIN = platform.system() == "Windows"
@@ -210,7 +211,7 @@ def ensure_binary(pool_url: str) -> bool:
             return True
 
     plat = detect_platform()
-    url = f"{pool_url}/download/starminer-{plat}"
+    url = f"{DOWNLOAD_BASE}/download/starminer-{plat}"
     if IS_WIN:
         url += ".exe"
 

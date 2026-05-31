@@ -234,26 +234,26 @@ def _compute_key(d_tame_hex: str, d_wild_hex: str) -> str | None:
 async def check_collision(db: aiosqlite.Connection, dps: list[dict]) -> str | None:
     """Check submitted DPs for a tame+wild collision; return verified privkey or None."""
     for dp in dps:
-        opposite = 1 - dp['type']
+        # Look for any DP with same x but DIFFERENT type (handles types 0,1,2 correctly)
         async with db.execute(
-            "SELECT d FROM dps WHERE x=? AND type=? LIMIT 1",
-            (dp['x'], opposite),
+            "SELECT d, type FROM dps WHERE x=? AND type!=? LIMIT 1",
+            (dp['x'], dp['type']),
         ) as cur:
             hit = await cur.fetchone()
         if not hit:
             continue
 
-        d_tame, d_wild = (dp['d'], hit[0]) if dp['type'] == 1 else (hit[0], dp['d'])
-        candidate = _compute_key(d_tame, d_wild)
-        if not candidate:
-            continue
+        d_other, t_other = hit[0], hit[1]
+        # Try both orderings — cryptographic verification is the authoritative check
+        for d_a, d_b in [(dp['d'], d_other), (d_other, dp['d'])]:
+            candidate = _compute_key(d_a, d_b)
+            if candidate and _verify_privkey(candidate):
+                logger.critical("COLLISION VERIFIED! x=%s  types=%s↔%s  privkey=%s",
+                                dp['x'], dp['type'], t_other, candidate)
+                return candidate
 
-        if _verify_privkey(candidate):
-            logger.critical("COLLISION VERIFIED! x=%s  privkey=%s", dp['x'], candidate)
-            return candidate
-        else:
-            logger.warning("Collision on x=%s but key failed pubkey check — false positive",
-                           dp['x'])
+        logger.warning("Collision on x=%s (types %s↔%s) failed pubkey check — false positive",
+                       dp['x'], dp['type'], t_other)
     return None
 
 
@@ -293,6 +293,7 @@ class WorkerSession:
         self.authenticated: bool = False
         self.current_work_id: int | None = None
         self.last_seen: float = time.time()
+        self.zero_accept_streak: int = 0  # consecutive all-duplicate batches
 
 
 # ── Frame I/O ─────────────────────────────────────────────────────────────────
@@ -448,8 +449,27 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
 
                     accepted = await save_dps(db, worker_name, dps)
                     if accepted:
+                        session.zero_accept_streak = 0
                         now_t = time.time()
                         _dp_times.extend([now_t] * accepted)
+                    else:
+                        session.zero_accept_streak += 1
+                        if session.zero_accept_streak >= 10:
+                            # Chunk exhausted — push a fresh assignment without waiting for reconnect
+                            session.zero_accept_streak = 0
+                            try:
+                                work = await assign_work(db, worker_name)
+                                session.current_work_id = work['work_id']
+                                frame = pack_work_assignment(
+                                    PUBKEY, work['range_start'], work['range_end'],
+                                    DP_BITS, work['work_id'],
+                                )
+                                await send_frame(writer, frame)
+                                logger.info("Stale chunk → new work for %s  id=%d",
+                                            worker_name, work['work_id'])
+                            except RuntimeError as e:
+                                logger.warning("Could not assign new chunk: %s", e)
+                            continue  # WORK_ASN sent instead of DP_ACK
 
                     # Cross-worker collision detection — compute + verify key
                     verified_key = await check_collision(db, dps)
