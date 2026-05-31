@@ -152,6 +152,68 @@ def download_binary(url, dest: Path):
         err(f"Download failed: {e}")
         return False
 
+# ─── CUDA runtime auto-install ────────────────────────────────────────
+def _ensure_cuda_runtime():
+    """Check for libcudart.so.12 and install it automatically if missing."""
+    import glob
+    # Check common locations
+    found = (
+        glob.glob("/usr/local/cuda*/lib64/libcudart.so*") or
+        glob.glob("/usr/lib/x86_64-linux-gnu/libcudart.so*") or
+        glob.glob("/usr/lib/libcudart.so*")
+    )
+    if found:
+        return  # already present
+
+    info("CUDA runtime (libcudart.so.12) not found — installing automatically...")
+
+    pkg_managers = []
+    if shutil.which("apt-get"):
+        pkg_managers.append(("apt-get", [
+            ["apt-get", "install", "-y", "-qq", "libcudart-12-0"],
+            ["apt-get", "install", "-y", "-qq", "cuda-cudart-12-0"],
+            ["apt-get", "install", "-y", "-qq", "cuda-libraries-12-0"],
+        ]))
+    elif shutil.which("yum"):
+        pkg_managers.append(("yum", [
+            ["yum", "install", "-y", "-q", "cuda-cudart-12-0"],
+        ]))
+
+    installed = False
+    for pm_name, attempts in pkg_managers:
+        for cmd in attempts:
+            try:
+                result = subprocess.run(
+                    cmd, capture_output=True, timeout=120
+                )
+                if result.returncode == 0:
+                    ok(f"CUDA runtime installed via {pm_name}")
+                    installed = True
+                    break
+            except Exception:
+                pass
+        if installed:
+            break
+
+    if not installed:
+        # Try adding NVIDIA CUDA repo and retry
+        info("Trying NVIDIA CUDA repository...")
+        try:
+            subprocess.run(["apt-get", "install", "-y", "-qq", "wget"], capture_output=True, timeout=30)
+            subprocess.run([
+                "bash", "-c",
+                "wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb -O /tmp/cuda-keyring.deb "
+                "&& dpkg -i /tmp/cuda-keyring.deb "
+                "&& apt-get update -qq "
+                "&& apt-get install -y -qq libcudart-12-0"
+            ], timeout=180)
+            ok("CUDA runtime installed via NVIDIA repo")
+            installed = True
+        except Exception as e:
+            warn(f"Could not auto-install CUDA runtime: {e}")
+            warn("Run manually: apt-get install -y libcudart-12-0")
+            warn("Or use the CPU binary: starminer-linux-x64-cpu")
+
 # ─── Desktop / service helpers ────────────────────────────────────────
 def create_linux_desktop(cmd):
     apps_dir = Path.home() / ".local" / "share" / "applications"
@@ -293,6 +355,10 @@ def main():
                 sys.exit(1)
         else:
             sys.exit(1)
+
+    # ── CUDA runtime check + auto-install ────────────────────────────
+    if IS_LINUX and gpu_info.get("nvidia"):
+        _ensure_cuda_runtime()
 
     # ── Save config ───────────────────────────────────────────────────
     CONFIG_PATH.write_text(json.dumps({
