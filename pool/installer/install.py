@@ -19,7 +19,7 @@ from pathlib import Path
 
 # ─── Config ───────────────────────────────────────────────────────────
 VERSION      = "2.0.0"
-POOL_JLP     = "jlp://115.187.38.11:5678"
+POOL_JLP     = "jlp://pool.starnetlive.space:5678"
 GH_RELEASE   = "https://github.com/Soumya001/starminer/releases/latest/download"
 APP_NAME     = "StarMiner135"
 
@@ -138,7 +138,12 @@ def download_binary(url, dest: Path):
     info(f"Downloading {url.split('/')[-1]} ...")
     dest.parent.mkdir(parents=True, exist_ok=True)
     try:
-        urllib.request.urlretrieve(url, str(dest))
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": f"StarMiner-Installer/{VERSION}"},
+        )
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            dest.write_bytes(resp.read())
         if not IS_WIN:
             dest.chmod(0o755)
         ok(f"Saved to {dest}  ({dest.stat().st_size:,} bytes)")
