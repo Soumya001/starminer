@@ -151,10 +151,19 @@ async def check_solution(db: aiosqlite.Connection) -> dict | None:
 
 
 async def assign_work(db: aiosqlite.Connection, worker_name: str) -> dict:
-    cutoff = time.time() - CHUNK_TIMEOUT
+    now = time.time()
+    # Expire by chunk timeout
     await db.execute(
         "UPDATE assignments SET status='expired' WHERE status='active' AND assigned_at < ?",
-        (cutoff,),
+        (now - CHUNK_TIMEOUT,),
+    )
+    # Expire if worker offline > 5 minutes
+    await db.execute(
+        "UPDATE assignments SET status='expired'"
+        " WHERE status='active' AND worker_name IN ("
+        "  SELECT worker_name FROM workers WHERE last_seen < ?"
+        ")",
+        (now - 300,),
     )
     await db.commit()
 
