@@ -152,58 +152,86 @@ def download_binary(url, dest: Path):
         err(f"Download failed: {e}")
         return False
 
-# ─── CUDA runtime auto-install ────────────────────────────────────────
-def _ensure_cuda_runtime():
-    """Check for libcudart.so.12 and install it automatically if missing."""
+# ─── CUDA runtime ─────────────────────────────────────────────────────
+def _find_cuda_lib_dirs():
+    """Return list of directories that contain libcudart.so* files."""
     import glob
-    # Check common locations
-    found = (
-        glob.glob("/usr/local/cuda*/lib64/libcudart.so*") or
-        glob.glob("/usr/lib/x86_64-linux-gnu/libcudart.so*") or
-        glob.glob("/usr/lib/libcudart.so*")
-    )
-    if found:
-        return  # already present
+    paths = set()
+    for pattern in [
+        "/usr/local/cuda*/lib64/libcudart.so*",
+        "/usr/lib/x86_64-linux-gnu/libcudart.so*",
+        "/usr/lib/libcudart.so*",
+        "/usr/local/lib/libcudart.so*",
+    ]:
+        for f in glob.glob(pattern):
+            paths.add(str(Path(f).parent))
+    return list(paths)
 
-    info("CUDA runtime (libcudart.so.12) not found — installing automatically...")
 
-    pkg_managers = []
-    if shutil.which("apt-get"):
-        pkg_managers.append(("apt-get", [
-            ["apt-get", "install", "-y", "-qq", "libcudart-12-0"],
-            ["apt-get", "install", "-y", "-qq", "cuda-cudart-12-0"],
-            ["apt-get", "install", "-y", "-qq", "cuda-libraries-12-0"],
-        ]))
-    elif shutil.which("yum"):
-        pkg_managers.append(("yum", [
-            ["yum", "install", "-y", "-q", "cuda-cudart-12-0"],
-        ]))
+def _cuda_runtime_loadable():
+    """Return True if the dynamic linker can already find libcudart.so.12."""
+    try:
+        r = subprocess.run(
+            ["ldconfig", "-p"], capture_output=True, text=True, timeout=10
+        )
+        return "libcudart.so.12" in r.stdout
+    except Exception:
+        return False
 
-    installed = False
-    for pm_name, attempts in pkg_managers:
-        for cmd in attempts:
+
+def _ensure_cuda_runtime():
+    """Make sure libcudart.so.12 is loadable; install or fix LD path if not."""
+    if _cuda_runtime_loadable():
+        return None  # nothing to do
+
+    # Library might exist on disk but not registered with ldconfig (common on Vast.ai)
+    dirs = _find_cuda_lib_dirs()
+    if dirs:
+        info("CUDA runtime found on disk but not in ldconfig — fixing...")
+        for d in dirs:
             try:
-                result = subprocess.run(
-                    cmd, capture_output=True, timeout=120
+                subprocess.run(["ldconfig", d], capture_output=True, timeout=10)
+            except Exception:
+                pass
+        if _cuda_runtime_loadable():
+            ok("CUDA runtime registered with ldconfig")
+            return None
+        # Still not found by ldconfig — return dirs so caller can set LD_LIBRARY_PATH
+        warn("Could not register via ldconfig — will set LD_LIBRARY_PATH instead")
+        return dirs
+
+    # Not on disk at all — install it
+    info("CUDA runtime (libcudart.so.12) not found — installing automatically...")
+    installed = False
+    if shutil.which("apt-get"):
+        for pkg in ["libcudart-12-0", "cuda-cudart-12-0", "cuda-libraries-12-0"]:
+            try:
+                r = subprocess.run(
+                    ["apt-get", "install", "-y", "-qq", pkg],
+                    capture_output=True, timeout=120
                 )
-                if result.returncode == 0:
-                    ok(f"CUDA runtime installed via {pm_name}")
+                if r.returncode == 0:
+                    ok(f"CUDA runtime installed ({pkg})")
                     installed = True
                     break
             except Exception:
                 pass
-        if installed:
-            break
+    elif shutil.which("yum"):
+        try:
+            subprocess.run(["yum", "install", "-y", "-q", "cuda-cudart-12-0"],
+                           capture_output=True, timeout=120)
+            installed = True
+        except Exception:
+            pass
 
     if not installed:
-        # Try adding NVIDIA CUDA repo and retry
         info("Trying NVIDIA CUDA repository...")
         try:
-            subprocess.run(["apt-get", "install", "-y", "-qq", "wget"], capture_output=True, timeout=30)
             subprocess.run([
                 "bash", "-c",
-                "wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb -O /tmp/cuda-keyring.deb "
-                "&& dpkg -i /tmp/cuda-keyring.deb "
+                "apt-get install -y -qq wget 2>/dev/null; "
+                "wget -q https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb -O /tmp/ck.deb "
+                "&& dpkg -i /tmp/ck.deb "
                 "&& apt-get update -qq "
                 "&& apt-get install -y -qq libcudart-12-0"
             ], timeout=180)
@@ -212,7 +240,10 @@ def _ensure_cuda_runtime():
         except Exception as e:
             warn(f"Could not auto-install CUDA runtime: {e}")
             warn("Run manually: apt-get install -y libcudart-12-0")
-            warn("Or use the CPU binary: starminer-linux-x64-cpu")
+            warn("Falling back to CPU binary")
+            return None
+
+    return None
 
 # ─── Desktop / service helpers ────────────────────────────────────────
 def create_linux_desktop(cmd):
@@ -357,8 +388,11 @@ def main():
             sys.exit(1)
 
     # ── CUDA runtime check + auto-install ────────────────────────────
+    extra_ld_dirs = []
     if IS_LINUX and gpu_info.get("nvidia"):
-        _ensure_cuda_runtime()
+        result = _ensure_cuda_runtime()
+        if isinstance(result, list):
+            extra_ld_dirs = result  # dirs to prepend to LD_LIBRARY_PATH
 
     # ── Save config ───────────────────────────────────────────────────
     CONFIG_PATH.write_text(json.dumps({
@@ -396,6 +430,12 @@ def main():
     print(f"  Pool   : {C['c']}{pool_url}{C['x']}")
     print(f"  Binary : {C['c']}{BINARY_PATH}{C['x']}")
     print(f"{C['g']}{'═'*55}{C['x']}\n")
+
+    # ── Patch LD_LIBRARY_PATH if CUDA libs found but not in ldconfig ─────
+    if extra_ld_dirs:
+        existing = os.environ.get("LD_LIBRARY_PATH", "")
+        os.environ["LD_LIBRARY_PATH"] = ":".join(extra_ld_dirs + ([existing] if existing else []))
+        ok(f"LD_LIBRARY_PATH set: {os.environ['LD_LIBRARY_PATH']}")
 
     # ── Start ─────────────────────────────────────────────────────────
     if HEADLESS:
