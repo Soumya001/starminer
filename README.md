@@ -1,19 +1,28 @@
-# StarMiner
+<div align="center">
 
-**StarMiner** is a GPU-accelerated Bitcoin puzzle solver targeting [Puzzle #135](https://starnetlive.space) — ~13.5 BTC prize — using Pollard's Kangaroo algorithm on the **StarNet collaborative pool**.
+# ₿ StarMiner
 
-🌐 **Dashboard:** [starnetlive.space](https://starnetlive.space) &nbsp;|&nbsp; 📦 **Releases:** [Latest](https://github.com/Soumya001/starminer/releases/latest)
+**GPU-accelerated Pollard's Kangaroo solver for Bitcoin Puzzle #135**
+
+~13.5 BTC prize · Collaborative pool · NVIDIA / AMD / Apple Silicon / CPU
+
+[![Latest Release](https://img.shields.io/github/v/release/Soumya001/starminer?color=22d3ee&label=release)](https://github.com/Soumya001/starminer/releases/latest)
+[![Dashboard](https://img.shields.io/badge/dashboard-starnetlive.space-22d3ee)](https://starnetlive.space)
+[![License](https://img.shields.io/badge/license-GPLv3-34d399)](LICENSE)
+
+</div>
 
 ---
 
 ## Download
 
-### Direct links (latest release)
+> **Easiest:** use the one-line installers below — auto-detects GPU, downloads binary, starts mining.
+> **Manual:** grab the binary directly for your platform.
 
-| Platform | Download | GPU |
+| Platform | Binary | GPU |
 |---|---|---|
 | Linux x64 | [starminer-linux-x64-cuda](https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-cuda) | NVIDIA CUDA |
-| Linux x64 | [starminer-linux-x64-rocm](https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-rocm) | AMD ROCm/HIP |
+| Linux x64 | [starminer-linux-x64-rocm](https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-rocm) | AMD ROCm / HIP |
 | Linux x64 | [starminer-linux-x64-cpu](https://github.com/Soumya001/starminer/releases/latest/download/starminer-linux-x64-cpu) | CPU only |
 | Windows x64 | [starminer-windows-x64-cuda.exe](https://github.com/Soumya001/starminer/releases/latest/download/starminer-windows-x64-cuda.exe) | NVIDIA CUDA |
 | Windows x64 | [starminer-windows-x64-hip.exe](https://github.com/Soumya001/starminer/releases/latest/download/starminer-windows-x64-hip.exe) | AMD RX 5000/6000/7000 |
@@ -22,71 +31,51 @@
 
 ---
 
-## Quick Install
+## Install
 
-### Windows
+### 🪟 Windows
 ```powershell
 irm https://starnetlive.space/install-135.ps1 | iex
 ```
-Auto-detects GPU, downloads binary, creates desktop shortcut. No Python needed.
+Auto-detects GPU, downloads binary, creates a desktop shortcut. No Python or build tools required.
 
-### Linux / macOS
+---
+
+### 🐧 Linux / macOS
 ```bash
 curl -fsSL https://starnetlive.space/install-135.sh | bash
 ```
 
-### Vast.ai / Headless / Datacenter
+---
 
-Datacenter IPs may be blocked by CDN on the above URLs. Use GitHub directly — **no CDN, always works:**
-
+### ☁️ Vast.ai / Headless / Datacenter
 ```bash
-# Interactive
-python3 <(curl -fsSL https://raw.githubusercontent.com/Soumya001/starminer/main/pool/installer/install.py)
-
-# Headless — no prompts, WORKER_NAME sets your BTC address
-WORKER_NAME=YOUR_BTC_ADDRESS python3 <(curl -fsSL https://raw.githubusercontent.com/Soumya001/starminer/main/pool/installer/install.py)
+# Headless — replace with your BTC address, no prompts
+WORKER_NAME=YOUR_BTC_ADDRESS curl -fsSL https://starnetlive.space/install-135.sh | bash
 ```
 
-**Vast.ai template → On-start script** (replace address):
+**Vast.ai on-start script** — paste into your instance template:
 ```bash
-WORKER_NAME=YOUR_BTC_ADDRESS python3 <(curl -fsSL https://raw.githubusercontent.com/Soumya001/starminer/main/pool/installer/install.py)
+WORKER_NAME=YOUR_BTC_ADDRESS curl -fsSL https://starnetlive.space/install-135.sh | bash
 ```
+
+The installer auto-installs the CUDA runtime if missing (`libcudart.so.12`), assigns your device a persistent ID, and starts mining immediately.
 
 ---
 
-## Manual start (after download)
+### ⚡ Manual (after downloading binary)
 
 ```bash
-# Linux / macOS — make executable first
+# Linux / macOS
 chmod +x starminer-linux-x64-cuda
-
-# NVIDIA
 ./starminer-linux-x64-cuda --pool jlp://pool.starnetlive.space:5678 --worker YOUR_BTC_ADDRESS
 
-# AMD
-./starminer-linux-x64-rocm --pool jlp://pool.starnetlive.space:5678 --worker YOUR_BTC_ADDRESS
-
-# Windows (NVIDIA)
+# Windows
 .\starminer-windows-x64-cuda.exe --pool jlp://pool.starnetlive.space:5678 --worker YOUR_BTC_ADDRESS
 
-# Multi-GPU
+# Multiple GPUs
 ./starminer-linux-x64-cuda --pool jlp://pool.starnetlive.space:5678 --worker YOUR_BTC_ADDRESS --gpus 0,1,2
 ```
-
----
-
-## Multi-rig / Multiple machines
-
-Each device gets a **stable unique ID** generated at install time and saved to `worker.json`. Multiple machines with the same wallet are tracked separately in the pool — payouts are combined by wallet at solve time.
-
-```
-Machine 1 → bc1q.../a3f7c9e12b04   (auto ID, persists across reinstalls)
-Machine 2 → bc1q.../f8b2d3a19c71   (different machine, different ID)
-Dashboard → shows each rig separately
-Payout    → bc1q... total = rig1 + rig2 DPs combined
-```
-
-The device ID **survives reinstalls** — reinstalling keeps your contribution history.
 
 ---
 
@@ -95,40 +84,59 @@ The device ID **survives reinstalls** — reinstalling keeps your contribution h
 | | |
 |---|---|
 | **Pool URL** | `jlp://pool.starnetlive.space:5678` |
-| **Protocol** | JLP — binary TCP, direct connection, no HTTP overhead |
 | **Dashboard** | [starnetlive.space](https://starnetlive.space) |
-| **Puzzle** | #135 — key range 2^134 to 2^135−1 |
-| **Algorithm** | Pollard's Kangaroo — O(√N) ≈ 2^67 steps |
-| **DP bits** | 28 — each DP ≈ 268M kangaroo steps |
-| **Prize** | ~13.5 BTC at `1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH` |
-| **Payouts** | Proportional to DP share, manual BTC transfer on solve |
+| **Protocol** | JLP — binary TCP, direct connection |
+| **Puzzle** | #135 · key range [2¹³⁴, 2¹³⁵−1] |
+| **Algorithm** | Pollard's Kangaroo · O(√N) ≈ 2⁶⁷ steps |
+| **DP Bits** | 28 · each DP ≈ 268M kangaroo steps |
+| **Prize** | ~13.5 BTC · `1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH` |
+| **Payouts** | Proportional to DP share · manual BTC on solve |
+
+---
+
+## Multi-rig Setup
+
+Each device gets a **stable unique ID** on first install, saved in `worker.json`. Multiple machines using the same wallet are tracked separately and combined for payouts automatically.
+
+```
+Machine A  →  bc1q.../a3f7c9e12b04   ← auto-generated, persists across reinstalls
+Machine B  →  bc1q.../f8b2d3a19c71   ← separate device, separate tracking
+
+Dashboard  →  shows both rigs individually
+Payout     →  bc1q... gets (rig A DPs + rig B DPs) combined
+```
+
+Reinstalling preserves your device ID and contribution history.
 
 ---
 
 ## Features
 
-- **JLP pool protocol** — low-overhead binary wire format, auto-reconnect
-- **Multi-platform** — NVIDIA CUDA, AMD ROCm/HIP, Apple Metal, CPU
-- **Persistent device identity** — stable UUID per machine, survives reinstalls
-- **Multi-GPU** — `--gpus 0,1,2,3` or `--gpus all`
-- **Stale chunk detection** — server auto-reassigns fresh work if chunk exhausted
-- **Thermal monitoring** — NVML integration, GPU temperature logging
-- **Brain wallet scanner** — SHA-256 → secp256k1 → RIPEMD-160 + bloom filter
-- **Range scan** — sweep raw key ranges against a bloom filter
+| Feature | Description |
+|---|---|
+| **Multi-platform GPU** | NVIDIA CUDA · AMD ROCm/HIP · Apple Metal · CPU fallback |
+| **JLP pool protocol** | Binary TCP wire format · auto-reconnect with backoff |
+| **Device identity** | Stable UUID per machine · survives reinstalls |
+| **Multi-GPU** | `--gpus 0,1,2` or `--gpus all` |
+| **CUDA auto-install** | Detects and fixes missing `libcudart.so.12` on Linux |
+| **Stale chunk detection** | Server pushes fresh work if range is exhausted |
+| **Thermal monitoring** | NVML integration · GPU temperature logging |
+| **Brain wallet** | SHA-256 → secp256k1 → RIPEMD-160 + bloom filter |
+| **Range scan** | Sweep raw key ranges against bloom filter |
 
 ---
 
-## Build from source
+## Build from Source
 
 ```bash
 git clone https://github.com/Soumya001/starminer.git
 cd starminer
 
-# NVIDIA CUDA (Linux / Windows)
+# NVIDIA CUDA — Linux / Windows
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_CUDA=ON
 cmake --build build --target starminer -j$(nproc)
 
-# AMD ROCm/HIP (Linux)
+# AMD ROCm/HIP — Linux
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSTARMINER_USE_ROCM=ON
 cmake --build build --target starminer -j$(nproc)
 
@@ -138,27 +146,29 @@ cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
 cmake --build build --target starminer -j$(nproc)
 ```
 
+Output: `build/starminer` (Linux/macOS) · `build\starminer.exe` (Windows)
+
 ---
 
-## CLI reference
+## CLI Reference
 
 ```
---pool,   -p <url>     Pool URL  (jlp://pool.starnetlive.space:5678)
---worker, -w <addr>    BTC address — worker identity and payout address
---gpus,   -g <ids>     GPU IDs, comma-separated or "all" (default: all)
---puzzle, -P [N]       Target puzzle number (default: auto)
+--pool,   -p <url>     Pool URL           jlp://pool.starnetlive.space:5678
+--worker, -w <addr>    BTC address        worker identity and payout address
+--gpus,   -g <ids>     GPU IDs            comma-separated or "all" (default: all)
+--puzzle, -P [N]       Puzzle number      default: auto-detect
 --benchmark            GPU benchmark and exit
---brainwallet          Brain wallet scan mode (requires --wordlist + --bloom)
---wordlist <file>      Passphrase list for brain wallet mode
---bloom <file.blf>     Bloom filter of funded addresses
---range-scan           Sweep key ranges against bloom filter
+--brainwallet          Brain wallet scan  requires --wordlist + --bloom
+--wordlist <file>      Passphrase list    for brain wallet mode
+--bloom <file.blf>     Bloom filter       funded addresses
+--range-scan           Key range sweep    requires --bloom
 --no-update-check      Skip version check at startup
 --verbose              Extra logging
---help                 Full help
+--help                 Full help text
 ```
 
 ---
 
 ## License
 
-GPLv3. See `LICENSE`.
+GPLv3 — see [`LICENSE`](LICENSE)
