@@ -169,6 +169,14 @@ Output: `build/starminer` (Linux/macOS) · `build\starminer.exe` (Windows)
 
 ---
 
+## Support / Donate
+
+If StarMiner or the pool has been useful to you, donations are appreciated:
+
+**Bitcoin:** `bc1qevyu9pngzdq54v592whjf9tm5mcztv46zpu40p`
+
+---
+
 ## License
 
 GPLv3 — see [`LICENSE`](LICENSE)
