@@ -158,6 +158,13 @@ async def assign_work(db: aiosqlite.Connection, worker_name: str) -> dict:
     )
     await db.commit()
 
+    # Expire all previous active assignments for this worker before issuing a new one
+    await db.execute(
+        "UPDATE assignments SET status='expired' WHERE worker_name=? AND status='active'",
+        (worker_name,),
+    )
+    await db.commit()
+
     for _ in range(300):
         chunk_id = random.randint(0, NUM_CHUNKS - 1)
         rs = RANGE_START + chunk_id * CHUNK_SIZE
