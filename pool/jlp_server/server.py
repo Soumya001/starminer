@@ -293,7 +293,7 @@ class WorkerSession:
         self.authenticated: bool = False
         self.current_work_id: int | None = None
         self.last_seen: float = time.time()
-        self.zero_accept_streak: int = 0  # consecutive all-duplicate batches
+        self.last_accepted_at: float = time.time()  # time of last accepted DP batch
 
 
 # ── Frame I/O ─────────────────────────────────────────────────────────────────
@@ -449,14 +449,13 @@ async def handle_connection(reader: asyncio.StreamReader, writer: asyncio.Stream
 
                     accepted = await save_dps(db, worker_name, dps)
                     if accepted:
-                        session.zero_accept_streak = 0
+                        session.last_accepted_at = time.time()
                         now_t = time.time()
                         _dp_times.extend([now_t] * accepted)
                     else:
-                        session.zero_accept_streak += 1
-                        if session.zero_accept_streak >= 10:
-                            # Chunk exhausted — push a fresh assignment without waiting for reconnect
-                            session.zero_accept_streak = 0
+                        # Only reassign if no new DPs accepted for 120 seconds
+                        if time.time() - session.last_accepted_at > 120:
+                            session.last_accepted_at = time.time()
                             try:
                                 work = await assign_work(db, worker_name)
                                 session.current_work_id = work['work_id']
