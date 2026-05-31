@@ -234,15 +234,6 @@ def main():
     dl_url, dl_label = select_binary(gpu_info)
     ok(f"Selected: {dl_label}")
 
-    # ── Worker name ───────────────────────────────────────────────────
-    if HEADLESS:
-        worker_name = WORKER_ENV
-        ok(f"Worker name from env: {worker_name}")
-    else:
-        print(f"\n{C['bold']}Enter your Bitcoin address as your worker name.{C['x']}")
-        print(f"{C['dim']}Rewards are tracked and paid out to this address.{C['x']}\n")
-        worker_name = ask_required("BTC address (worker name)")
-
     pool_url = POOL_JLP
 
     # ── Already installed? ────────────────────────────────────────────
@@ -258,6 +249,40 @@ def main():
         info("Reinstalling...")
         BINARY_PATH.unlink(missing_ok=True)
 
+    # ── Worker identity ───────────────────────────────────────────────
+    # Load existing config to preserve device_id across reinstalls
+    saved_wallet = ""
+    saved_device = ""
+    if CONFIG_PATH.exists():
+        try:
+            cfg = json.loads(CONFIG_PATH.read_text())
+            saved_wallet = cfg.get("wallet", "")
+            saved_device = cfg.get("device_id", "")
+        except Exception:
+            pass
+
+    # Stable device ID: generated once, never changes for this machine
+    if not saved_device:
+        import uuid
+        saved_device = uuid.uuid4().hex[:12]
+
+    if HEADLESS:
+        wallet = WORKER_ENV or saved_wallet or f"worker-{os.uname().nodename}"
+        ok(f"Wallet from env: {wallet}")
+    else:
+        print(f"\n{C['bold']}Enter your Bitcoin address for payouts.{C['x']}")
+        print(f"{C['dim']}Each device gets a unique ID — multiple machines with the same wallet are tracked separately.{C['x']}\n")
+        default_wallet = saved_wallet or ""
+        wallet = ask_required(f"BTC address{' ['+default_wallet+']' if default_wallet else ''}")
+        if not wallet and default_wallet:
+            wallet = default_wallet
+
+    # worker_name = wallet/deviceid (unique per device, payouts group by wallet)
+    worker_name = f"{wallet}/{saved_device}"
+    ok(f"Wallet:    {wallet}")
+    ok(f"Device ID: {saved_device}  (stable, survives reinstalls)")
+    ok(f"Worker ID: {worker_name}")
+
     # ── Download binary ───────────────────────────────────────────────
     if not download_binary(dl_url, BINARY_PATH):
         # AMD HIP fallback to CPU on Windows if HIP binary not yet released
@@ -272,6 +297,8 @@ def main():
     # ── Save config ───────────────────────────────────────────────────
     CONFIG_PATH.write_text(json.dumps({
         "worker_name":  worker_name,
+        "wallet":       wallet,
+        "device_id":    saved_device,
         "pool_url":     pool_url,
         "binary":       str(BINARY_PATH),
         "installed_at": time.time(),
